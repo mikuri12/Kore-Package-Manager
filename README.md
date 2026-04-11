@@ -49,6 +49,7 @@ Para automatizar tareas o actuar con rapidez, puedes usar los siguientes flags:
 | `-l, --list` | Lista las aplicaciones instaladas. | `tm -l` |
 | `-r, --remove` | Desinstala una app (soporta búsqueda parcial). | `tm -r discord` |
 | `-i, --install` | Instala un tarball (directo o abre buscador). | `tm -i [args]` |
+| `-v, --version` | Muestra la version instalada. | `tm -v` |
 | `-h, --help` | Muestra el manual de ayuda. | `tm -h` |
 
 #### Instalación Directa
