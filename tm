@@ -70,11 +70,18 @@ install_app() {
     local TARBALL=$(file_browser "$HOME")
     [[ -z "$TARBALL" ]] && return 0
 
-    local APP_NAME=$(basename "$TARBALL" | sed -E 's/\.tar\.(gz|xz|bz2)//')
-    local TARGET="$INSTALL_DIR/$APP_NAME"
+    local RAW_NAME=$(basename "$TARBALL" | sed -E 's/\.tar\.(gz|xz|bz2)//')
+    
+    clear
+    info_msg "Archivo detectado: $RAW_NAME"
+    echo -e "${YELLOW}󰋼 Ingresa el nombre para el menú (Ej: Vesktop)${NC}"
+    read -p ">> " APP_NAME
+    [[ -z "$APP_NAME" ]] && APP_NAME="$RAW_NAME"
 
-    if [ -n "$APP_NAME" ] && [ -d "$TARGET" ]; then
-        warn_msg "La aplicación '$APP_NAME' ya está instalada."
+    local TARGET="$INSTALL_DIR/$RAW_NAME"
+
+    if [ -d "$TARGET" ]; then
+        warn_msg "La carpeta '$RAW_NAME' ya existe."
         local ACTION=$(echo -e "Cancelar\nReemplazar / Actualizar" | fzf --height=15% --reverse --border=rounded --prompt="¿Qué deseas hacer? ")
         [[ "$ACTION" != "Reemplazar / Actualizar" ]] && return 0
         
@@ -84,7 +91,7 @@ install_app() {
     fi
 
     mkdir -p "$TARGET"
-    info_msg "Extrayendo $APP_NAME..."
+    info_msg "Extrayendo $RAW_NAME..."
     tar -xf "$TARBALL" -C "$TARGET" --strip-components=1
 
     info_msg "Selecciona el binario principal"
@@ -107,7 +114,7 @@ Type=Application
 Terminal=false
 Categories=Utility;Development;
 EOF
-        success_msg "¡$APP_NAME instalado con éxito!"
+        success_msg "¡$APP_NAME instalado! (Carpeta: $RAW_NAME)"
     else
         warn_msg "No se seleccionó binario."
     fi
