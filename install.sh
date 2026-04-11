@@ -7,47 +7,76 @@ INSTALL_DIR="$HOME/.local/share/binaries"
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BOLD='\033[1m'
 NC='\033[0m'
 
+info()    { echo -e "${CYAN}  →${NC} $1"; }
+success() { echo -e "${GREEN}  ✔${NC} $1"; }
+error()   { echo -e "${RED}  ✘${NC} $1"; }
+title()   { echo -e "\n${BOLD}$1${NC}"; }
+
 install_tm() {
+    title "Instalando Tarball Manager..."
+    
     mkdir -p "$BIN_DIR"
-    echo -e "${CYAN}󰀼 Instalando Tarball Manager...${NC}"
+    info "Descargando binario desde GitHub..."
+    
     if curl -sSf "$REPO_RAW_URL" -o "$BIN_DIR/tm"; then
         chmod +x "$BIN_DIR/tm"
-        echo -e "${GREEN}󰄬 Instalado en $BIN_DIR/tm${NC}"
-        echo -e "${CYAN}󰀪 Asegúrate de tener $BIN_DIR en tu PATH.${NC}"
+        success "Instalación completa en $BIN_DIR/tm"
+        echo ""
+        info "Asegúrate de que $BIN_DIR esté en tu PATH."
+        info "Si usas Fish: fish_add_path $BIN_DIR"
     else
-        echo -e "${RED}󰅚 Error en la descarga.${NC}"
+        error "No se pudo descargar el script principal."
     fi
 }
 
 uninstall_tm() {
-    echo -e "${RED}󰆴 Eliminando Tarball Manager...${NC}"
+    title "Desinstalando Tarball Manager..."
+
     if [ -f "$BIN_DIR/tm" ]; then
         rm "$BIN_DIR/tm"
-        echo -e "${GREEN}󰄬 Binario eliminado.${NC}"
+        success "Binario eliminado."
     else
-        echo -e "${RED}󰅚 No se encontró el binario.${NC}"
+        error "No se encontró el binario en $BIN_DIR/tm"
     fi
+
+    echo ""
+    echo -ne "  ${YELLOW}⚠${NC} ¿Eliminar también todas las apps instaladas? (s/n): "
+    read -r resp < /dev/tty
     
-    echo -e "${CYAN}¿Eliminar también todas las aplicaciones instaladas? (s/N)${NC}"
-    read -p ">> " choice < /dev/tty
-    if [[ "$choice" =~ ^[Ss]$ ]]; then
+    if [[ "$resp" =~ ^[sS]$ ]]; then
         rm -rf "$INSTALL_DIR"
-        echo -e "${GREEN}󰄬 Aplicaciones eliminadas.${NC}"
+        success "Carpeta de aplicaciones eliminada."
     fi
 }
 
-clear
-echo -e "${CYAN}--- TARBALL MANAGER INSTALLER ---${NC}"
-echo "1) Instalar"
-echo "2) Desinstalar"
-echo "3) Salir"
-read -p "Selecciona una opción: " opt < /dev/tty
+main_menu() {
+    clear
+    echo -e "${BOLD}  ╔══════════════════════════════════╗${NC}"
+    echo -e "${BOLD}  ║      TARBALL MANAGER (TM)        ║${NC}"
+    echo -e "${BOLD}  ╚══════════════════════════════════╝${NC}"
+    echo ""
+    echo "  Seleccioná una opción:"
+    echo ""
+    echo -e "  ${CYAN}1)${NC} Instalar"
+    echo -e "  ${CYAN}2)${NC} Desinstalar"
+    echo -e "  ${CYAN}3)${NC} Salir"
+    echo ""
+    
+    read -rp "  Opción [1-3]: " opcion < /dev/tty
 
-case $opt in
-    1) install_tm ;;
-    2) uninstall_tm ;;
-    3) exit 0 ;;
-    *) echo -e "${RED}Opción no válida.${NC}" ;;
-esac
+    case "$opcion" in
+        1) install_tm ;;
+        2) uninstall_tm ;;
+        3) echo -e "\n  Saliendo..."; exit 0 ;;
+        *) echo -e "\n  ${RED}✘ Opción inválida${NC}"; sleep 1; main_menu ;;
+    esac
+
+    echo ""
+    read -rp "  Presioná Enter para finalizar..." _ < /dev/tty
+}
+
+main_menu
