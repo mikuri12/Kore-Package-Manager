@@ -17,19 +17,22 @@ error()   { echo -e "${RED}  ✘${NC} $1"; }
 title()   { echo -e "\n${BOLD}$1${NC}"; }
 
 install_tm() {
-    title "Instalando Tarball Manager..."
+    local mode=${1:-"Instalando"}
+    title "$mode Tarball Manager..."
     
     mkdir -p "$BIN_DIR"
-    info "Descargando binario desde GitHub..."
+    info "Obteniendo versión desde GitHub..."
     
-    if curl -sSf "$REPO_RAW_URL" -o "$BIN_DIR/tm"; then
+    if curl -sSf "$REPO_RAW_URL?$(date +%s)" -o "$BIN_DIR/tm"; then
         chmod +x "$BIN_DIR/tm"
-        success "Instalación completa en $BIN_DIR/tm"
-        echo ""
-        info "Asegúrate de que $BIN_DIR esté en tu PATH."
-        info "Si usas Fish: fish_add_path $BIN_DIR"
+        success "$mode completado."
+        if [[ "$mode" == "Instalando" ]]; then
+            echo ""
+            info "Asegúrate de que $BIN_DIR esté en tu PATH."
+            info "Si usas Fish: fish_add_path $BIN_DIR"
+        fi
     else
-        error "No se pudo descargar el script principal."
+        error "No se pudo descargar el binario."
     fi
 }
 
@@ -40,11 +43,11 @@ uninstall_tm() {
         rm "$BIN_DIR/tm"
         success "Binario eliminado."
     else
-        error "No se encontró el binario en $BIN_DIR/tm"
+        error "No se encontró el binario."
     fi
 
     echo ""
-    echo -ne "  ${YELLOW}⚠${NC} ¿Eliminar también todas las apps instaladas? (s/n): "
+    echo -ne "  ${YELLOW}⚠${NC} ¿Eliminar apps en $INSTALL_DIR? (s/n): "
     read -r resp < /dev/tty
     
     if [[ "$resp" =~ ^[sS]$ ]]; then
@@ -55,26 +58,35 @@ uninstall_tm() {
 
 main_menu() {
     clear
-    echo -e "${CYAN}TARBALL MANAGER (tm)${NC}"
+    echo -e "${CYAN}${BOLD}TARBALL MANAGER (tm)${NC}"
     echo ""
     echo "  Seleccioná una opción:"
     echo ""
     echo -e "  ${CYAN}1)${NC} Instalar"
-    echo -e "  ${CYAN}2)${NC} Desinstalar"
-    echo -e "  ${CYAN}3)${NC} Salir"
+    echo -e "  ${CYAN}2)${NC} Actualizar"
+    echo -e "  ${CYAN}3)${NC} Desinstalar"
+    echo -e "  ${CYAN}4)${NC} Salir"
     echo ""
     
-    read -rp "  Opción [1-3]: " opcion < /dev/tty
+    read -rp "  Opción [1-4]: " opcion < /dev/tty
 
     case "$opcion" in
-        1) install_tm ;;
-        2) uninstall_tm ;;
-        3) echo -e "\n  Saliendo..."; exit 0 ;;
-        *) echo -e "\n  ${RED}✘ Opción inválida${NC}"; sleep 1; main_menu ;;
+        1) install_tm "Instalando" ;;
+        2) 
+            if [ -f "$BIN_DIR/tm" ]; then
+                install_tm "Actualizando"
+            else
+                error "tm no está instalado."
+            fi
+            ;;
+        3) uninstall_tm ;;
+        4) exit 0 ;;
+        *) sleep 1; main_menu ;;
     esac
 
     echo ""
-    read -rp "  Presioná Enter para finalizar..." _ < /dev/tty
+    read -rp "  Presioná Enter para continuar..." _ < /dev/tty
+    main_menu
 }
 
 main_menu
