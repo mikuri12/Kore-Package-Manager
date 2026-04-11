@@ -1,6 +1,6 @@
 #!/bin/bash
 
-REPO_RAW_URL="https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/tm"
+REPO="ezequielgk/Tarball-Manager"
 BIN_DIR="$HOME/.local/bin"
 INSTALL_DIR="$HOME/.local/share/binaries"
 
@@ -21,18 +21,27 @@ install_tm() {
     title "$mode Tarball Manager..."
     
     mkdir -p "$BIN_DIR"
-    info "Obteniendo versión desde GitHub..."
+    info "Buscando la última versión estable en GitHub Releases..."
     
-    if curl -sSf "$REPO_RAW_URL?$(date +%s)" -o "$BIN_DIR/tm"; then
+    local LATEST_URL=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep "browser_download_url" | grep "/tm\"" | cut -d '"' -f 4)
+
+    if [[ -z "$LATEST_URL" ]]; then
+        info "No se encontró asset en release, intentando fallback a branch main..."
+        LATEST_URL="https://raw.githubusercontent.com/$REPO/main/tm"
+    fi
+    
+    if curl -sSL "$LATEST_URL" -o "$BIN_DIR/tm"; then
         chmod +x "$BIN_DIR/tm"
-        success "$mode completado."
+        local VERSION=$("$BIN_DIR/tm" -v 2>/dev/null | awk '{print $NF}')
+        success "$mode completado (Versión: $VERSION)."
+        
         if [[ "$mode" == "Instalando" ]]; then
             echo ""
             info "Asegúrate de que $BIN_DIR esté en tu PATH."
             info "Si usas Fish: fish_add_path $BIN_DIR"
         fi
     else
-        error "No se pudo descargar el binario."
+        error "No se pudo descargar el binario desde GitHub."
     fi
 }
 
