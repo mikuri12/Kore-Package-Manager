@@ -55,9 +55,7 @@ uninstall_tm() {
 
 main_menu() {
     clear
-    echo -e "${BOLD}  ╔══════════════════════════════════╗${NC}"
-    echo -e "${BOLD}  ║      TARBALL MANAGER (TM)        ║${NC}"
-    echo -e "${BOLD}  ╚══════════════════════════════════╝${NC}"
+    echo -e "${CYAN}TARBALL MANAGER (tm)${NC}"
     echo ""
     echo "  Seleccioná una opción:"
     echo ""
