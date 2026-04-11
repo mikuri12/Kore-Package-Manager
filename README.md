@@ -1,5 +1,5 @@
 # Tarball Manager (tm)
-![License](https://img.shields.io/badge/license-MIT-cyan)
+![License](https://img.shields.io/badge/license-GPL-cyan)
 ![Shell](https://img.shields.io/badge/shell-bash%2Fzsh%2Ffish-orange)
 
 Un gestor de programas minimalista y universal para Linux, diseñado específicamente para manejar aplicaciones distribuidas en **tarballs** (.tar.gz, .tar.xz, .tar.bz2). 
