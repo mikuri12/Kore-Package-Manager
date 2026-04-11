@@ -15,6 +15,7 @@ install_tm() {
     if curl -sSf "$REPO_RAW_URL" -o "$BIN_DIR/tm"; then
         chmod +x "$BIN_DIR/tm"
         echo -e "${GREEN}󰄬 Instalado en $BIN_DIR/tm${NC}"
+        echo -e "${CYAN}󰀪 Asegúrate de tener $BIN_DIR en tu PATH.${NC}"
     else
         echo -e "${RED}󰅚 Error en la descarga.${NC}"
     fi
@@ -22,10 +23,19 @@ install_tm() {
 
 uninstall_tm() {
     echo -e "${RED}󰆴 Eliminando Tarball Manager...${NC}"
-    rm -f "$BIN_DIR/tm" && echo -e "${GREEN}󰄬 Binario eliminado.${NC}"
-    echo -e "${CYAN}¿Eliminar apps instaladas? (s/N)${NC}"
+    if [ -f "$BIN_DIR/tm" ]; then
+        rm "$BIN_DIR/tm"
+        echo -e "${GREEN}󰄬 Binario eliminado.${NC}"
+    else
+        echo -e "${RED}󰅚 No se encontró el binario.${NC}"
+    fi
+    
+    echo -e "${CYAN}¿Eliminar también todas las aplicaciones instaladas? (s/N)${NC}"
     read -p ">> " choice < /dev/tty
-    [[ "$choice" =~ ^[Ss]$ ]] && rm -rf "$INSTALL_DIR" && echo -e "${GREEN}󰄬 Limpieza completada.${NC}"
+    if [[ "$choice" =~ ^[Ss]$ ]]; then
+        rm -rf "$INSTALL_DIR"
+        echo -e "${GREEN}󰄬 Aplicaciones eliminadas.${NC}"
+    fi
 }
 
 clear
