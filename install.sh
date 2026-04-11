@@ -9,29 +9,23 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-msg() { echo -e "${CYAN}$1${NC}"; }
-success() { echo -e "${GREEN}$1${NC}"; }
-error() { echo -e "${RED}$1${NC}"; }
-
 install_tm() {
     mkdir -p "$BIN_DIR"
-    msg "󰀼 Instalando Tarball Manager..."
+    echo -e "${CYAN}󰀼 Instalando Tarball Manager...${NC}"
     if curl -sSf "$REPO_RAW_URL" -o "$BIN_DIR/tm"; then
         chmod +x "$BIN_DIR/tm"
-        success "󰄬 Instalado en $BIN_DIR/tm"
-        msg "󰀪 Asegúrate de tener $BIN_DIR en tu PATH."
+        echo -e "${GREEN}󰄬 Instalado en $BIN_DIR/tm${NC}"
     else
-        error "󰅚 Error en la descarga."
+        echo -e "${RED}󰅚 Error en la descarga.${NC}"
     fi
 }
 
 uninstall_tm() {
-    msg "󰆴 Eliminando Tarball Manager..."
-    rm -f "$BIN_DIR/tm" && success "󰄬 Binario eliminado."
-    
-    read -p "¿Eliminar también todas las aplicaciones instaladas? (s/N): " choice
-    [[ "$choice" =~ ^[Ss]$ ]] && rm -rf "$INSTALL_DIR" && success "󰄬 Aplicaciones eliminadas."
-    success "󰄬 Desinstalación finalizada."
+    echo -e "${RED}󰆴 Eliminando Tarball Manager...${NC}"
+    rm -f "$BIN_DIR/tm" && echo -e "${GREEN}󰄬 Binario eliminado.${NC}"
+    echo -e "${CYAN}¿Eliminar apps instaladas? (s/N)${NC}"
+    read -p ">> " choice < /dev/tty
+    [[ "$choice" =~ ^[Ss]$ ]] && rm -rf "$INSTALL_DIR" && echo -e "${GREEN}󰄬 Limpieza completada.${NC}"
 }
 
 clear
@@ -39,11 +33,11 @@ echo -e "${CYAN}--- TARBALL MANAGER INSTALLER ---${NC}"
 echo "1) Instalar"
 echo "2) Desinstalar"
 echo "3) Salir"
-read -p "Selecciona una opción: " opt
+read -p "Selecciona una opción: " opt < /dev/tty
 
 case $opt in
     1) install_tm ;;
     2) uninstall_tm ;;
     3) exit 0 ;;
-    *) error "Opción no válida." ;;
+    *) echo -e "${RED}Opción no válida.${NC}" ;;
 esac
