@@ -73,50 +73,85 @@ install_app() {
     local RAW_NAME=$(basename "$TARBALL" | sed -E 's/\.tar\.(gz|xz|bz2)//')
     
     clear
-    info_msg "Archivo detectado: $RAW_NAME"
-    echo -e "${YELLOW}󰋼 Ingresa el nombre para el menú (Ej: Vesktop)${NC}"
-    read -p ">> " APP_NAME
+    info_msg "Archivo: $RAW_NAME"
+    read -p "Nombre para el menú (ej: Discord): " APP_NAME
     [[ -z "$APP_NAME" ]] && APP_NAME="$RAW_NAME"
 
     local TARGET="$INSTALL_DIR/$RAW_NAME"
 
     if [ -d "$TARGET" ]; then
-        warn_msg "La carpeta '$RAW_NAME' ya existe."
-        local ACTION=$(echo -e "Cancelar\nReemplazar / Actualizar" | fzf --height=15% --reverse --border=rounded --prompt="¿Qué deseas hacer? ")
-        [[ "$ACTION" != "Reemplazar / Actualizar" ]] && return 0
-        
-        rm -rf "$TARGET"
-        rm -f "$BIN_DIR/$APP_NAME"
-        rm -f "$APPS_DIR/$APP_NAME.desktop"
+        warn_msg "La carpeta ya existe."
+        local ACTION=$(echo -e "Cancelar\nReemplazar" | fzf --height=15% --reverse --border=rounded)
+        [[ "$ACTION" != "Reemplazar" ]] && return 0
+        rm -rf "$TARGET" && rm -f "$BIN_DIR/$APP_NAME" && rm -f "$APPS_DIR/$APP_NAME.desktop"
     fi
 
     mkdir -p "$TARGET"
-    info_msg "Extrayendo $RAW_NAME..."
+    info_msg "Extrayendo..."
     tar -xf "$TARBALL" -C "$TARGET" --strip-components=1
 
     info_msg "Selecciona el binario principal"
-    local EXEC_PATH=$(find "$TARGET" -maxdepth 3 -executable -type f | fzf \
-        --height=40% --reverse --border=rounded --prompt="󰜎 Binario: " \
-        --preview "file -b {}")
+    local EXEC_PATH=$(find "$TARGET" -maxdepth 3 -executable -type f | fzf --height=40% --reverse --border=rounded)
 
     if [[ -n "$EXEC_PATH" ]]; then
-        ln -sf "$EXEC_PATH" "$BIN_DIR/$APP_NAME"
-        
-        local ICON_PATH=$(find "$TARGET" -maxdepth 4 \( -name "*.png" -o -name "*.svg" \) | head -n 1)
+        echo -e "${YELLOW}󰋼 ¿Requiere privilegios de Root (pkexec)?${NC}"
+        local USE_ROOT=$(echo -e "No\nSi" | fzf --height=15% --reverse --border=rounded)
+
+        echo -e "${YELLOW}󰋼 Selecciona la categoría:${NC}"
+        local CATEGORY=$(echo -e "Utility\nDevelopment\nGame\nGraphics\nNetwork\nAudioVideo\nOffice\nSystem" | fzf \
+            --height=40% --reverse --border=rounded)
+        [[ -z "$CATEGORY" ]] && CATEGORY="Utility"
+
+        info_msg "Buscando icono localmente..."
+        local ICON_PATH=$(find "$TARGET" -maxdepth 4 \( -name "*.png" -o -name "*.svg" -o -name "*.ico" \) | head -n 1)
+
+        if [[ -z "$ICON_PATH" ]]; then
+            warn_msg "No se encontró icono en el tarball."
+            echo -e "${CYAN}󰋼 Buscando icono en la web para '$APP_NAME'...${NC}"
+            
+            local SEARCH_URL="https://www.google.com/search?q=${APP_NAME}+icon+png&tbm=isch"
+            local USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            
+            local IMAGE_URLS=$(curl -s -A "$USER_AGENT" "$SEARCH_URL" | grep -oP 'https://[^"]*?\.(png|jpg|svg)' | head -n 5)
+
+            if [[ -n "$IMAGE_URLS" ]]; then
+                echo -e "${YELLOW}󰋼 Selecciona una URL de icono:${NC}"
+                local SELECTED_URL=$(echo "$IMAGE_URLS" | fzf \
+                    --height=30% --reverse --border=rounded --prompt="URL de Icono > ")
+
+                if [[ -n "$SELECTED_URL" ]]; then
+                    info_msg "Descargando icono seleccionado..."
+                    local ICON_EXT="${SELECTED_URL##*.}"
+                    local DOWNLOADED_ICON="$TARGET/icon.$ICON_EXT"
+                    if curl -s -o "$DOWNLOADED_ICON" "$SELECTED_URL"; then
+                        ICON_PATH="$DOWNLOADED_ICON"
+                        success_msg "Icono descargado y configurado."
+                    else
+                        error_msg "Error al descargar el icono."
+                    fi
+                fi
+            else
+                error_msg "No se encontraron iconos en la web."
+            fi
+        fi
+
         [[ -z "$ICON_PATH" ]] && ICON_PATH="utilities-terminal"
+
+        ln -sf "$EXEC_PATH" "$BIN_DIR/$APP_NAME"
+        local FINAL_EXEC="$BIN_DIR/$APP_NAME"
+        [[ "$USE_ROOT" == "Si" ]] && FINAL_EXEC="pkexec $EXEC_PATH"
 
         cat <<EOF > "$APPS_DIR/$APP_NAME.desktop"
 [Desktop Entry]
 Name=$APP_NAME
-Exec=$BIN_DIR/$APP_NAME
+Exec=$FINAL_EXEC
 Icon=$ICON_PATH
 Type=Application
 Terminal=false
-Categories=Utility;Development;
+Path=$TARGET
+Categories=$CATEGORY;
 EOF
-        success_msg "¡$APP_NAME instalado! (Carpeta: $RAW_NAME)"
-    else
-        warn_msg "No se seleccionó binario."
+        success_msg "¡$APP_NAME instalado con éxito!"
     fi
     sleep 2
     return 0
@@ -126,22 +161,48 @@ remove_app() {
     local APPS=$(ls -1 "$INSTALL_DIR" 2>/dev/null)
     [[ -z "$APPS" ]] && { error_msg "No hay nada para eliminar."; sleep 1; return 0; }
 
-    local TO_REMOVE=$(echo "$APPS" | fzf --height=60% --reverse --border=rounded --prompt="󰆴 Eliminar: ")
+
+    local TO_REMOVE=$(echo "$APPS" | fzf --height=60% --reverse --border=rounded --prompt="󰆴 Carpeta a eliminar: ")
     [[ -z "$TO_REMOVE" ]] && return 0
 
-    local CONFIRM=$(echo -e "No\nSi" | fzf --height=15% --reverse --border=rounded --prompt="¿Confirmas borrar $TO_REMOVE? ")
+    local CONFIRM=$(echo -e "No\nSi" | fzf --height=15% --reverse --border=rounded --prompt="¿Confirmas borrar $TO_REMOVE y sus accesos? ")
+    
     if [[ "$CONFIRM" == "Si" ]]; then
-        rm -rf "$INSTALL_DIR/$TO_REMOVE"
-        rm -f "$BIN_DIR/$TO_REMOVE"
-        rm -f "$APPS_DIR/$TO_REMOVE.desktop"
-        success_msg "$TO_REMOVE eliminado."
+        info_msg "Rastreando archivos .desktop asociados..."
+
+
+        local TARGET_PATH="$INSTALL_DIR/$TO_REMOVE"
+        local DESKTOP_FILES=$(grep -rl "$TARGET_PATH" "$APPS_DIR" 2>/dev/null)
+
+        if [[ -n "$DESKTOP_FILES" ]]; then
+            echo "$DESKTOP_FILES" | while read -r file; do
+
+                local BIN_NAME=$(basename "$file" .desktop)
+                rm -f "$BIN_DIR/$BIN_NAME"
+                
+                rm -f "$file"
+                success_msg "Eliminado: $(basename "$file")"
+            done
+        else
+            rm -f "$APPS_DIR/${TO_REMOVE}.desktop"
+            rm -f "$BIN_DIR/$TO_REMOVE"
+        fi
+
+        rm -rf "$TARGET_PATH"
+
+        if command -v update-desktop-database &>/dev/null; then
+            update-desktop-database "$APPS_DIR" 2>/dev/null
+        fi
+        
+        touch "$APPS_DIR"
+        
+        success_msg "¡$TO_REMOVE eliminado de raíz!"
     else
         info_msg "Operación cancelada."
     fi
     sleep 1
     return 0
 }
-
 main_menu() {
     while true; do
         clear
