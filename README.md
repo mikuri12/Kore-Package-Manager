@@ -21,7 +21,8 @@ Ideal para usuarios de **Void Linux**, **Arch** o cualquier sistema donde necesi
 Puedes instalarlo directamente usando `curl`:
 
 ```bash
-curl -sSL [https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/install.sh](https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/install.sh) | bash
+curl -sSL https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/install.sh | bash
+
 ```
 
 > **Nota**: Asegúrate de tener `fzf` instalado y que `~/.local/bin` esté en tu `$PATH`.
