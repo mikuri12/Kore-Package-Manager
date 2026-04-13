@@ -2,6 +2,7 @@
 ![License](https://img.shields.io/badge/license-GPL-cyan)
 ![Shell](https://img.shields.io/badge/shell-bash%2Fzsh%2Ffish-orange)
 [![Changelog](https://img.shields.io/badge/Changelog-v1.2.0-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielkg/Tarball-Manager/blob/main/CHANGELOG.md)
+
 Un gestor de programas minimalista y universal para Linux, diseñado específicamente para manejar aplicaciones distribuidas en **tarballs** (.tar.gz, .tar.xz, .tar.bz2). 
 
 Ideal para usuarios de **Void Linux**, **Arch** o cualquier sistema donde necesites instalar software de forma aislada, limpia y con una interfaz TUI elegante basada en `fzf`.
