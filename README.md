@@ -1,93 +1,84 @@
 # Tarball Manager (tm)
 ![License](https://img.shields.io/badge/license-GPL-cyan)
-![Shell](https://img.shields.io/badge/shell-bash%2Fzsh%2Ffish-orange)
+![Rust](https://img.shields.io/badge/language-Rust-orange)
 [![Changelog](https://img.shields.io/badge/Changelog-v1.2.0-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG.md)
 
-Un gestor de programas minimalista y universal para Linux, diseñado específicamente para manejar aplicaciones distribuidas en **tarballs** (.tar.gz, .tar.xz, .tar.bz2). 
+Un gestor de programas minimalista y universal para Linux, rediseñado completamente en **Rust**. Está diseñado específicamente para manejar aplicaciones distribuidas en **tarballs** (.tar.gz, .tar.xz, .tar.bz2). 
 
-Ideal para usuarios de **Void Linux**, **Arch** o cualquier sistema donde necesites instalar software de forma aislada, limpia y con una interfaz TUI elegante basada en `fzf`.
+Ideal para usuarios de **Void Linux**, **Arch** o cualquier sistema donde necesites instalar software pre-compilado de forma aislada, limpia y con una interfaz de terminal interactiva (TUI) elegante basada en `ratatui`.
 
 ## Características principales
 
-* **Navegación TUI**: Explora tus archivos y carpetas con una interfaz inspirada en Yazi/fzf.
+* **Navegación TUI**: Explora tus archivos y carpetas con una interfaz de terminal inmersiva de alto rendimiento.
 * **Interfaz CLI Híbrida**: Usa el menú interactivo o ejecuta comandos directos por terminal.
-* **Instalación Inteligente**: Extrae programas en `~/.local/share/binaries` manteniendo tu HOME limpio.
+* **Instalación Inteligente**: Extrae archivos en `~/.local/share/binaries` manteniendo tu HOME limpio.
 * **Gestión de Binarios**: Crea enlaces simbólicos automáticamente en `~/.local/bin`.
-* **Integración con el Menú**: Genera archivos `.desktop` automáticamente con búsqueda inteligente de iconos y soporte para `pkexec`.
-* **Inspección Previa**: Previsualiza el contenido de un tarball sin extraerlo.
-* **Desinstalación Atómica**: Elimina la app, el binario y el acceso directo de forma limpia.
+* **Integración con el Menú**: Genera archivos `.desktop` de forma automatizada.
+* **Extracción Libre de Ruido**: Ejecuta subcomandos en segundo plano (`tar`) omitiendo salidas de terminal que puedan ensuciar la interfaz (`stdout`/`stderr`).
+* **Desinstalación Atómica**: Elimina la aplicación, el enlace simbólico y el acceso directo de forma limpia.
 
 ## Instalación rápida
 
-Puedes instalarlo directamente usando `curl`:
+Puedes instalar la última versión pre-compilada directamente ejecutando:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/install.sh | bash
-
 ```
 
-> **Nota**: Asegúrate de tener `fzf` instalado y que `~/.local/bin` esté en tu `$PATH`.
+> **Nota**: Este script descarga automáticamente la versión correcta desde *GitHub Releases*. Asegúrate de que tu carpeta `~/.local/bin` esté en tu `$PATH` del sistema.
 
 ## Uso
 
 ### Modo Interactivo (TUI)
-Solo tienes que ejecutar el comando `tm` sin argumentos:
+Solo tienes que llamar a la herramienta sin argumentos para abrir la interfaz:
 ```bash
 tm
 ```
-* **ENTER**: Entrar en carpetas o seleccionar archivos/binarios.
-* **ESC**: Volver atrás o cancelar la operación.
-* **Filtro**: Simplemente empieza a escribir para buscar en tiempo real.
+* Sigue las instrucciones generadas en pantalla usando tus teclas de flechas, `ENTER` (para confirmar) y `ESC` (para regresar/salir). El flujo dinámico te permite seleccionar la app, extraer y definir el binario a linkear todo de manera guiada.
 
 ---
 
 ### Interfaz de Línea de Comandos (CLI)
 
-Para automatizar tareas o actuar con rapidez, puedes usar los siguientes flags:
+Para operaciones rápidas y no interactivas, soporta los siguientes comandos definidos (`clap`):
 
-| Opción | Descripción | Ejemplo de Uso |
-| :--- | :--- | :--- |
-| `-l, --list` | Lista las aplicaciones instaladas. | `tm -l` |
-| `-r, --remove` | Desinstala una app (soporta búsqueda parcial). | `tm -r discord` |
-| `-i, --install` | Instala un tarball (directo o abre buscador). | `tm -i [args]` |
-| `-v, --version` | Muestra la version instalada. | `tm -v` |
-| `-h, --help` | Muestra el manual de ayuda. | `tm -h` |
+| Comando | Alias Corto | Descripción | Ejemplo de Uso |
+| :--- | :--- | :--- | :--- |
+| `list` | `-l`, `list-installed`| Lista las aplicaciones instaladas actualmente desde tm. | `tm list` |
+| `remove` | `-r` | Desinstala completamente una app instalada. | `tm remove discord` |
+| `install` | `-i` | Instala y extrae directamente una app desde un tarball. | `tm install app.tar.gz` |
+| `help` | `-h`, `--help` | Imprime las opciones de ayuda completas del programa. | `tm --help` |
+| *(ninguno)* | `-V`, `--version` | Muestra la versión actual de instalación. | `tm -V` |
 
 #### Instalación Directa
-Puedes instalar una aplicación en un solo comando pasando los parámetros requeridos:
+Si no quieres usar el modo interactivo, puedes instalar pasándole los argumentos directamente (el orden es: *Ruta*, *Nombre*, *PermisosRoot*, *Categoría*):
 ```bash
-tm -i "/ruta/archivo.tar.gz" "Nombre" "No/Si" "Categoría"
+tm install "app.tar.gz" "NombreApp" "No" "Network"
+# O usando el alias:
+tm -i "app.tar.gz" "NombreApp" "No" "Network"
 ```
-* **Si/No**: Define si requiere privilegios de superusuario (`pkexec`).
-* **Categoría**: Categoría estándar de XDG. Las más comunes son:
-    * `AudioVideo`: Reproductores de música y video.
-    * `Development`: IDEs y herramientas de programación.
-    * `Game`: Juegos y emuladores.
-    * `Graphics`: Editores de imagen y visores.
-    * `Network`: Navegadores y clientes de chat (Discord, Telegram).
-    * `Office`: Herramientas de oficina y lectura.
-    * `System`: Herramientas del sistema y terminales.
-    * `Utility`: Utilidades generales y accesorios.
- 
+* **Nombre App**: Nombre que tendrá la aplicación en el sistema.
+* **Permisos Root (No/Yes)**: Define si el atajo `.desktop` utilizará `pkexec` para requerir privilegios de superusuario cada vez que se ejecute.
+* **Categoría**: Categoría XDG para el menú de aplicaciones (`Utility`, `Network`, `Game`, `Development`, `Graphics`, `AudioVideo`, `System`, `Office`).
+
 #### Desinstalación Inteligente
-El comando de desinstalación es insensible a mayúsculas y reconoce nombres parciales:
 ```bash
-# Borrará la carpeta aunque se llame "Vesktop-1.6.3"
-tm -r vesktop
+# Borrará la carpeta, el binario y el desktop sin necesidad de usar directorios
+tm remove nombre_app
+# Ej usando el sub-comando corto:
+tm -r nombre_app
 ```
 
 ---
 
 ## Estructura de directorios
 
-El script organiza los archivos de la siguiente manera:
-- **Apps**: `~/.local/share/binaries/[app-name]`
-- **Binarios**: `~/.local/bin/[app-name]`
-- **Accesos directos**: `~/.local/share/applications/[app-name].desktop`
+Por defecto, la herramienta aísla los archivos instalados en la estructura correcta del usuario:
+- **Archivos extraídos**: `~/.local/share/binaries/[app-name]`
+- **Binarios globales (Symlinks)**: `~/.local/bin/[app-name]`
+- **Accesos directos (XDG Desktop)**: `~/.local/share/applications/[app-name].desktop`
 
-## Requisitos
+## Requisitos del sistema
 
-- `bash` (para ejecutar el script)
-- `fzf` (para la interfaz)
-- `tar` (para la extracción)
-- `Nerd Fonts` (recomendado para ver los iconos correctamente)
+Al estar escrito en Rust ya no es necesario instalar dependencias extenas de terminal como `fzf` o `bash`, su único requisito es:
+- `tar` (la herramienta base nativa de Linux para realizar la descompresión propiamente).
