@@ -26,13 +26,13 @@ install_tm() {
     local LATEST_URL=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep "browser_download_url" | grep "/tm\"" | cut -d '"' -f 4)
 
     if [[ -z "$LATEST_URL" ]]; then
-        info "No se encontró asset en release, intentando fallback a branch main..."
-        LATEST_URL="https://raw.githubusercontent.com/$REPO/main/tm"
+        error "No se encontró el binario 'tm' compilado en la última Release de GitHub."
+        exit 1
     fi
     
     if curl -sSL "$LATEST_URL" -o "$BIN_DIR/tm"; then
         chmod +x "$BIN_DIR/tm"
-        local VERSION=$("$BIN_DIR/tm" -v 2>/dev/null | awk '{print $NF}')
+        local VERSION=$("$BIN_DIR/tm" -V 2>/dev/null | awk '{print $NF}')
         success "$mode completado (Versión: $VERSION)."
         
         if [[ "$mode" == "Instalando" ]]; then
