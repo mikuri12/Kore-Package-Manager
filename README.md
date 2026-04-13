@@ -84,4 +84,4 @@ Al estar escrito en Rust, se ha eliminado la necesidad de utilizar dependencias 
 
 - `tar`: Utilizado de fondo para la descompresión.
 - `pkexec` (Opcional): Requerido únicamente si marcas una aplicación para que solicite permisos de superusuario.
-- `desktop-file-utils` (`update-desktop-database`): Sirve para notificar al sistema cuando una aplicación es desinstalada y refrescar el menú de aplicaciones.
+- `desktop-file-utils` (`update-desktop-database`): Sirve para notificar al sistema cuando una aplicación es "desinstalada" y refrescar el menú de aplicaciones.
