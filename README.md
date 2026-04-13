@@ -80,5 +80,8 @@ Por defecto, la herramienta aísla los archivos instalados en la estructura corr
 
 ## Requisitos del sistema
 
-Al estar escrito en Rust ya no es necesario instalar dependencias extenas de terminal como `fzf` o `bash`, su único requisito es:
-- `tar` (la herramienta base nativa de Linux para realizar la descompresión propiamente).
+Al estar escrito en Rust, se ha eliminado la necesidad de utilizar dependencias externas de entorno (como `fzf` o `bash`). Los únicos requisitos en tu sistema (la inmensa mayoría vienen pre-instalados por defecto en Linux) son:
+
+- `tar`: Utilizado de fondo para la descompresión.
+- `pkexec` (Opcional): Requerido únicamente si marcas una aplicación para que solicite permisos de superusuario.
+- `desktop-file-utils` (`update-desktop-database`): Sirve para notificar al sistema cuando una aplicación es desinstalada y refrescar el menú de aplicaciones.
