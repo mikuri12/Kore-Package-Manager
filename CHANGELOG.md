@@ -1,3 +1,11 @@
+## [1.2.1] - 2026-04-14
+
+### Mejoras (Enhancements)
+- Se refactorizó la metadata de `clap` (`src/cli.rs`) para que tome dinámicamente la versión desde `Cargo.toml`. De este modo, al actualizar el paquete principal, los comandos de la CLI (como `tm -v`) reportan automáticamente la última versión sin depender de valores codificados internamente.
+
+### Correcciones (Bug Fixes)
+- Se corrigió el argumento de versión en la línea de comandos para que soporte la bandera corta `-v` de forma nativa (`tm -v`), además de `-V` y `--version`.
+
 ## [1.2.0] - 2026-04-13 (Rust TUI Edition)
 
 ### Features

@@ -3,11 +3,15 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(name = "tm")]
-#[command(version = "1.2.0")]
+#[command(version)]
 #[command(about = "TARBALL MANAGER (tm)", long_about = None)]
+#[command(disable_version_flag = true)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
+
+    #[arg(short = 'v', short_alias = 'V', long = "version", action = clap::ArgAction::Version, help = "Print version")]
+    pub version: Option<bool>,
 }
 
 #[derive(Subcommand, Debug)]
