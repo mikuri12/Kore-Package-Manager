@@ -1,5 +1,5 @@
 # Tarball Manager (tm)
-![License](https://img.shields.io/badge/license-GPL-cyan)
+![License](https://img.shields.io/badge/license-BSD-cyan)
 ![Rust](https://img.shields.io/badge/language-Rust-orange)
 [![Changelog](https://img.shields.io/badge/Changelog-v1.2.1-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG.md)
 
