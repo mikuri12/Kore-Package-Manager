@@ -28,7 +28,6 @@ setup_path() {
         if [ -f "$file" ]; then
             if ! grep -q "$BIN_DIR" "$file"; then
                 echo -e "\n# Tarball Manager\n$path_line" >> "$file"
-                success "PATH agregado a $(basename "$file")"
                 updated=true
             fi
         fi
@@ -39,13 +38,13 @@ setup_path() {
         mkdir -p "$(dirname "$fish_conf")"
         if ! grep -q "$BIN_DIR" "$fish_conf" 2>/dev/null; then
             echo -e "\n# Tarball Manager\n$fish_path_line" >> "$fish_conf"
-            success "PATH agregado a config.fish"
             updated=true
         fi
     fi
 
     if [ "$updated" = true ]; then
-        echo -e "\n${YELLOW}${BOLD}⚠ IMPORTANTE:${NC} Reinicia tu terminal o ejecuta: ${CYAN}source ~/.bashrc${NC} (o el archivo que uses)"
+        success "PATH configurado correctamente."
+        echo -e "${YELLOW}${BOLD}⚠ IMPORTANTE:${NC} Reinicia tu terminal o ejecuta: ${CYAN}source ~/.bashrc${NC}"
     else
         info "El PATH ya estaba configurado."
     fi
