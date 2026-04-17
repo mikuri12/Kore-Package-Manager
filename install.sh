@@ -22,26 +22,22 @@ setup_path() {
     local fish_path_line="fish_add_path $BIN_DIR"
     local updated=false
 
-    if [ -f "$HOME/.bashrc" ]; then
-        if ! grep -q "$BIN_DIR" "$HOME/.bashrc"; then
-            echo -e "\n# Tarball Manager\n$path_line" >> "$HOME/.bashrc"
-            success "PATH agregado a .bashrc"
-            updated=true
+    local shell_files=("$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.bash_profile" "$HOME/.profile")
+    
+    for file in "${shell_files[@]}"; do
+        if [ -f "$file" ]; then
+            if ! grep -q "$BIN_DIR" "$file"; then
+                echo -e "\n# Tarball Manager\n$path_line" >> "$file"
+                success "PATH agregado a $(basename "$file")"
+                updated=true
+            fi
         fi
-    fi
-
-    if [ -f "$HOME/.zshrc" ]; then
-        if ! grep -q "$BIN_DIR" "$HOME/.zshrc"; then
-            echo -e "\n# Tarball Manager\n$path_line" >> "$HOME/.zshrc"
-            success "PATH agregado a .zshrc"
-            updated=true
-        fi
-    fi
+    done
 
     if [ -d "$HOME/.config/fish" ]; then
         local fish_conf="$HOME/.config/fish/config.fish"
-        touch "$fish_conf"
-        if ! grep -q "$BIN_DIR" "$fish_conf"; then
+        mkdir -p "$(dirname "$fish_conf")"
+        if ! grep -q "$BIN_DIR" "$fish_conf" 2>/dev/null; then
             echo -e "\n# Tarball Manager\n$fish_path_line" >> "$fish_conf"
             success "PATH agregado a config.fish"
             updated=true
@@ -49,9 +45,9 @@ setup_path() {
     fi
 
     if [ "$updated" = true ]; then
-        info "Reinicia tu terminal o ejecuta 'source' en tu archivo de configuración."
+        echo -e "\n${YELLOW}${BOLD}⚠ IMPORTANTE:${NC} Reinicia tu terminal o ejecuta: ${CYAN}source ~/.bashrc${NC} (o el archivo que uses)"
     else
-        info "El PATH ya estaba configurado o no se encontraron archivos de shell conocidos."
+        info "El PATH ya estaba configurado."
     fi
 }
 
