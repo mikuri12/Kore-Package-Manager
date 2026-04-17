@@ -16,6 +16,45 @@ success() { echo -e "${GREEN}  ✔${NC} $1"; }
 error()   { echo -e "${RED}  ✘${NC} $1"; }
 title()   { echo -e "\n${BOLD}$1${NC}"; }
 
+setup_path() {
+    title "Configurando PATH..."
+    local path_line="export PATH=\"\$PATH:$BIN_DIR\""
+    local fish_path_line="fish_add_path $BIN_DIR"
+    local updated=false
+
+    if [ -f "$HOME/.bashrc" ]; then
+        if ! grep -q "$BIN_DIR" "$HOME/.bashrc"; then
+            echo -e "\n# Tarball Manager\n$path_line" >> "$HOME/.bashrc"
+            success "PATH agregado a .bashrc"
+            updated=true
+        fi
+    fi
+
+    if [ -f "$HOME/.zshrc" ]; then
+        if ! grep -q "$BIN_DIR" "$HOME/.zshrc"; then
+            echo -e "\n# Tarball Manager\n$path_line" >> "$HOME/.zshrc"
+            success "PATH agregado a .zshrc"
+            updated=true
+        fi
+    fi
+
+    if [ -d "$HOME/.config/fish" ]; then
+        local fish_conf="$HOME/.config/fish/config.fish"
+        touch "$fish_conf"
+        if ! grep -q "$BIN_DIR" "$fish_conf"; then
+            echo -e "\n# Tarball Manager\n$fish_path_line" >> "$fish_conf"
+            success "PATH agregado a config.fish"
+            updated=true
+        fi
+    fi
+
+    if [ "$updated" = true ]; then
+        info "Reinicia tu terminal o ejecuta 'source' en tu archivo de configuración."
+    else
+        info "El PATH ya estaba configurado o no se encontraron archivos de shell conocidos."
+    fi
+}
+
 install_tm() {
     local mode=${1:-"Instalando"}
     title "$mode Tarball Manager..."
@@ -35,11 +74,10 @@ install_tm() {
         local VERSION=$("$BIN_DIR/tm" -V 2>/dev/null | awk '{print $NF}')
         success "$mode completado (Versión: $VERSION)."
         
-        if [[ "$mode" == "Instalando" ]]; then
-            echo ""
-            info "Asegúrate de que $BIN_DIR esté en tu PATH."
-            info "Si usas Fish: fish_add_path $BIN_DIR"
-        fi
+    if [[ "$mode" == "Instalando" ]]; then
+                echo ""
+                setup_path
+            fi
     else
         error "No se pudo descargar el binario desde GitHub."
     fi
