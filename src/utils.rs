@@ -3,16 +3,29 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
+use std::sync::atomic::{AtomicBool, Ordering};
+
+pub static IS_CLI: AtomicBool = AtomicBool::new(true);
+
 pub fn info_msg(msg: &str) {
-    println!("{} {}", "󰋼".cyan(), msg);
+    tracing::info!("{}", msg);
+    if IS_CLI.load(Ordering::Relaxed) {
+        println!("{} {}", "󰋼".cyan(), msg);
+    }
 }
 
 pub fn success_msg(msg: &str) {
-    println!("{} {}", "󰄬".green(), msg);
+    tracing::info!("{}", msg);
+    if IS_CLI.load(Ordering::Relaxed) {
+        println!("{} {}", "󰄬".green(), msg);
+    }
 }
 
 pub fn error_msg(msg: &str) {
-    println!("{} {}", "󰅚".red().bold(), msg);
+    tracing::error!("{}", msg);
+    if IS_CLI.load(Ordering::Relaxed) {
+        println!("{} {}", "󰅚".red().bold(), msg);
+    }
 }
 
 

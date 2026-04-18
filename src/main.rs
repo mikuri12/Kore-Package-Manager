@@ -8,29 +8,38 @@ use clap::Parser;
 use cli::{Cli, Commands};
 use config::Config;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let config = Config::new();
-    if let Err(e) = config.setup_dirs() {
-        utils::error_msg(&format!("Error setting up directories: {}", e));
-        return;
-    }
+    config.setup_dirs()?;
 
     let cli = Cli::parse();
+    
+    let is_cli_mode = cli.command.is_some() || cli.update_bin;
+    crate::utils::IS_CLI.store(is_cli_mode, std::sync::atomic::Ordering::Relaxed);
+    
+    let _guard = config.setup_logging()?;
+
+    if cli.update_bin {
+        core::update_tm(&config)?;
+        return Ok(());
+    }
 
     match &cli.command {
         Some(Commands::List) => {
             core::list_cli(&config);
         }
         Some(Commands::Remove { app_name }) => {
-            let _ = core::remove_app(&config, app_name, true, false);
+            core::remove_app(&config, app_name, true, false)?;
         }
         Some(Commands::Install { tarball, app_name, use_root, category }) => {
             let app = if app_name.is_empty() { None } else { Some(app_name.as_str()) };
-            let _ = core::install_app(&config, tarball, app, Some(use_root), Some(category), true);
+            core::install_app(&config, tarball, app, Some(use_root), Some(category), true)?;
         }
         None => {
-            // Si no hay argumentos, abrimos la interfaz TUI (Terminal User Interface)
-            let _ = tui::main_menu(&config);
+            // If there are no arguments, open the TUI (Terminal User Interface)
+            tui::main_menu(&config)?;
         }
     }
+    
+    Ok(())
 }

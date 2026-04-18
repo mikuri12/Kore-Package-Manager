@@ -12,6 +12,9 @@ pub struct Cli {
 
     #[arg(short = 'v', short_alias = 'V', long = "version", action = clap::ArgAction::Version, help = "Print version")]
     pub version: Option<bool>,
+
+    #[arg(long = "update-bin", help = "Update the program from the latest version in the repository")]
+    pub update_bin: bool,
 }
 
 #[derive(Subcommand, Debug)]

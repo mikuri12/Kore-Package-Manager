@@ -1,3 +1,20 @@
+## [1.2.2] - 2026-04-18
+
+### Características (Features)
+- **Refactorización Mayor de la Arquitectura:** Se modularizó la TUI en una estructura basada en componentes (`src/tui/`). La lógica ahora está separada en `state.rs`, `ui.rs`, `handlers.rs` y `mod.rs`.
+- **Gestor de Íconos Personalizados:** Nueva acción en la TUI dentro de "Manage Installed Apps" para buscar y seleccionar manualmente íconos personalizados (`.png`, `.svg`, `.ico`) para las aplicaciones instaladas.
+- **Inyección de Variables de Entorno:** Soporte para inyectar variables de entorno personalizadas (ej: `OZONE_PLATFORM=wayland`) directamente en los archivos `.desktop` desde la TUI.
+- **CLI para Actualizar Binario:** Nuevo comando `--update-bin` en la CLI para actualizar automáticamente el programa a la última versión desde el repositorio de GitHub.
+
+### Mejoras Técnicas (Technical Improvements)
+- **Manejo de Errores Robusto:** Migración completa a `anyhow` para un reporte de errores estandarizado y detallado en todo el core y la TUI.
+- **Sistema de Logging Profesional:** Integración de `tracing` y `tracing-appender`. Los logs ahora se escriben en `~/.local/state/tm/tm.log` para evitar que la salida de la terminal corrompa la TUI.
+- **Mensajería Inteligente:** Implementación del flag `IS_CLI` para alternar condicionalmente entre logs solo en archivo (modo TUI) y salida por terminal (modo CLI).
+
+### Correcciones (Bug Fixes)
+- Se corrigieron problemas de resolución de rutas y del "borrow checker" en `config.rs`.
+- Limpieza de importaciones no utilizadas y refinamiento del actualizador de archivos desktop para que sea aditivo (preservando modificadores existentes).
+
 ## [1.2.1] - 2026-04-14
 
 ### Mejoras (Enhancements)
