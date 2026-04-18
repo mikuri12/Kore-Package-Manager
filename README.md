@@ -49,7 +49,7 @@ Para operaciones rápidas y no interactivas, soporta los siguientes comandos def
 | `install` | `-i` | Instala y extrae directamente una app desde un tarball. | `tm install app.tar.gz` |
 | `help` | `-h`, `--help` | Imprime las opciones de ayuda completas del programa. | `tm --help` |
 | *(ninguno)* | `-V`, `--version` | Muestra la versión actual de instalación. | `tm -V` |
-| `--update-bin` | Actualizara el Binario a su ultima version. | `tm --update-bin` |
+| `--update-bin` | *(ninguno)* | Actualizara el Binario a su ultima version. | `tm --update-bin` |
 
 
 #### Instalación Directa
