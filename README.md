@@ -1,7 +1,7 @@
 # Tarball Manager (tm)
 ![License](https://img.shields.io/badge/license-BSD-cyan)
 ![Rust](https://img.shields.io/badge/language-Rust-orange)
-[![Changelog](https://img.shields.io/badge/Changelog-v1.2.1-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG.md)
+[![Changelog](https://img.shields.io/badge/Changelog-v1.2.2-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG.md)
 
 Un gestor de programas minimalista y universal para Linux, rediseñado completamente en **Rust**. Está diseñado específicamente para manejar aplicaciones distribuidas en **tarballs** (.tar.gz, .tar.xz, .tar.bz2). 
 
@@ -49,6 +49,8 @@ Para operaciones rápidas y no interactivas, soporta los siguientes comandos def
 | `install` | `-i` | Instala y extrae directamente una app desde un tarball. | `tm install app.tar.gz` |
 | `help` | `-h`, `--help` | Imprime las opciones de ayuda completas del programa. | `tm --help` |
 | *(ninguno)* | `-V`, `--version` | Muestra la versión actual de instalación. | `tm -V` |
+| `--update-bin` | Actualizara el Binario a su ultima version. | `tm --update-bin` |
+
 
 #### Instalación Directa
 Si no quieres usar el modo interactivo, puedes instalar pasándole los argumentos directamente (el orden es: *Ruta*, *Nombre*, *PermisosRoot*, *Categoría*):
