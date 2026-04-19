@@ -29,6 +29,12 @@
       "url": "https://www.freecad.org/downloads.php",
       "category": "Utility",
       "requires_root": false
+    },
+    {
+      "name": "Reaper",
+      "url": "https://www.reaper.fm/files/7.x/reaper769_linux_x86_64.tar.xz",
+      "category": "Music",
+      "requires_root": false
     }
   ]
 }
