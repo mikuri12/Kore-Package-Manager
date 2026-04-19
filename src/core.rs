@@ -210,7 +210,8 @@ pub fn finalize_installation(
     let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
     let icon_path = find_icon(target, app_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
-    let bin_dest = config.bin_dir.join(app_name);
+    let sanitized_name = app_name.to_lowercase().replace(" ", "-");
+    let bin_dest = config.bin_dir.join(&sanitized_name);
     if bin_dest.exists() {
         let _ = fs::remove_file(&bin_dest);
     }
@@ -241,8 +242,12 @@ Categories={};"#,
         category
     );
 
-    let desktop_path = config.apps_dir.join(format!("{}.desktop", app_name));
+    let desktop_path = config.apps_dir.join(format!("{}.desktop", sanitized_name));
     fs::write(desktop_path, desktop_content)?;
+
+    // Refresh desktop database to show the icon and entry immediately
+    let _ = Command::new("update-desktop-database").arg(&config.apps_dir).status();
+    let _ = Command::new("touch").arg(&config.apps_dir).status();
 
     Ok(())
 }
@@ -257,11 +262,13 @@ pub fn install_app(
 ) -> anyhow::Result<()> {
     let mut actual_tarball = PathBuf::from(source);
     let mut downloaded = false;
+    let mut repo_name_opt: Option<String> = None;
 
     if !actual_tarball.exists() {
         // Try to match it to a repository
         let all_repos = crate::repo::get_all_repos(config);
         if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == source.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == source.to_lowercase())) {
+            repo_name_opt = Some(repo_source.repo.name.clone());
             let url = &repo_source.repo.url;
             if crate::download::is_supported_git_url(url) {
                 info_msg(&format!("Fetching releases for {}...", repo_source.repo.name));
@@ -342,8 +349,9 @@ pub fn install_app(
         let app_name = app_name_opt
             .map(|s| s.to_string())
             .unwrap_or_else(|| {
-                // If it was downloaded from a repo, use the repo name by default!
-                if downloaded {
+                if let Some(repo_name) = &repo_name_opt {
+                    repo_name.clone()
+                } else if downloaded {
                     source.to_string()
                 } else {
                     raw_name_folder.clone()

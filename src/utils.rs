@@ -60,7 +60,7 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
     {
         if entry.file_type().is_file() {
             if let Some(ext) = entry.path().extension().and_then(|e| e.to_str()) {
-                if ext == "png" || ext == "svg" || ext == "ico" {
+                if ext == "png" || ext == "svg" || ext == "ico" || ext == "xpm" {
                     let mut score = 0;
                     let path_str = entry.path().to_string_lossy().to_lowercase();
                     let file_stem = entry.path().file_stem().unwrap_or_default().to_string_lossy().to_lowercase();

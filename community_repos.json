@@ -29,13 +29,6 @@
       "requires_root": false
     },
     {
-      "name": "Freecad",
-      "package_name": "freecad",
-      "url": "https://github.com/FreeCAD/FreeCAD",
-      "category": "Utility",
-      "requires_root": false
-    },
-    {
       "name": "Reaper",
       "package_name": "reaper",
       "url": "https://www.reaper.fm/files/7.x/reaper769_linux_x86_64.tar.xz",
