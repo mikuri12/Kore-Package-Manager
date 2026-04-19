@@ -17,6 +17,18 @@
       "url": "https://telegram.org/dl/desktop/linux",
       "category": "Internet",
       "requires_root": false
+    },
+    {
+      "name": "Heroic Games Launcher",
+      "url": "https://heroicgameslauncher.com/downloads",
+      "category": "Games",
+      "requires_root": false
+    },
+    {
+      "name": "Heroic Games Launcher",
+      "url": "https://www.freecad.org/downloads.php",
+      "category": "Utility",
+      "requires_root": false
     }
   ]
 }
