@@ -1,4 +1,4 @@
-## [1.3.1-1.3.4] - 2026-04-19
+## [1.3.1-1.3.5] - 2026-04-19
 
 ### Mejoras e Integración (Improvements & Integration)
 - **Perfeccionamiento del Sistema de Íconos:** Se rediseñó el buscador para soportar variantes de nombres con guiones (ej: `sublime-text.png` para "Sublime Text") y se aumentó la prioridad de las rutas estándar como `/icons/`, `/share/icons/` y `/pixmaps/`.
