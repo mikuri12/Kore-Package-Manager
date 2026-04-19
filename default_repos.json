@@ -41,12 +41,26 @@
       "url": "https://github.com/schollz/croc",
       "category": "Utility",
       "requires_root": false
-    },     
+    },
     {
       "name": "Strawberry",
       "package_name": "strawberry",
       "url": "https://github.com/strawberrymusicplayer/strawberry",
       "category": "Music",
+      "requires_root": false
+    },
+    {
+      "name": "Waterfox",
+      "package_name": "waterfox",
+      "url": "https://cdn.waterfox.com/waterfox/releases/6.6.11/Linux_x86_64/waterfox-6.6.11.tar.bz2",
+      "category": "Network",
+      "requires_root": false
+    },
+    {
+      "name": "Krita",
+      "package_name": "krita",
+      "url": "https://download.kde.org/stable/krita/6.0.1/krita-6.0.1.tar.xz",
+      "category": "Graphics",
       "requires_root": false
     }
   ]

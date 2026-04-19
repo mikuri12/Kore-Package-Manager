@@ -88,14 +88,29 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
                         score += 20;
                     }
 
+                    if path_str.contains(&app_lower) || path_str.contains(&app_sanitized) {
+                        score += 30;
+                    }
+
                     if path_str.contains("/icons/") || path_str.contains("/hicolor/") || path_str.contains("/scalable/") || path_str.contains("/pixmaps/") || path_str.contains("/share/icons/") {
                         score += 80;
                     }
 
-                    if file_stem == "icon" || file_stem == "logo" || file_stem == "app" || file_stem == "main" || file_stem == "code" {
+                    if file_stem == "icon" || file_stem == "logo" || file_stem == "app" || file_stem == "main" || file_stem == "code" || file_stem == "default" {
                         score += 40;
-                    } else if file_stem.contains("icon") || file_stem.contains("logo") {
+                    } else if file_stem.contains("icon") || file_stem.contains("logo") || file_stem.contains("default") {
                         score += 10;
+                    }
+
+                    // Boost based on size if numbers are present (e.g. default128.png)
+                    let size_score = file_stem.chars()
+                        .filter(|c| c.is_ascii_digit())
+                        .collect::<String>()
+                        .parse::<i32>()
+                        .unwrap_or(0);
+                    
+                    if size_score > 0 {
+                        score += size_score / 32;
                     }
 
                     // Penalize deep paths lightly to prefer root icons
