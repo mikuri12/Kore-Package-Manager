@@ -44,7 +44,7 @@
     },
     {
       "name": "Youtube Music",
-      "package_name": "yt-music",
+      "package_name": "youtube-music",
       "url": "https://github.com/pear-devs/pear-desktop",
       "category": "Music",
       "requires_root": false
