@@ -6,6 +6,9 @@ pub struct Config {
     pub bin_dir: PathBuf,
     pub apps_dir: PathBuf,
     pub log_dir: PathBuf,
+    pub community_repos_file: PathBuf,
+    pub user_repos_file: PathBuf,
+    pub official_repos_file: PathBuf,
 }
 
 impl Config {
@@ -16,11 +19,15 @@ impl Config {
             .map(|p| p.to_path_buf())
             .unwrap_or_else(|| base_dirs.home_dir().join(".local").join("state"));
 
+        let tm_data = local_data.join("tm");
         Config {
             install_dir: local_data.join("binaries"),
             bin_dir: base_dirs.home_dir().join(".local").join("bin"),
             apps_dir: local_data.join("applications"),
             log_dir: state_dir.join("tm"),
+            community_repos_file: tm_data.join("community_repos.json"),
+            user_repos_file: tm_data.join("user_repos.json"),
+            official_repos_file: tm_data.join("official_repos.json"),
         }
     }
 
@@ -29,6 +36,28 @@ impl Config {
         std::fs::create_dir_all(&self.bin_dir)?;
         std::fs::create_dir_all(&self.apps_dir)?;
         std::fs::create_dir_all(&self.log_dir)?;
+        if let Some(parent) = self.community_repos_file.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+
+        // Initialize official repos to sync with bundled defaults only if missing
+        if !self.official_repos_file.exists() {
+            let default_json = include_str!("../default_repos.json");
+            std::fs::write(&self.official_repos_file, default_json)?;
+        }
+
+        // Initialize community repos to sync with bundled defaults only if missing
+        if !self.community_repos_file.exists() {
+            let community_json = include_str!("../community_repos.json");
+            std::fs::write(&self.community_repos_file, community_json)?;
+        }
+
+        // Initialize empty user repos if file doesn't exist
+        if !self.user_repos_file.exists() {
+            let empty_json = "{\n  \"repositories\": []\n}";
+            std::fs::write(&self.user_repos_file, empty_json)?;
+        }
+
         Ok(())
     }
 

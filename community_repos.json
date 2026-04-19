@@ -1,0 +1,22 @@
+{
+  "repositories": [
+    {
+      "name": "Antigravity",
+      "url": "https://antigravity.google/download",
+      "category": "Development",
+      "requires_root": false
+    },
+    {
+      "name": "JetBrains Toolbox",
+      "url": "https://download.jetbrains.com/toolbox/jetbrains-toolbox-3.4.3.81140.tar.gz",
+      "category": "Development",
+      "requires_root": false
+    },
+    {
+      "name": "Telegram",
+      "url": "https://telegram.org/dl/desktop/linux",
+      "category": "Internet",
+      "requires_root": false
+    }
+  ]
+}

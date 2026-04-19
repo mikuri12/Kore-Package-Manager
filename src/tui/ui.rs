@@ -140,6 +140,7 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                 ListItem::new("󰉍 Install New Tarball"),
                 ListItem::new("󰏗 Manage Installed"),
                 ListItem::new("󰆴 Uninstall Application"),
+                ListItem::new("󰒋 Manage Repositories"),
                 ListItem::new("󰈆 Exit"),
             ];
             let list = List::new(items)
@@ -217,6 +218,106 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                     .borders(Borders::ALL)
                     .border_type(BorderType::Rounded)
                     .title(" Preview ")
+                    .border_style(Style::default().fg(Color::Green)))
+                .wrap(ratatui::widgets::Wrap { trim: true });
+
+            f.render_widget(preview, main_chunks[1]);
+
+            let input_p = Paragraph::new(format!("> {}", app.input))
+                .block(Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title(if app.popup_type != PopupType::None { " Hold " } else { " Search (Type to filter) " })
+                    .border_style(Style::default().fg(Color::White)));
+
+            f.render_widget(input_p, chunks[1]);
+        }
+        Route::RepoCategorySelect => {
+            let items = vec![
+                ListItem::new("󰒋 Official Repository"),
+                ListItem::new("󰃇 Community Repositories"),
+                ListItem::new("󰈔 My Custom Repositories"),
+            ];
+
+            let list = List::new(items)
+                .block(Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title(" 󰒋 Select Repository Type ")
+                    .border_style(Style::default().fg(Color::Cyan)))
+                .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+                .highlight_symbol(">> ");
+
+            let area = centered_rect(50, 40, f.area());
+            f.render_stateful_widget(list, area, &mut app.repo_category_state);
+        }
+        Route::ManageRepos => {
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Min(2), Constraint::Length(3)])
+                .split(f.area());
+
+            let main_chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+                .split(chunks[0]);
+
+            let title = match app.viewing_repo_type {
+                crate::repo::RepoType::Official => " 󰒋 Official Repository ",
+                crate::repo::RepoType::Community => " 󰃇 Community Repositories ",
+                crate::repo::RepoType::User => " 󰈔 My Custom Repositories ",
+            };
+
+            let items: Vec<ListItem> = app
+                .filtered_repos
+                .iter()
+                .map(|r| ListItem::new(format!("󰏫 {}", r.repo.name)))
+                .collect();
+
+            let list = List::new(items)
+                .block(Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title(title)
+                    .border_style(Style::default().fg(Color::Cyan)))
+                .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+                .highlight_symbol(">> ");
+
+            f.render_stateful_widget(list, main_chunks[0], &mut app.list_state);
+
+            let selected_repo = if let Some(idx) = app.list_state.selected() {
+                app.filtered_repos.get(idx)
+            } else {
+                None
+            };
+
+            let preview_text = if let Some(r) = selected_repo {
+                format!(
+                    "--- REPOSITORY INFO ---\nName: {}\nType: {}\nURL: {}\nCategory: {}\nRequires Root: {}\n\nPress Enter for options\n{}",
+                    r.repo.name,
+                    match r.repo_type {
+                        crate::repo::RepoType::Official => "Official",
+                        crate::repo::RepoType::Community => "Community",
+                        crate::repo::RepoType::User => "Custom",
+                    },
+                    r.repo.url,
+                    r.repo.category,
+                    if r.repo.requires_root { "Yes" } else { "No" },
+                    if app.viewing_repo_type == crate::repo::RepoType::User { "Press 'A' to add new custom repository" } else { "" }
+                )
+            } else {
+                match app.viewing_repo_type {
+                    crate::repo::RepoType::Official => "No selection\n\nOfficial repositories are managed by the application.".to_string(),
+                    crate::repo::RepoType::Community => "No selection\n\nCommunity repositories are managed by the community.".to_string(),
+                    crate::repo::RepoType::User => "No selection\n\nPress 'A' to add new custom repository".to_string(),
+                }
+            };
+
+            let preview = Paragraph::new(preview_text)
+                .block(Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title(" Details ")
                     .border_style(Style::default().fg(Color::Green)))
                 .wrap(ratatui::widgets::Wrap { trim: true });
 
@@ -326,12 +427,13 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
         f.render_widget(Clear, area);
 
         match app.popup_type {
-            PopupType::ActionSelect | PopupType::CategorySelect | PopupType::ChangeBinarySelect | PopupType::ChangeRootSelect | PopupType::ConfirmUninstall | PopupType::InstallRootSelect | PopupType::InstallCategorySelect | PopupType::InstallBinarySelect => {
+            PopupType::ActionSelect | PopupType::CategorySelect | PopupType::ChangeBinarySelect | PopupType::ChangeRootSelect | PopupType::ConfirmUninstall | PopupType::InstallRootSelect | PopupType::InstallCategorySelect | PopupType::InstallBinarySelect | PopupType::RepoActionSelect | PopupType::RepoRootInput => {
                 let popup_title = match app.popup_type {
                     PopupType::ActionSelect => " Action ",
+                    PopupType::RepoActionSelect => " Repo Action ",
                     PopupType::CategorySelect | PopupType::InstallCategorySelect => " Select Category ",
                     PopupType::ConfirmUninstall => " Are you sure? ",
-                    PopupType::InstallRootSelect | PopupType::ChangeRootSelect => " Needs Root? ",
+                    PopupType::InstallRootSelect | PopupType::ChangeRootSelect | PopupType::RepoRootInput => " Needs Root? ",
                     PopupType::InstallBinarySelect | PopupType::ChangeBinarySelect => " Select Main Binary ",
                     _ => " Options ",
                 };
@@ -353,8 +455,15 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
 
                 f.render_stateful_widget(p_list, area, &mut app.popup_state);
             }
-            PopupType::NameInput | PopupType::InstallNameInput | PopupType::EnvVarInput => {
-                let title = if app.popup_type == PopupType::NameInput { " New Name " } else if app.popup_type == PopupType::InstallNameInput { " Target Name " } else { " Environment Variables " };
+            PopupType::NameInput | PopupType::InstallNameInput | PopupType::EnvVarInput | PopupType::RepoNameInput | PopupType::RepoUrlInput | PopupType::RepoCategoryInput => {
+                let title = match app.popup_type {
+                    PopupType::NameInput => " New Name ",
+                    PopupType::InstallNameInput => " Target Name ",
+                    PopupType::RepoNameInput => " Repo Name ",
+                    PopupType::RepoUrlInput => " Repo URL ",
+                    PopupType::RepoCategoryInput => " Repo Category ",
+                    _ => " Environment Variables "
+                };
                 let mut content = format!("{}█", app.popup_input);
                 if app.popup_type == PopupType::NameInput || app.popup_type == PopupType::InstallNameInput {
                     content.push_str("\n\n(No special characters allowed)");

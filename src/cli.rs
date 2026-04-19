@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
+
 
 #[derive(Parser, Debug)]
 #[command(name = "tm")]
@@ -32,12 +32,46 @@ pub enum Commands {
     /// Install application from a specific tarball
     #[command(name = "install", short_flag = 'i')]
     Install {
-        tarball: PathBuf,
+        source: String,
         #[arg(default_value = "")]
         app_name: String,
         #[arg(default_value = "No")]
         use_root: String,
         #[arg(default_value = "Utility")]
         category: String,
+    },
+    
+    /// Update installed applications from repositories
+    #[command(name = "update", short_flag = 'u')]
+    Update {
+        #[arg(help = "Specific application to update (updates all repo apps if omitted)")]
+        app_name: Option<String>,
+    },
+    
+    /// Manage repositories
+    #[command(name = "repo")]
+    Repo {
+        #[command(subcommand)]
+        repo_command: RepoCommands,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum RepoCommands {
+    /// List all repositories
+    List,
+    /// Fetch latest default and community repositories from GitHub
+    Sync,
+    /// Add a third-party repository
+    Add {
+        name: String,
+        url: String,
+        category: String,
+        #[arg(default_value_t = false)]
+        requires_root: bool,
+    },
+    /// Remove a third-party repository
+    Remove {
+        name: String,
     },
 }

@@ -22,7 +22,7 @@ pub fn list_cli(config: &Config) {
         } else {
             println!("\x1b[1;36mInstalled Apps:\x1b[0m");
             for app in apps {
-                println!("  󰏗 {}", app);
+                println!("  - {}", app);
             }
         }
     } else {
@@ -207,7 +207,8 @@ pub fn finalize_installation(
     category: &str,
     silent: bool,
 ) -> anyhow::Result<()> {
-    let icon_path = find_icon(target, 4).unwrap_or_else(|| "utilities-terminal".to_string());
+    let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
+    let icon_path = find_icon(target, app_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
     let bin_dest = config.bin_dir.join(app_name);
     if bin_dest.exists() {
@@ -248,13 +249,84 @@ Categories={};"#,
 
 pub fn install_app(
     config: &Config,
-    tarball: &Path,
+    source: &str,
     app_name_opt: Option<&str>,
     use_root_opt: Option<&str>,
     category_opt: Option<&str>,
     is_cli: bool,
 ) -> anyhow::Result<()> {
-    if let Some((target, raw_name_folder, executables)) = extract_and_scan(config, tarball, false)? {
+    let mut actual_tarball = PathBuf::from(source);
+    let mut downloaded = false;
+
+    if !actual_tarball.exists() {
+        // Try to match it to a repository
+        let all_repos = crate::repo::get_all_repos(config);
+        if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == source.to_lowercase()) {
+            let url = &repo_source.repo.url;
+            if crate::download::is_supported_git_url(url) {
+                info_msg(&format!("Fetching releases for {}...", repo_source.repo.name));
+                match crate::download::get_latest_release_assets(url) {
+                    Ok(assets) => {
+                        if assets.is_empty() {
+                            error_msg("No suitable tarball assets found in the latest release.");
+                            return Ok(());
+                        }
+                        
+                        let selected_asset = if assets.len() == 1 {
+                            &assets[0]
+                        } else {
+                            let choices: Vec<String> = assets.iter().map(|a| a.name.clone()).collect();
+                            info_msg("Multiple tarballs found. Please select one:");
+                            let sel = Select::new().with_prompt("Tarball").items(&choices).default(0).interact().unwrap_or(0);
+                            &assets[sel]
+                        };
+                        
+                        let tmp_dir = std::env::temp_dir().join("tm_downloads");
+                        std::fs::create_dir_all(&tmp_dir)?;
+                        
+                        info_msg(&format!("Downloading {}...", selected_asset.name));
+                        match crate::download::download_file(&selected_asset.browser_download_url, &tmp_dir) {
+                            Ok(path) => {
+                                actual_tarball = path;
+                                downloaded = true;
+                                info_msg("Download complete!");
+                            }
+                            Err(e) => {
+                                error_msg(&format!("Failed to download: {}", e));
+                                return Ok(());
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        error_msg(&format!("Failed to query release API: {}", e));
+                        return Ok(());
+                    }
+                }
+            } else {
+                info_msg(&format!("{} is not a known Git provider. Treating as direct download link...", url));
+                let tmp_dir = std::env::temp_dir().join("tm_downloads");
+                std::fs::create_dir_all(&tmp_dir)?;
+                
+                info_msg(&format!("Downloading from {}...", url));
+                match crate::download::download_file(url, &tmp_dir) {
+                    Ok(path) => {
+                        actual_tarball = path;
+                        downloaded = true;
+                        info_msg("Download complete!");
+                    }
+                    Err(e) => {
+                        error_msg(&format!("Failed to download: {}", e));
+                        return Ok(());
+                    }
+                }
+            }
+        } else {
+            error_msg(&format!("The file '{}' does not exist, and no repository matches this name.", source));
+            return Ok(());
+        }
+    }
+
+    if let Some((target, raw_name_folder, executables)) = extract_and_scan(config, &actual_tarball, false)? {
         let exec_path = if executables.is_empty() {
             error_msg("No executable binary found.");
             return Ok(());
@@ -263,24 +335,54 @@ pub fn install_app(
         } else {
             info_msg("Select the main executable binary:");
             let choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
-            let sel = Select::new().with_prompt("󰜎 Binary").items(&choices).default(0).interact().unwrap_or(0);
+            let sel = Select::new().with_prompt("Binary").items(&choices).default(0).interact().unwrap_or(0);
             executables[sel].clone()
         };
 
         let app_name = app_name_opt
             .map(|s| s.to_string())
-            .unwrap_or_else(|| raw_name_folder.clone());
+            .unwrap_or_else(|| {
+                // If it was downloaded from a repo, use the repo name by default!
+                if downloaded {
+                    source.to_string()
+                } else {
+                    raw_name_folder.clone()
+                }
+            });
 
-        let use_root = use_root_opt
-            .map(|s| s.to_lowercase() == "si" || s.to_lowercase() == "yes" || s.to_lowercase() == "s")
-            .unwrap_or(false);
+        // Use root from the repo if matched!
+        let use_root = if downloaded && use_root_opt.is_none() {
+            let all_repos = crate::repo::get_all_repos(config);
+            let requires_root = all_repos.iter()
+                .find(|r| r.repo.name.to_lowercase() == source.to_lowercase())
+                .map(|r| r.repo.requires_root)
+                .unwrap_or(false);
+            requires_root
+        } else {
+            use_root_opt
+                .map(|s| s.to_lowercase() == "si" || s.to_lowercase() == "yes" || s.to_lowercase() == "s")
+                .unwrap_or(false)
+        };
 
-        let category = category_opt.unwrap_or("Utility");
+        let category = if downloaded && category_opt.is_none() {
+            let all_repos = crate::repo::get_all_repos(config);
+            all_repos.iter()
+                .find(|r| r.repo.name.to_lowercase() == source.to_lowercase())
+                .map(|r| r.repo.category.clone())
+                .unwrap_or_else(|| "Utility".to_string())
+        } else {
+            category_opt.unwrap_or("Utility").to_string()
+        };
         
-        finalize_installation(config, &target, &exec_path, &app_name, use_root, category, false)?;
+        finalize_installation(config, &target, &exec_path, &app_name, use_root, &category, false)?;
         if !is_cli {
             std::thread::sleep(std::time::Duration::from_secs(2));
         }
+    }
+    
+    // Clean up downloaded file
+    if downloaded && actual_tarball.exists() {
+        let _ = std::fs::remove_file(&actual_tarball);
     }
     
     Ok(())

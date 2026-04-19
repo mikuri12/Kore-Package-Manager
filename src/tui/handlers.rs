@@ -67,7 +67,11 @@ pub fn handle_key_events<B: Backend>(
                         PopupType::NameInput => match key.code {
                             KeyCode::Esc => { app.popup_type = PopupType::None; }
                             KeyCode::Backspace => { app.popup_input.pop(); }
-                            KeyCode::Char(c) => { app.popup_input.push(c); }
+                            KeyCode::Char(c) => { 
+                                if !['@', '$', '/', '\\', '|', '*', '?', '<', '>', ':', '\"'].contains(&c) {
+                                    app.popup_input.push(c); 
+                                }
+                            }
                             KeyCode::Enter => {
                                 if !app.popup_input.trim().is_empty() {
                                     if let Some(idx) = app.list_state.selected() {
@@ -179,7 +183,11 @@ pub fn handle_key_events<B: Backend>(
                         PopupType::InstallNameInput => match key.code {
                             KeyCode::Esc => { app.popup_type = PopupType::None; }
                             KeyCode::Backspace => { app.popup_input.pop(); }
-                            KeyCode::Char(c) => { app.popup_input.push(c); }
+                            KeyCode::Char(c) => { 
+                                if !['@', '$', '/', '\\', '|', '*', '?', '<', '>', ':', '\"'].contains(&c) {
+                                    app.popup_input.push(c); 
+                                }
+                            }
                             KeyCode::Enter => {
                                 app.pending_app_name = if app.popup_input.trim().is_empty() {
                                     app.pending_raw_name.clone()
@@ -266,6 +274,86 @@ pub fn handle_key_events<B: Backend>(
                             }
                             _ => {}
                         },
+                        PopupType::RepoActionSelect => match key.code {
+                            KeyCode::Esc => { app.popup_type = PopupType::None; }
+                            KeyCode::Up => { app.previous(); }
+                            KeyCode::Down => { app.next(); }
+                            KeyCode::Enter => {
+                                let cidx = app.popup_state.selected().unwrap_or(1);
+                                if cidx == 0 {
+                                    if let Some(idx) = app.list_state.selected() {
+                                        if let Some(repo) = app.filtered_repos.get(idx) {
+                                            let _ = crate::repo::remove_user_repo(config, &repo.repo.name);
+                                            app.open_popup_info("Repository successfully removed.");
+                                            app.load_repos(config);
+                                        }
+                                    }
+                                } else {
+                                    app.popup_type = PopupType::None;
+                                }
+                            }
+                            _ => {}
+                        },
+                        PopupType::RepoNameInput => match key.code {
+                            KeyCode::Esc => { app.popup_type = PopupType::None; }
+                            KeyCode::Backspace => { app.popup_input.pop(); }
+                            KeyCode::Char(c) => { 
+                                if !['@', '$', '/', '\\', '|', '*', '?', '<', '>', ':', '\"'].contains(&c) {
+                                    app.popup_input.push(c); 
+                                }
+                            }
+                            KeyCode::Enter => {
+                                if !app.popup_input.trim().is_empty() {
+                                    app.pending_repo_name = app.popup_input.trim().to_string();
+                                    app.open_popup_input(PopupType::RepoUrlInput, "");
+                                }
+                            }
+                            _ => {}
+                        },
+                        PopupType::RepoUrlInput => match key.code {
+                            KeyCode::Esc => { app.popup_type = PopupType::None; }
+                            KeyCode::Backspace => { app.popup_input.pop(); }
+                            KeyCode::Char(c) => { app.popup_input.push(c); }
+                            KeyCode::Enter => {
+                                if !app.popup_input.trim().is_empty() {
+                                    app.pending_repo_url = app.popup_input.trim().to_string();
+                                    app.open_popup_input(PopupType::RepoCategoryInput, "Utility");
+                                }
+                            }
+                            _ => {}
+                        },
+                        PopupType::RepoCategoryInput => match key.code {
+                            KeyCode::Esc => { app.popup_type = PopupType::None; }
+                            KeyCode::Backspace => { app.popup_input.pop(); }
+                            KeyCode::Char(c) => { app.popup_input.push(c); }
+                            KeyCode::Enter => {
+                                if !app.popup_input.trim().is_empty() {
+                                    app.pending_repo_category = app.popup_input.trim().to_string();
+                                    app.open_popup_list(PopupType::RepoRootInput, vec!["No".to_string(), "Yes".to_string()]);
+                                }
+                            }
+                            _ => {}
+                        },
+                        PopupType::RepoRootInput => match key.code {
+                            KeyCode::Esc => { app.popup_type = PopupType::None; }
+                            KeyCode::Up => { app.previous(); }
+                            KeyCode::Down => { app.next(); }
+                            KeyCode::Enter => {
+                                app.pending_repo_root = app.popup_state.selected().unwrap_or(0) == 1;
+                                match crate::repo::add_user_repo(
+                                    config, 
+                                    &app.pending_repo_name, 
+                                    &app.pending_repo_url, 
+                                    &app.pending_repo_category, 
+                                    app.pending_repo_root
+                                ) {
+                                    Ok(_) => app.open_popup_info("Custom repository added successfully!"),
+                                    Err(e) => app.open_popup_info(&format!("Failed: {}", e)),
+                                }
+                                app.load_repos(config);
+                            }
+                            _ => {}
+                        },
                         _ => {}
                     }
                     return Ok(false);
@@ -290,6 +378,9 @@ pub fn handle_key_events<B: Backend>(
                                 2 => {
                                     app.route = Route::RemoveApps;
                                     app.load_apps(config);
+                                }
+                                3 => {
+                                    app.route = Route::RepoCategorySelect;
                                 }
                                 _ => { return Ok(true); }
                             }
@@ -424,6 +515,63 @@ pub fn handle_key_events<B: Backend>(
                                     app.open_popup_info("Icon successfully updated.");
                                     app.route = Route::ManageApps;
                                     app.load_apps(config);
+                                }
+                            }
+                        }
+                        _ => {}
+                    },
+                    Route::RepoCategorySelect => match key.code {
+                        KeyCode::Esc | KeyCode::Char('q') => {
+                            app.route = Route::MainMenu;
+                            app.list_state.select(Some(3));
+                        }
+                        KeyCode::Down => { app.next(); }
+                        KeyCode::Up => { app.previous(); }
+                        KeyCode::Enter => {
+                            let s = app.repo_category_state.selected().unwrap_or(0);
+                            app.viewing_repo_type = match s {
+                                0 => crate::repo::RepoType::Official,
+                                1 => crate::repo::RepoType::Community,
+                                _ => crate::repo::RepoType::User,
+                            };
+                            app.route = Route::ManageRepos;
+                            app.load_repos(config);
+                        }
+                        _ => {}
+                    },
+                    Route::ManageRepos => match key.code {
+                        KeyCode::Esc => {
+                            app.route = Route::RepoCategorySelect;
+                            app.input.clear();
+                        }
+                        KeyCode::Down => { app.next(); }
+                        KeyCode::Up => { app.previous(); }
+                        KeyCode::Backspace => {
+                            app.input.pop();
+                            app.filter_repos();
+                        }
+                        KeyCode::Char('A') | KeyCode::Char('a') if app.input.is_empty() => {
+                            if app.viewing_repo_type != crate::repo::RepoType::User {
+                                app.open_popup_info("Only Custom Repositories can be modified. Go to My Custom Repositories to add your own.");
+                            } else {
+                                app.open_popup_input(PopupType::RepoNameInput, "");
+                            }
+                        }
+                        KeyCode::Char(c) => {
+                            app.input.push(c);
+                            app.filter_repos();
+                        }
+                        KeyCode::Enter => {
+                            if let Some(idx) = app.list_state.selected() {
+                                if let Some(repo) = app.filtered_repos.get(idx) {
+                                    if repo.repo_type == crate::repo::RepoType::User {
+                                        app.open_popup_list(PopupType::RepoActionSelect, vec![
+                                            "󰆴 Remove Custom Repo".to_string(),
+                                            "󰈆 Cancel".to_string()
+                                        ]);
+                                    } else {
+                                        app.open_popup_info("Official and Community repositories cannot be modified or removed.");
+                                    }
                                 }
                             }
                         }

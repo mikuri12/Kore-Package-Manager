@@ -10,6 +10,8 @@ pub enum Route {
     RemoveApps,
     FileBrowser,
     IconBrowser,
+    ManageRepos,
+    RepoCategorySelect,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -27,6 +29,11 @@ pub enum PopupType {
     InstallBinarySelect,
     EnvVarInput,
     Information,
+    RepoActionSelect,
+    RepoNameInput,
+    RepoUrlInput,
+    RepoCategoryInput,
+    RepoRootInput,
 }
 
 pub struct App {
@@ -59,6 +66,15 @@ pub struct App {
     pub pending_executables: Vec<PathBuf>,
     pub pending_selected_exec: PathBuf,
     pub pending_icon_target: String,
+
+    pub repos: Vec<crate::repo::RepoSource>,
+    pub filtered_repos: Vec<crate::repo::RepoSource>,
+    pub pending_repo_name: String,
+    pub pending_repo_url: String,
+    pub pending_repo_category: String,
+    pub pending_repo_root: bool,
+    pub repo_category_state: ListState,
+    pub viewing_repo_type: crate::repo::RepoType,
 }
 
 impl App {
@@ -89,6 +105,14 @@ impl App {
             pending_executables: Vec::new(),
             pending_selected_exec: PathBuf::new(),
             pending_icon_target: String::new(),
+            repos: Vec::new(),
+            filtered_repos: Vec::new(),
+            pending_repo_name: String::new(),
+            pending_repo_url: String::new(),
+            pending_repo_category: String::new(),
+            pending_repo_root: false,
+            repo_category_state: ListState::default(),
+            viewing_repo_type: crate::repo::RepoType::Official,
         }
     }
 
@@ -135,6 +159,30 @@ impl App {
                 .collect();
         }
         self.list_state.select(if self.filtered.is_empty() { None } else { Some(0) });
+    }
+
+    pub fn load_repos(&mut self, config: &Config) {
+        self.repos = crate::repo::get_all_repos(config);
+        self.input.clear();
+        self.filter_repos();
+    }
+
+    pub fn filter_repos(&mut self) {
+        let base_filtered: Vec<_> = self.repos.iter()
+            .filter(|r| r.repo_type == self.viewing_repo_type)
+            .cloned()
+            .collect();
+
+        if self.input.is_empty() {
+            self.filtered_repos = base_filtered;
+        } else {
+            let lower = self.input.to_lowercase();
+            self.filtered_repos = base_filtered
+                .into_iter()
+                .filter(|r| r.repo.name.to_lowercase().contains(&lower) || r.repo.category.to_lowercase().contains(&lower))
+                .collect();
+        }
+        self.list_state.select(if self.filtered_repos.is_empty() { None } else { Some(0) });
     }
 
     pub fn load_dir(&mut self) {
@@ -195,14 +243,15 @@ impl App {
         if self.popup_type == PopupType::ActionSelect || self.popup_type == PopupType::CategorySelect
           || self.popup_type == PopupType::ChangeBinarySelect || self.popup_type == PopupType::ChangeRootSelect
           || self.popup_type == PopupType::ConfirmUninstall || self.popup_type == PopupType::InstallRootSelect 
-          || self.popup_type == PopupType::InstallCategorySelect || self.popup_type == PopupType::InstallBinarySelect {
+          || self.popup_type == PopupType::InstallCategorySelect || self.popup_type == PopupType::InstallBinarySelect
+          || self.popup_type == PopupType::RepoActionSelect || self.popup_type == PopupType::RepoRootInput {
             let i = match self.popup_state.selected() {
                 Some(i) => (i + 1) % self.popup_items.len(),
                 None => 0,
             };
             self.popup_state.select(Some(i));
         } else if self.route == Route::MainMenu {
-            let len = 4;
+            let len = 5; // Updated for Repositories menu
             let i = match self.list_state.selected() {
                 Some(i) => (i + 1) % len,
                 None => 0,
@@ -216,6 +265,20 @@ impl App {
                 None => 0,
             };
             self.fb_state.select(Some(i));
+        } else if self.route == Route::RepoCategorySelect {
+            let i = match self.repo_category_state.selected() {
+                Some(i) => (i + 1) % 3,
+                None => 0,
+            };
+            self.repo_category_state.select(Some(i));
+        } else if self.route == Route::ManageRepos {
+            let i = match self.list_state.selected() {
+                Some(i) => {
+                    if i >= self.filtered_repos.len().saturating_sub(1) { 0 } else { i + 1 }
+                }
+                None => 0,
+            };
+            self.list_state.select(Some(i));
         } else {
             let i = match self.list_state.selected() {
                 Some(i) => {
@@ -231,7 +294,8 @@ impl App {
         if self.popup_type == PopupType::ActionSelect || self.popup_type == PopupType::CategorySelect
           || self.popup_type == PopupType::ChangeBinarySelect || self.popup_type == PopupType::ChangeRootSelect
           || self.popup_type == PopupType::ConfirmUninstall || self.popup_type == PopupType::InstallRootSelect 
-          || self.popup_type == PopupType::InstallCategorySelect || self.popup_type == PopupType::InstallBinarySelect {
+          || self.popup_type == PopupType::InstallCategorySelect || self.popup_type == PopupType::InstallBinarySelect
+          || self.popup_type == PopupType::RepoActionSelect || self.popup_type == PopupType::RepoRootInput {
             let i = match self.popup_state.selected() {
                 Some(i) => {
                     if i == 0 { self.popup_items.len().saturating_sub(1) } else { i - 1 }
@@ -240,7 +304,7 @@ impl App {
             };
             self.popup_state.select(Some(i));
         } else if self.route == Route::MainMenu {
-            let len = 4;
+            let len = 5;
             let i = match self.list_state.selected() {
                 Some(i) => {
                     if i == 0 { len - 1 } else { i - 1 }
@@ -256,6 +320,22 @@ impl App {
                 None => 0,
             };
             self.fb_state.select(Some(i));
+        } else if self.route == Route::RepoCategorySelect {
+            let i = match self.repo_category_state.selected() {
+                Some(i) => {
+                    if i == 0 { 2 } else { i - 1 }
+                }
+                None => 0,
+            };
+            self.repo_category_state.select(Some(i));
+        } else if self.route == Route::ManageRepos {
+            let i = match self.list_state.selected() {
+                Some(i) => {
+                    if i == 0 { self.filtered_repos.len().saturating_sub(1) } else { i - 1 }
+                }
+                None => 0,
+            };
+            self.list_state.select(Some(i));
         } else {
             let i = match self.list_state.selected() {
                 Some(i) => {

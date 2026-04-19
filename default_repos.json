@@ -1,0 +1,28 @@
+{
+  "repositories": [
+    {
+      "name": "Vscodium",
+      "url": "https://github.com/VSCodium/vscodium",
+      "category": "Development",
+      "requires_root": false
+    },
+    {
+      "name": "vesktop",
+      "url": "https://github.com/Vencord/Vesktop",
+      "category": "Utility",
+      "requires_root": true
+    },
+    {
+      "name": "Neovim",
+      "url": "https://github.com/neovim/neovim",
+      "category": "Development",
+      "requires_root": false
+    },
+    {
+      "name": "scrcpy",
+      "url": "https://github.com/Genymobile/scrcpy",
+      "category": "Development",
+      "requires_root": false
+    }
+  ]
+}
