@@ -1,6 +1,6 @@
 [package]
 name = "tm"
-version = "1.2.2"
+version = "1.2.3"
 edition = "2021"
 description = "Tarball Manager (tm) - Edition 2026"
 
