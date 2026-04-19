@@ -35,6 +35,12 @@
       "url": "https://www.reaper.fm/files/7.x/reaper769_linux_x86_64.tar.xz",
       "category": "Music",
       "requires_root": false
+    },
+    {
+      "name": "Sublime Text",
+      "url": "https://www.sublimetext.com/download_thanks?target=x64-tar#direct-downloads",
+      "category": "Development",
+      "requires_root": false
     }
   ]
 }
