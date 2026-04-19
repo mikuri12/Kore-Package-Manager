@@ -23,6 +23,12 @@
       "url": "https://github.com/Genymobile/scrcpy",
       "category": "Development",
       "requires_root": false
+    },
+    {
+      "name": "Ranger",
+      "url": "https://github.com/ranger/ranger",
+      "category": "Utility",
+      "requires_root": false
     }
   ]
 }
