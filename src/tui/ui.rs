@@ -455,11 +455,12 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
 
                 f.render_stateful_widget(p_list, area, &mut app.popup_state);
             }
-            PopupType::NameInput | PopupType::InstallNameInput | PopupType::EnvVarInput | PopupType::RepoNameInput | PopupType::RepoUrlInput | PopupType::RepoCategoryInput => {
+            PopupType::NameInput | PopupType::InstallNameInput | PopupType::EnvVarInput | PopupType::RepoNameInput | PopupType::RepoPackageNameInput | PopupType::RepoUrlInput | PopupType::RepoCategoryInput => {
                 let title = match app.popup_type {
                     PopupType::NameInput => " New Name ",
                     PopupType::InstallNameInput => " Target Name ",
                     PopupType::RepoNameInput => " Repo Name ",
+                    PopupType::RepoPackageNameInput => " Package Name ",
                     PopupType::RepoUrlInput => " Repo URL ",
                     PopupType::RepoCategoryInput => " Repo Category ",
                     _ => " Environment Variables "

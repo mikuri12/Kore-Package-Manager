@@ -2,42 +2,49 @@
   "repositories": [
     {
       "name": "Antigravity",
+      "package_name": "antigravity",
       "url": "https://antigravity.google/download",
       "category": "Development",
       "requires_root": false
     },
     {
       "name": "JetBrains Toolbox",
+      "package_name": "jetbrains-toolbox",
       "url": "https://download.jetbrains.com/toolbox/jetbrains-toolbox-3.4.3.81140.tar.gz",
       "category": "Development",
       "requires_root": false
     },
     {
       "name": "Telegram",
+      "package_name": "telegram",
       "url": "https://telegram.org/dl/desktop/linux",
       "category": "Internet",
       "requires_root": false
     },
     {
       "name": "Heroic Games Launcher",
+      "package_name": "heroic-games-launcher",
       "url": "https://heroicgameslauncher.com/downloads",
       "category": "Games",
       "requires_root": false
     },
     {
       "name": "Freecad",
+      "package_name": "freecad",
       "url": "https://www.freecad.org/downloads.php",
       "category": "Utility",
       "requires_root": false
     },
     {
       "name": "Reaper",
+      "package_name": "reaper",
       "url": "https://www.reaper.fm/files/7.x/reaper769_linux_x86_64.tar.xz",
       "category": "Music",
       "requires_root": false
     },
     {
       "name": "Sublime Text",
+      "package_name": "sublime-text",
       "url": "https://www.sublimetext.com/download_thanks?target=x64-tar#direct-downloads",
       "category": "Development",
       "requires_root": false

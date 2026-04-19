@@ -51,7 +51,7 @@ fn main() -> anyhow::Result<()> {
                                 repo::RepoType::Community => "Community",
                                 repo::RepoType::User => "Custom",
                             };
-                            println!("  - [{}] {} - {} ({})", r_type, r.repo.name, r.repo.url, r.repo.category);
+                            println!("  - [{}] {} ({}) - {} ({})", r_type, r.repo.name, r.repo.package_name, r.repo.url, r.repo.category);
                         }
                     }
                 }
@@ -62,8 +62,8 @@ fn main() -> anyhow::Result<()> {
                         Err(e) => utils::error_msg(&format!("Failed to sync repositories: {}", e)),
                     }
                 }
-                cli::RepoCommands::Add { name, url, category, requires_root } => {
-                    match repo::add_user_repo(&config, name, url, category, *requires_root) {
+                cli::RepoCommands::Add { name, package_name, url, category, requires_root } => {
+                    match repo::add_user_repo(&config, name, package_name, url, category, *requires_root) {
                         Ok(_) => utils::success_msg(&format!("Repository '{}' added.", name)),
                         Err(e) => utils::error_msg(&format!("Failed to add repository: {}", e)),
                     }

@@ -305,6 +305,22 @@ pub fn handle_key_events<B: Backend>(
                             KeyCode::Enter => {
                                 if !app.popup_input.trim().is_empty() {
                                     app.pending_repo_name = app.popup_input.trim().to_string();
+                                    app.open_popup_input(PopupType::RepoPackageNameInput, "");
+                                }
+                            }
+                            _ => {}
+                        },
+                        PopupType::RepoPackageNameInput => match key.code {
+                            KeyCode::Esc => { app.popup_type = PopupType::None; }
+                            KeyCode::Backspace => { app.popup_input.pop(); }
+                            KeyCode::Char(c) => { 
+                                if !['@', '$', '/', '\\', '|', '*', '?', '<', '>', ':', '\"', ' '].contains(&c) {
+                                    app.popup_input.push(c); 
+                                }
+                            }
+                            KeyCode::Enter => {
+                                if !app.popup_input.trim().is_empty() {
+                                    app.pending_repo_package_name = app.popup_input.trim().to_string();
                                     app.open_popup_input(PopupType::RepoUrlInput, "");
                                 }
                             }
@@ -343,6 +359,7 @@ pub fn handle_key_events<B: Backend>(
                                 match crate::repo::add_user_repo(
                                     config, 
                                     &app.pending_repo_name, 
+                                    &app.pending_repo_package_name,
                                     &app.pending_repo_url, 
                                     &app.pending_repo_category, 
                                     app.pending_repo_root

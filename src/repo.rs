@@ -5,6 +5,7 @@ use crate::config::Config;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Repository {
     pub name: String,
+    pub package_name: String,
     pub url: String,
     pub category: String,
     pub requires_root: bool,
@@ -93,6 +94,7 @@ pub fn get_all_repos(config: &Config) -> Vec<RepoSource> {
 pub fn add_user_repo(
     config: &Config,
     name: &str,
+    package_name: &str,
     url: &str,
     category: &str,
     requires_root: bool,
@@ -104,6 +106,7 @@ pub fn add_user_repo(
     }
     repos.push(Repository {
         name: name.to_string(),
+        package_name: package_name.to_string(),
         url: url.to_string(),
         category: category.to_string(),
         requires_root,

@@ -2,36 +2,42 @@
   "repositories": [
     {
       "name": "Vscodium",
+      "package_name": "vscodium",
       "url": "https://github.com/VSCodium/vscodium",
       "category": "Development",
       "requires_root": false
     },
     {
       "name": "vesktop",
+      "package_name": "vesktop",
       "url": "https://github.com/Vencord/Vesktop",
       "category": "Utility",
       "requires_root": true
     },
     {
       "name": "Neovim",
+      "package_name": "neovim",
       "url": "https://github.com/neovim/neovim",
       "category": "Development",
       "requires_root": false
     },
     {
       "name": "scrcpy",
+      "package_name": "scrcpy",
       "url": "https://github.com/Genymobile/scrcpy",
       "category": "Development",
       "requires_root": false
     },
     {
       "name": "Ranger",
+      "package_name": "ranger",
       "url": "https://github.com/ranger/ranger",
       "category": "Utility",
       "requires_root": false
     },
     {
       "name": "Croc",
+      "package_name": "croc",
       "url": "https://github.com/schollz/croc",
       "category": "Utility",
       "requires_root": false

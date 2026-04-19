@@ -65,6 +65,7 @@ pub enum RepoCommands {
     /// Add a third-party repository
     Add {
         name: String,
+        package_name: String,
         url: String,
         category: String,
         #[arg(default_value_t = false)]
