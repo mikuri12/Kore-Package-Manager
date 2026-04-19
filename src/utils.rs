@@ -52,6 +52,7 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
     let mut best_icon: Option<String> = None;
     let mut max_score = -1;
     let app_lower = app_name.to_lowercase();
+    let app_sanitized = app_lower.replace(" ", "-");
     let exec_lower = exec_name.to_lowercase();
 
     for entry in WalkDir::new(target)
@@ -68,17 +69,17 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
                     if path_str.contains("node_modules") || path_str.contains("/extensions/") || path_str.contains("/.git") {
                         score -= 1000;
                     }
-                    if path_str.contains("/out/") || path_str.contains("/build/") || path_str.contains("/test/") {
+                    if path_str.contains("/test/") {
                         score -= 50;
                     }
 
                     if ext == "svg" { score += 10; }
                     if ext == "png" { score += 5; }
                     
-                    if file_stem == app_lower {
-                        score += 50;
-                    } else if file_stem.contains(&app_lower) && app_lower.len() > 3 {
-                        score += 20;
+                    if file_stem == app_lower || file_stem == app_sanitized {
+                        score += 100;
+                    } else if (file_stem.contains(&app_lower) || file_stem.contains(&app_sanitized)) && app_sanitized.len() > 2 {
+                        score += 40;
                     }
 
                     if file_stem == exec_lower {
@@ -87,8 +88,8 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
                         score += 20;
                     }
 
-                    if path_str.contains("/icons/") || path_str.contains("/hicolor/") || path_str.contains("/scalable/") || path_str.contains("/pixmaps/") {
-                        score += 30;
+                    if path_str.contains("/icons/") || path_str.contains("/hicolor/") || path_str.contains("/scalable/") || path_str.contains("/pixmaps/") || path_str.contains("/share/icons/") {
+                        score += 80;
                     }
 
                     if file_stem == "icon" || file_stem == "logo" || file_stem == "app" || file_stem == "main" || file_stem == "code" {

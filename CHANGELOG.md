@@ -1,3 +1,13 @@
+## [1.3.1-1.3.4] - 2026-04-19
+
+### Mejoras e Integración (Improvements & Integration)
+- **Perfeccionamiento del Sistema de Íconos:** Se rediseñó el buscador para soportar variantes de nombres con guiones (ej: `sublime-text.png` para "Sublime Text") y se aumentó la prioridad de las rutas estándar como `/icons/`, `/share/icons/` y `/pixmaps/`.
+- **Soporte para Aplicaciones Electron:** Se eliminaron las restricciones de búsqueda en carpetas `/build/` y `/out/`, permitiendo que aplicaciones como *Heroic Launcher* detecten sus íconos correctamente.
+- **Normalización de Accesos Directos:** Los archivos `.desktop` ahora usan el nombre del repositorio (ej: "Reaper") en lugar del nombre del paquete técnico para el campo visual del menú.
+- **Sanitización de Archivos:** Tanto los archivos `.desktop` como los binarios en `~/.local/bin` ahora usan nombres normalizados (minúsculas y sin espacios) para garantizar la compatibilidad con todos los lanzadores y terminales.
+- **Refresco Automático:** Integración de `update-desktop-database` tras cada instalación para que los cambios en íconos y menús se reflejen instantáneamente sin necesidad de reiniciar la sesión.
+- **Compatibilidad Ampliada:** Soporte restaurado para íconos `.ico` y nuevo soporte para archivos `.xpm`.
+
 ## [1.3.0] - 2026-04-19
 
 ### Características (Features)
