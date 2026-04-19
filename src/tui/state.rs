@@ -182,7 +182,7 @@ impl App {
             let lower = self.input.to_lowercase();
             self.filtered_repos = base_filtered
                 .into_iter()
-                .filter(|r| r.repo.name.to_lowercase().contains(&lower) || r.repo.category.to_lowercase().contains(&lower))
+                .filter(|r| r.repo.name.to_lowercase().contains(&lower) || r.repo.package_name.to_lowercase().contains(&lower) || r.repo.category.to_lowercase().contains(&lower))
                 .collect();
         }
         self.list_state.select(if self.filtered_repos.is_empty() { None } else { Some(0) });

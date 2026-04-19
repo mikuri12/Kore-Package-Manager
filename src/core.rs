@@ -261,7 +261,7 @@ pub fn install_app(
     if !actual_tarball.exists() {
         // Try to match it to a repository
         let all_repos = crate::repo::get_all_repos(config);
-        if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == source.to_lowercase()) {
+        if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == source.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == source.to_lowercase())) {
             let url = &repo_source.repo.url;
             if crate::download::is_supported_git_url(url) {
                 info_msg(&format!("Fetching releases for {}...", repo_source.repo.name));
@@ -354,7 +354,7 @@ pub fn install_app(
         let use_root = if downloaded && use_root_opt.is_none() {
             let all_repos = crate::repo::get_all_repos(config);
             let requires_root = all_repos.iter()
-                .find(|r| r.repo.name.to_lowercase() == source.to_lowercase())
+                .find(|r| r.repo.name.to_lowercase() == source.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == source.to_lowercase()))
                 .map(|r| r.repo.requires_root)
                 .unwrap_or(false);
             requires_root
@@ -367,7 +367,7 @@ pub fn install_app(
         let category = if downloaded && category_opt.is_none() {
             let all_repos = crate::repo::get_all_repos(config);
             all_repos.iter()
-                .find(|r| r.repo.name.to_lowercase() == source.to_lowercase())
+                .find(|r| r.repo.name.to_lowercase() == source.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == source.to_lowercase()))
                 .map(|r| r.repo.category.clone())
                 .unwrap_or_else(|| "Utility".to_string())
         } else {

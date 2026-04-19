@@ -80,7 +80,7 @@ fn main() -> anyhow::Result<()> {
         Some(Commands::Update { app_name }) => {
             let all_repos = repo::get_all_repos(&config);
             if let Some(target) = app_name {
-                if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == target.to_lowercase()) {
+                if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == target.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == target.to_lowercase())) {
                     let _ = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true);
                 } else {
                     utils::error_msg(&format!("Application '{}' does not belong to any repository.", target));
@@ -91,7 +91,7 @@ fn main() -> anyhow::Result<()> {
                     for entry in entries.flatten() {
                         if entry.path().is_dir() {
                             let app = entry.file_name().to_string_lossy().to_string();
-                            if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == app.to_lowercase()) {
+                            if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == app.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == app.to_lowercase())) {
                                 utils::info_msg(&format!("Updating {}...", repo_source.repo.name));
                                 let _ = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true);
                                 updated_any = true;

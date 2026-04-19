@@ -24,7 +24,7 @@
     {
       "name": "Heroic Games Launcher",
       "package_name": "heroic-games-launcher",
-      "url": "https://heroicgameslauncher.com/downloads",
+      "url": "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher",
       "category": "Games",
       "requires_root": false
     },

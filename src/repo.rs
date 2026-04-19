@@ -5,6 +5,7 @@ use crate::config::Config;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Repository {
     pub name: String,
+    #[serde(default)]
     pub package_name: String,
     pub url: String,
     pub category: String,
