@@ -1,3 +1,16 @@
+## [1.3.0] - 2026-04-19
+
+### Características (Features)
+- **Sistema de Repositorios de 3 Niveles:** Clasificación en repositorios *Official*, *Community* y *User Custom*. Los oficiales y comunitarios ahora están protegidos en modo "Solo Lectura", asegurando que las listas base no puedan romperse accidentalmente.
+- **Sincronización Remota de Repositorios:** Nuevo comando CLI `tm repo sync` para descargar las listas de aplicaciones predeterminadas directamente desde la rama `main` del proyecto en GitHub, sin necesidad de actualizar el binario completo.
+- **Actualización Automática de Apps:** Nuevo comando CLI `tm update [app_name]` que escanea tus aplicaciones instaladas y descarga/reinstala automáticamente sus últimas versiones desde sus respectivos repositorios.
+- **Soporte Multi-Forja (GitLab & Codeberg):** El motor de descarga ahora es capaz de consultar e interpretar las APIs de lanzamientos (Releases) de `gitlab.com` y `codeberg.org`, además de GitHub.
+- **Direct Download Fallback:** Soporte universal para instalar aplicaciones desde cualquier URL estática de internet. Si el enlace no proviene de un proveedor Git conocido, Tarball-Manager simplemente descargará el archivo directamente.
+
+### Mejoras (Enhancements)
+- **Búsqueda Profunda de Íconos:** Se rediseñó el algoritmo de búsqueda de íconos. Ahora escanea todo el tarball sin límite de profundidad utilizando un sistema inteligente de "puntuación", logrando encontrar los íconos ocultos incluso en las estructuras de carpetas más complejas.
+- **Limpieza de CLI:** Se eliminaron los íconos de fuentes especiales (Nerd Fonts) de la salida estándar del CLI (`tm`) para maximizar la compatibilidad con terminales simples, reemplazándolos por corchetes limpios (`[i]`, `[+]`, `[x]`).
+
 ## [1.2.3] - 2026-04-19
 
 ### Mejoras (Enhancements)
