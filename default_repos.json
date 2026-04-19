@@ -29,6 +29,12 @@
       "url": "https://github.com/ranger/ranger",
       "category": "Utility",
       "requires_root": false
+    },
+    {
+      "name": "Croc",
+      "url": "https://github.com/schollz/croc",
+      "category": "Utility",
+      "requires_root": false
     }
   ]
 }
