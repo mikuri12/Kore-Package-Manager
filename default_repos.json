@@ -41,6 +41,13 @@
       "url": "https://github.com/schollz/croc",
       "category": "Utility",
       "requires_root": false
+    },     
+    {
+      "name": "Strawberry",
+      "package_name": "strawberry",
+      "url": "https://github.com/strawberrymusicplayer/strawberry",
+      "category": "Music",
+      "requires_root": false
     }
   ]
 }
