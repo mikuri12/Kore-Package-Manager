@@ -17,7 +17,7 @@
     {
       "name": "Telegram",
       "package_name": "telegram",
-      "url": "https://telegram.org/dl/desktop/linux",
+      "url": "https://github.com/telegramdesktop/tdesktop",
       "category": "Internet",
       "requires_root": false
     },
@@ -31,7 +31,7 @@
     {
       "name": "Freecad",
       "package_name": "freecad",
-      "url": "https://www.freecad.org/downloads.php",
+      "url": "https://github.com/FreeCAD/FreeCAD",
       "category": "Utility",
       "requires_root": false
     },
@@ -45,7 +45,7 @@
     {
       "name": "Sublime Text",
       "package_name": "sublime-text",
-      "url": "https://www.sublimetext.com/download_thanks?target=x64-tar#direct-downloads",
+      "url": "https://download.sublimetext.com/sublime_text_build_4200_x64.tar.xz",
       "category": "Development",
       "requires_root": false
     }
