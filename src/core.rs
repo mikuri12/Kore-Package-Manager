@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::utils::{error_msg, find_executables, find_icon, info_msg, success_msg};
 use dialoguer::{Select, Confirm, Input};
+use std::collections::HashSet;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::os::unix::fs::symlink;
@@ -428,4 +429,39 @@ pub fn update_tm(config: &Config) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+pub fn get_all_categories(config: &Config) -> Vec<String> {
+    let mut categories: HashSet<String> = HashSet::new();
+    let default_categories = ["Utility", "Network", "Game", "Development", "Graphics", "AudioVideo", "System", "Office"];
+    for cat in default_categories {
+        categories.insert(cat.to_string());
+    }
+
+    if let Ok(entries) = fs::read_dir(&config.apps_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("desktop") {
+                if let Ok(file_raw) = fs::File::open(&path) {
+                    let reader = BufReader::new(file_raw);
+                    for line in reader.lines().flatten() {
+                        if line.starts_with("Categories=") {
+                            let cats = line["Categories=".len()..].split(&[';', ','][..]);
+                            for cat in cats {
+                                let trimmed = cat.trim();
+                                if !trimmed.is_empty() {
+                                    categories.insert(trimmed.to_string());
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let mut sorted: Vec<String> = categories.into_iter().collect();
+    sorted.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+    sorted
 }

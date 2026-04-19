@@ -1,3 +1,9 @@
+## [1.2.3] - 2026-04-19
+
+### Mejoras (Enhancements)
+- **Categorías Dinámicas:** La TUI ahora escanea automáticamente los archivos `.desktop` existentes para descubrir y mostrar categorías personalizadas creadas por el usuario, además de las opciones predeterminadas.
+- **Mensaje de Validación:** Se agregó un mensaje de advertencia visual `(No special characters allowed)` en los diálogos de entrada de texto (al instalar o renombrar) para prevenir errores al nombrar las aplicaciones.
+
 ## [1.2.2] - 2026-04-18
 
 ### Características (Features)

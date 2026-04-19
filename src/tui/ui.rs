@@ -355,7 +355,11 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
             }
             PopupType::NameInput | PopupType::InstallNameInput | PopupType::EnvVarInput => {
                 let title = if app.popup_type == PopupType::NameInput { " New Name " } else if app.popup_type == PopupType::InstallNameInput { " Target Name " } else { " Environment Variables " };
-                let p = Paragraph::new(format!("{}█", app.popup_input))
+                let mut content = format!("{}█", app.popup_input);
+                if app.popup_type == PopupType::NameInput || app.popup_type == PopupType::InstallNameInput {
+                    content.push_str("\n\n(No special characters allowed)");
+                }
+                let p = Paragraph::new(content)
                     .block(Block::default()
                         .borders(Borders::ALL)
                         .border_type(BorderType::Rounded)

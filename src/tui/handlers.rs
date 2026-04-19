@@ -27,7 +27,7 @@ pub fn handle_key_events<B: Backend>(
                                 if selected_action == 0 {
                                     app.open_popup_input(PopupType::NameInput, "");
                                 } else if selected_action == 1 {
-                                    app.open_popup_list(PopupType::CategorySelect, vec!["Utility".to_string(), "Network".to_string(), "Game".to_string(), "Development".to_string(), "Graphics".to_string(), "AudioVideo".to_string(), "System".to_string(), "Office".to_string()]);
+                                    app.open_popup_list(PopupType::CategorySelect, crate::core::get_all_categories(config));
                                 } else if selected_action == 2 {
                                     if let Some(idx) = app.list_state.selected() {
                                         let selected_app = app.filtered[idx].clone();
@@ -196,7 +196,7 @@ pub fn handle_key_events<B: Backend>(
                             KeyCode::Down => { app.next(); }
                             KeyCode::Enter => {
                                 app.pending_use_root = app.popup_state.selected().unwrap_or(0) == 1;
-                                app.open_popup_list(PopupType::InstallCategorySelect, vec!["Utility".to_string(), "Network".to_string(), "Game".to_string(), "Development".to_string(), "Graphics".to_string(), "AudioVideo".to_string(), "System".to_string(), "Office".to_string()]);
+                                app.open_popup_list(PopupType::InstallCategorySelect, crate::core::get_all_categories(config));
                             }
                             _ => {}
                         },
