@@ -69,6 +69,13 @@
       "url": "https://www.torproject.org/dist/torbrowser/15.0.9/tor-browser-linux-x86_64-15.0.9.tar.xz",
       "category": "Network",
       "requires_root": false
+    },
+    {
+      "name": "Local Send",
+      "package_name": "localsend",
+      "url": "https://github.com/localsend/localsend",
+      "category": "Network",
+      "requires_root": false
     }
   ]
 }
