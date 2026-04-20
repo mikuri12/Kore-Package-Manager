@@ -57,7 +57,7 @@ install_tm() {
     mkdir -p "$BIN_DIR"
     info "Buscando la última versión estable en GitHub Releases..."
     
-    local LATEST_URL=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep "browser_download_url" | grep "/tm\"" | cut -d '"' -f 4)
+    local LATEST_URL=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep -o 'https://github.com/[^"]*/tm"' | head -n 1 | sed 's/"$//')
 
     if [[ -z "$LATEST_URL" ]]; then
         error "No se encontró el binario 'tm' compilado en la última Release de GitHub."
