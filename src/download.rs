@@ -96,18 +96,20 @@ pub fn download_file(url: &str, dest_dir: &Path) -> Result<PathBuf> {
         .user_agent("Tarball-Manager/1.0")
         .build()?;
         
-    let response = client.get(url).send()?;
+    let mut response = client.get(url).send()?;
     if !response.status().is_success() {
         return Err(anyhow::anyhow!("Failed to download file: {}", response.status()));
     }
     
-    // Extract filename from URL
-    let file_name = url.split('/').last().unwrap_or("downloaded_file.tar.gz");
+    // Extract filename from URL more safely, avoiding query parameters
+    let file_name = url.split('?').next().unwrap_or(url)
+        .split('/').last()
+        .unwrap_or("downloaded_file.tar.gz");
+        
     let dest_path = dest_dir.join(file_name);
     
     let mut file = File::create(&dest_path).context("Failed to create download file")?;
-    let content = response.bytes()?;
-    std::io::copy(&mut content.as_ref(), &mut file).context("Failed to write to file")?;
+    response.copy_to(&mut file).context("Failed to download file content")?;
     
     Ok(dest_path)
 }

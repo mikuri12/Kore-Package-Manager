@@ -1,4 +1,10 @@
-## [1.3.1-1.3.5] - 2026-04-19
+## [1.4.0] - 2026-04-20
+
+### Correcciones (Bug Fixes)
+- **Descargas de Gran Tamaño:** Se migró el motor de descarga a un sistema de transmisión de flujo (streaming). Esto resuelve el error "error decoding response body" al descargar archivos pesados al evitar cargar todo el archivo en la memoria RAM.
+- **Normalización de URLs:** Mejora en la extracción de nombres de archivos desde URLs que contienen parámetros de consulta o redirecciones complejas.
+
+## [1.3.1-1.3.9] - 2026-04-19
 
 ### Mejoras e Integración (Improvements & Integration)
 - **Perfeccionamiento del Sistema de Íconos:** Se rediseñó el buscador para soportar variantes de nombres con guiones (ej: `sublime-text.png` para "Sublime Text") y se aumentó la prioridad de las rutas estándar como `/icons/`, `/share/icons/` y `/pixmaps/`.
