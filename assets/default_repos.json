@@ -111,6 +111,13 @@
       "url": "https://discord.com/api/download?platform=linux&format=tar.gz",
       "category": "Network",
       "requires_root": false
+    },
+    {
+      "name": "Floorp",
+      "package_name": "floorp",
+      "url": "https://github.com/Floorp-Projects/Floorp",
+      "category": "Network",
+      "requires_root": false
     }
   ]
 }

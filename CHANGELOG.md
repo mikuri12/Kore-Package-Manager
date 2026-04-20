@@ -1,3 +1,13 @@
+## [1.4.3] - 2026-04-20
+
+### Características (Features)
+- **Control Total sobre Binarios:** Se eliminó la autoselección automática de ejecutables. Ahora el usuario siempre debe confirmar qué binario desea vincular, incluso si solo se detecta uno en el tarball.
+- **Opciones de Omisión (Skip):** Se agregó la capacidad de saltar la selección de binarios o de archivos `.desktop` durante la instalación interactiva, permitiendo una extracción "limpia" sin crear enlaces en el sistema.
+- **Nuevos Repositorios Oficiales:** Inclusión de **Zen Browser**, **Stoat**, **Discord** y **Floorp** en la lista de paquetes predeterminados.
+
+### Mejoras (Improvements)
+- **Robustez en la Selección:** Mejorado el manejo de canales de respuesta (`mpsc`) para evitar cierres inesperados de popups durante la instalación.
+
 ## [1.4.2] - 2026-04-20
 
 ### Características (Features)
