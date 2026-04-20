@@ -69,6 +69,20 @@
       "url": "https://github.com/Cisco-Talos/clamav",
       "category": "Utility",
       "requires_root": false
+    },
+    {
+      "name": "Micro",
+      "package_name": "micro",
+      "url": "https://github.com/micro-editor/micro",
+      "category": "Development",
+      "requires_root": false
+    },
+    {
+      "name": "Helix",
+      "package_name": "helix",
+      "url": "https://github.com/helix-editor/helix",
+      "category": "Development",
+      "requires_root": false
     }
   ]
 }
