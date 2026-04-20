@@ -67,7 +67,7 @@
       "name": "Tor Browser",
       "package_name": "tor-browser",
       "url": "https://www.torproject.org/dist/torbrowser/15.0.9/tor-browser-linux-x86_64-15.0.9.tar.xz",
-      "category": "Internet",
+      "category": "Network",
       "requires_root": false
     }
   ]
