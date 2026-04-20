@@ -83,6 +83,13 @@
       "url": "https://github.com/helix-editor/helix",
       "category": "Development",
       "requires_root": false
+    },
+    {
+      "name": "Bat",
+      "package_name": "bat",
+      "url": "https://github.com/sharkdp/bat",
+      "category": "Utility",
+      "requires_root": false
     }
   ]
 }
