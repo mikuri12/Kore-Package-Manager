@@ -24,6 +24,14 @@ pub struct GitlabRelease {
 #[derive(Debug, Deserialize)]
 pub struct GitlabAssets {
     pub links: Vec<GitlabLink>,
+    #[serde(default)]
+    pub sources: Vec<GitlabSource>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GitlabSource {
+    pub format: String,
+    pub url: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -69,17 +77,31 @@ pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
         if releases.is_empty() {
             return Err(anyhow::anyhow!("No releases found on GitLab instance {}", host));
         }
-        releases.remove(0).assets.links
-            .into_iter()
-            .filter(|l| {
-                let n = l.name.to_lowercase();
-                n.ends_with(".tar.gz") || n.ends_with(".tar.xz") || n.ends_with(".tar.bz2") || n.ends_with(".zip")
-            })
-            .map(|l| Asset {
-                name: l.name,
-                browser_download_url: l.url,
-            })
-            .collect()
+        
+        let first = releases.remove(0);
+        let mut assets = Vec::new();
+
+        // Agregar links (binarios subidos manualmente)
+        for link in first.assets.links {
+            let n = link.name.to_lowercase();
+            if n.ends_with(".tar.gz") || n.ends_with(".tar.xz") || n.ends_with(".tar.bz2") || n.ends_with(".zip") {
+                assets.push(Asset {
+                    name: link.name,
+                    browser_download_url: link.url,
+                });
+            }
+        }
+
+        // Agregar sources (archivos generados automáticamente por GitLab)
+        for source in first.assets.sources {
+            let name = format!("{}.{}", repo, source.format);
+            assets.push(Asset {
+                name,
+                browser_download_url: source.url,
+            });
+        }
+
+        assets
     } else {
         let api_url = if url.contains("codeberg.org") {
             format!("https://codeberg.org/api/v1/repos/{}/{}/releases/latest", owner, repo)

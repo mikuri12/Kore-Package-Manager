@@ -132,6 +132,13 @@
       "url": "https://github.com/obsidianmd/obsidian-releases",
       "category": "Office",
       "requires_root": false
+    },
+    {
+      "name": "Foot",
+      "package_name": "foot",
+      "url": "https://codeberg.org/dnkl/foot",
+      "category": "Utility",
+      "requires_root": false
     }
   ]
 }
