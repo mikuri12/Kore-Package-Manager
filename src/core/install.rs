@@ -426,26 +426,30 @@ pub fn install_app(
             let exec_path = if executables.is_empty() {
                 if is_cli { error_msg("No executable binary found."); }
                 None
-            } else if executables.len() == 1 {
-                Some(executables[0].clone())
             } else {
                 if !is_cli {
                     if let Some(t) = &tx {
                         let (reply_tx, reply_rx) = std::sync::mpsc::channel();
-                        let choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
+                        let mut choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
+                        choices.push("Skip / Manual link later".to_string());
                         let _ = t.send(InstallMessage::SelectBinary(choices, reply_tx));
                         match reply_rx.recv() {
-                            Ok(idx) => Some(executables[idx].clone()),
-                            Err(_) => Some(executables[0].clone()),
+                            Ok(idx) if idx < executables.len() => Some(executables[idx].clone()),
+                            _ => None,
                         }
                     } else {
                         Some(executables[0].clone())
                     }
                 } else {
                     info_msg("Select the main executable binary:");
-                    let choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
-                    let sel = Select::new().with_prompt("Binary").items(&choices).default(0).interact().unwrap_or(0);
-                    Some(executables[sel].clone())
+                    let mut choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
+                    choices.push("Skip / Manual link later".to_string());
+                    let sel = Select::new().with_prompt("Binary").items(&choices).default(0).interact().unwrap_or(choices.len() - 1);
+                    if sel < executables.len() {
+                        Some(executables[sel].clone())
+                    } else {
+                        None
+                    }
                 }
             };
 
