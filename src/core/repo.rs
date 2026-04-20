@@ -105,6 +105,24 @@ pub fn add_user_repo(
     if repos.iter().any(|r| r.name.to_lowercase() == name.to_lowercase()) {
         return Err(crate::error::TmError::Generic("A repository with that name already exists".to_string()));
     }
+
+    // Validate URL reachability
+    let client = reqwest::blocking::Client::builder()
+        .user_agent("Tarball-Manager/1.0")
+        .timeout(std::time::Duration::from_secs(5))
+        .build()?;
+    
+    match client.get(url).send() {
+        Ok(resp) => {
+            if !resp.status().is_success() {
+                return Err(crate::error::TmError::Generic(format!("The URL '{}' returned status {}. Please verify it exists.", url, resp.status())));
+            }
+        }
+        Err(e) => {
+            return Err(crate::error::TmError::Generic(format!("Could not reach the URL '{}': {}", url, e)));
+        }
+    }
+
     repos.push(Repository {
         name: name.to_string(),
         package_name: package_name.to_string(),

@@ -53,10 +53,44 @@ fn main() -> anyhow::Result<()> {
                     if all.is_empty() {
                         utils::info_msg("No packages found.");
                     } else {
-                        println!("\x1b[1;36mPackages:\x1b[0m");
-                        for r in all {
-                            let display_name = if r.repo.package_name.is_empty() { &r.repo.name } else { &r.repo.package_name };
-                            println!("  - {}", display_name);
+                        let mut official: Vec<_> = all.iter().filter(|r| r.repo_type == repo::RepoType::Official).collect();
+                        let mut community: Vec<_> = all.iter().filter(|r| r.repo_type == repo::RepoType::Community).collect();
+                        let mut custom: Vec<_> = all.iter().filter(|r| r.repo_type == repo::RepoType::User).collect();
+
+                        let sort_fn = |a: &&repo::RepoSource, b: &&repo::RepoSource| {
+                            let name_a = if a.repo.package_name.is_empty() { &a.repo.name } else { &a.repo.package_name };
+                            let name_b = if b.repo.package_name.is_empty() { &b.repo.name } else { &b.repo.package_name };
+                            name_a.to_lowercase().cmp(&name_b.to_lowercase())
+                        };
+
+                        official.sort_by(sort_fn);
+                        community.sort_by(sort_fn);
+                        custom.sort_by(sort_fn);
+
+                        if !official.is_empty() {
+                            println!("\x1b[1;36mOfficial Repositories:\x1b[0m");
+                            for r in official {
+                                let display_name = if r.repo.package_name.is_empty() { &r.repo.name } else { &r.repo.package_name };
+                                println!("  - {}", display_name);
+                            }
+                            println!();
+                        }
+
+                        if !community.is_empty() {
+                            println!("\x1b[1;36mCommunity Repositories:\x1b[0m");
+                            for r in community {
+                                let display_name = if r.repo.package_name.is_empty() { &r.repo.name } else { &r.repo.package_name };
+                                println!("  - {}", display_name);
+                            }
+                            println!();
+                        }
+
+                        if !custom.is_empty() {
+                            println!("\x1b[1;36mCustom Repositories:\x1b[0m");
+                            for r in custom {
+                                let display_name = if r.repo.package_name.is_empty() { &r.repo.name } else { &r.repo.package_name };
+                                println!("  - {}", display_name);
+                            }
                         }
                     }
                 }

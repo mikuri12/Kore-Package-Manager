@@ -3,6 +3,7 @@
 ### Características (Features)
 - **Control Total sobre Binarios:** Se eliminó la autoselección automática de ejecutables. Ahora el usuario siempre debe confirmar qué binario desea vincular, incluso si solo se detecta uno en el tarball.
 - **Opciones de Omisión (Skip):** Se agregó la capacidad de saltar la selección de binarios o de archivos `.desktop` durante la instalación interactiva, permitiendo una extracción "limpia" sin crear enlaces en el sistema.
+- **Validación de Repositorios:** Ahora el sistema verifica que la URL sea válida y accesible antes de permitir agregar un nuevo repositorio personalizado, evitando errores futuros durante la instalación.
 - **Nuevos Repositorios Oficiales:** Inclusión de **Zen Browser**, **Stoat**, **Discord** y **Floorp** en la lista de paquetes predeterminados.
 
 ### Mejoras (Improvements)
