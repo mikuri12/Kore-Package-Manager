@@ -42,13 +42,13 @@ impl Config {
 
         // Initialize official repos to sync with bundled defaults only if missing
         if !self.official_repos_file.exists() {
-            let default_json = include_str!("../default_repos.json");
+            let default_json = include_str!("../assets/default_repos.json");
             std::fs::write(&self.official_repos_file, default_json)?;
         }
 
         // Initialize community repos to sync with bundled defaults only if missing
         if !self.community_repos_file.exists() {
-            let community_json = include_str!("../community_repos.json");
+            let community_json = include_str!("../assets/community_repos.json");
             std::fs::write(&self.community_repos_file, community_json)?;
         }
 
