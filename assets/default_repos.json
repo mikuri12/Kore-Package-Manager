@@ -118,6 +118,20 @@
       "url": "https://github.com/Floorp-Projects/Floorp",
       "category": "Network",
       "requires_root": false
+    },
+    {
+      "name": "Basalt",
+      "package_name": "basalt",
+      "url": "https://github.com/erikjuhani/basalt",
+      "category": "Office",
+      "requires_root": false
+    },
+    {
+      "name": "Obsidian",
+      "package_name": "obsidian",
+      "url": "https://github.com/obsidianmd/obsidian-releases",
+      "category": "Office",
+      "requires_root": false
     }
   ]
 }

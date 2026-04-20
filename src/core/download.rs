@@ -33,7 +33,7 @@ pub struct GitlabLink {
 }
 
 pub fn is_supported_git_url(url: &str) -> bool {
-    url.contains("github.com") || url.contains("gitlab.com") || url.contains("codeberg.org")
+    url.contains("github.com") || url.contains("gitlab.") || url.contains("codeberg.org")
 }
 
 pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
@@ -44,19 +44,30 @@ pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
     let repo = parts.pop().unwrap();
     let owner = parts.pop().unwrap();
 
+    // Determinar el host (ej: gitlab.gnome.org o github.com)
+    let host = if url.contains("github.com") {
+        "github.com"
+    } else if url.contains("codeberg.org") {
+        "codeberg.org"
+    } else if let Some(h) = url.split("://").nth(1).and_then(|s| s.split('/').next()) {
+        h
+    } else {
+        "gitlab.com"
+    };
+
     let client = reqwest::blocking::Client::builder()
         .user_agent("Tarball-Manager/1.0")
         .build()?;
 
-    let valid_assets = if url.contains("gitlab.com") {
-        let api_url = format!("https://gitlab.com/api/v4/projects/{}%2F{}/releases", owner, repo);
+    let valid_assets = if url.contains("gitlab.") {
+        let api_url = format!("https://{}/api/v4/projects/{}%2F{}/releases", host, owner, repo);
         let response = client.get(&api_url).send()?;
         if !response.status().is_success() {
             return Err(anyhow::anyhow!("Failed to fetch GitLab release: {}", response.status()));
         }
         let mut releases: Vec<GitlabRelease> = response.json()?;
         if releases.is_empty() {
-            return Err(anyhow::anyhow!("No releases found on GitLab"));
+            return Err(anyhow::anyhow!("No releases found on GitLab instance {}", host));
         }
         releases.remove(0).assets.links
             .into_iter()

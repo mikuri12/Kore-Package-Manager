@@ -90,6 +90,13 @@
       "url": "https://github.com/ElyPrismLauncher/Launcher",
       "category": "Games",
       "requires_root": false
+    },
+    {
+      "name": "Gnome Boxes",
+      "package_name": "gnome-boxes",
+      "url": "https://gitlab.gnome.org/GNOME/gnome-boxes",
+      "category": "System",
+      "requires_root": false
     }
   ]
 }
