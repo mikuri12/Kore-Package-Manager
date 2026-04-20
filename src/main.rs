@@ -34,18 +34,41 @@ fn main() -> anyhow::Result<()> {
             core::remove_app(&config, app_name, true, false)?;
         }
         Some(Commands::Install { source, app_name, use_root, category }) => {
-            let app = if app_name.is_empty() { None } else { Some(app_name.as_str()) };
-            core::install_app(&config, source, app, Some(use_root), Some(category), true)?;
+            core::install_app(&config, source, app_name.as_deref(), use_root.as_deref(), category.as_deref(), true)?;
         }
         Some(Commands::Repo { repo_command }) => {
             match repo_command {
                 cli::RepoCommands::List => {
+                    let off_count = repo::get_official_repos(&config).len();
+                    let com_count = repo::get_community_repos(&config).len();
+                    let usr_count = repo::get_user_repos(&config).len();
+
+                    println!("\x1b[1;36mRepositories:\x1b[0m");
+                    println!("  - Official Repository: {} packages", off_count);
+                    println!("  - Community Repositories: {} packages", com_count);
+                    println!("  - Custom Repositories: {} packages", usr_count);
+                }
+                cli::RepoCommands::PkgList => {
                     let all = repo::get_all_repos(&config);
                     if all.is_empty() {
-                        utils::info_msg("No repositories found.");
+                        utils::info_msg("No packages found.");
                     } else {
-                        println!("\x1b[1;36mRepositories:\x1b[0m");
+                        println!("\x1b[1;36mPackages:\x1b[0m");
                         for r in all {
+                            let display_name = if r.repo.package_name.is_empty() { &r.repo.name } else { &r.repo.package_name };
+                            println!("  - {}", display_name);
+                        }
+                    }
+                }
+                cli::RepoCommands::PkgSearch { query } => {
+                    let all = repo::get_all_repos(&config);
+                    let q = query.to_lowercase();
+                    let matches: Vec<_> = all.into_iter().filter(|r| r.repo.name.to_lowercase().contains(&q) || r.repo.package_name.to_lowercase().contains(&q)).collect();
+                    if matches.is_empty() {
+                        utils::info_msg(&format!("No packages found matching '{}'.", query));
+                    } else {
+                        println!("\x1b[1;36mSearch Results:\x1b[0m");
+                        for r in matches {
                             let r_type = match r.repo_type {
                                 repo::RepoType::Official => "Official",
                                 repo::RepoType::Community => "Community",

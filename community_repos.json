@@ -48,6 +48,13 @@
       "url": "https://github.com/pear-devs/pear-desktop",
       "category": "Music",
       "requires_root": false
+    },
+    {
+      "name": "SuperTuxKart",
+      "package_name": "supertuxkart",
+      "url": "https://github.com/supertuxkart/stk-code",
+      "category": "Games",
+      "requires_root": false
     }
   ]
 }

@@ -96,10 +96,10 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
                         score += 80;
                     }
 
-                    if file_stem == "icon" || file_stem == "logo" || file_stem == "app" || file_stem == "main" || file_stem == "code" || file_stem == "default" {
-                        score += 40;
-                    } else if file_stem.contains("icon") || file_stem.contains("logo") || file_stem.contains("default") {
-                        score += 10;
+                    if file_stem == "icon" || file_stem == "logo" || file_stem == "app" || file_stem == "main" || file_stem == "code" || file_stem == "default" || file_stem == "favicon" || file_stem == "launcher" || file_stem == "brand" {
+                        score += 80;
+                    } else if file_stem.contains("icon") || file_stem.contains("logo") || file_stem.contains("default") || file_stem.contains("main") || file_stem.contains("app") {
+                        score += 20;
                     }
 
                     // Boost based on size if numbers are present (e.g. default128.png)

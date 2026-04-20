@@ -33,12 +33,9 @@ pub enum Commands {
     #[command(name = "install", short_flag = 'i')]
     Install {
         source: String,
-        #[arg(default_value = "")]
-        app_name: String,
-        #[arg(default_value = "No")]
-        use_root: String,
-        #[arg(default_value = "Utility")]
-        category: String,
+        app_name: Option<String>,
+        use_root: Option<String>,
+        category: Option<String>,
     },
     
     /// Update installed applications from repositories
@@ -58,8 +55,16 @@ pub enum Commands {
 
 #[derive(Subcommand, Debug)]
 pub enum RepoCommands {
-    /// List all repositories
+    /// List all repositories and their package counts
     List,
+    /// List all packages available in the repositories
+    #[command(name = "pkg-list")]
+    PkgList,
+    /// Search for packages in the repositories
+    #[command(name = "pkg-search")]
+    PkgSearch {
+        query: String,
+    },
     /// Fetch latest default and community repositories from GitHub
     Sync,
     /// Add a third-party repository

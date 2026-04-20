@@ -8,6 +8,23 @@ use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+fn find_desktop_files_with_target(config: &Config, target_str: &str) -> Vec<PathBuf> {
+    let mut found = Vec::new();
+    if let Ok(entries) = fs::read_dir(&config.apps_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("desktop") {
+                if let Ok(content) = fs::read_to_string(&path) {
+                    if content.contains(target_str) {
+                        found.push(path);
+                    }
+                }
+            }
+        }
+    }
+    found
+}
+
 pub fn list_cli(config: &Config) {
     if let Ok(entries) = fs::read_dir(&config.install_dir) {
         let mut apps = Vec::new();
@@ -32,21 +49,7 @@ pub fn list_cli(config: &Config) {
 
 pub fn update_desktop_file(config: &Config, app_folder: &str, new_val: &str, field: &str, silent: bool) {
     let target_str = config.install_dir.join(app_folder).to_string_lossy().to_string();
-    let mut found_path = None;
-
-    if let Ok(entries) = fs::read_dir(&config.apps_dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.extension().and_then(|s| s.to_str()) == Some("desktop") {
-                if let Ok(content) = fs::read_to_string(&path) {
-                    if content.contains(&target_str) {
-                        found_path = Some(path);
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    let found_path = find_desktop_files_with_target(config, &target_str).into_iter().next();
 
     if let Some(desktop_file) = found_path {
         let mut final_val = new_val.to_string();
@@ -85,21 +88,7 @@ pub fn update_exec_modifiers(
     silent: bool,
 ) {
     let target_str = config.install_dir.join(app_folder).to_string_lossy().to_string();
-    let mut found_path = None;
-
-    if let Ok(entries) = fs::read_dir(&config.apps_dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.extension().and_then(|s| s.to_str()) == Some("desktop") {
-                if let Ok(content) = fs::read_to_string(&path) {
-                    if content.contains(&target_str) {
-                        found_path = Some(path);
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    let found_path = find_desktop_files_with_target(config, &target_str).into_iter().next();
 
     if let Some(desktop_file) = found_path {
         let mut current_exec = String::new();
@@ -164,6 +153,7 @@ pub fn update_exec_modifiers(
 pub fn extract_and_scan(
     config: &Config,
     tarball: &Path,
+    target_folder_name: Option<&str>,
     silent: bool,
 ) -> anyhow::Result<Option<(PathBuf, String, Vec<PathBuf>)>> {
     if !tarball.exists() || !tarball.is_file() {
@@ -172,10 +162,12 @@ pub fn extract_and_scan(
     }
 
     let file_name = tarball.file_name().unwrap_or_default().to_string_lossy();
-    let raw_name_folder = file_name
-        .replace(".tar.gz", "")
-        .replace(".tar.xz", "")
-        .replace(".tar.bz2", "");
+    let raw_name_folder = target_folder_name.map(|s| s.to_string()).unwrap_or_else(|| {
+        file_name
+            .replace(".tar.gz", "")
+            .replace(".tar.xz", "")
+            .replace(".tar.bz2", "")
+    });
 
     let target = config.install_dir.join(&raw_name_folder);
 
@@ -210,7 +202,7 @@ pub fn finalize_installation(
     let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
     let icon_path = find_icon(target, app_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
-    let sanitized_name = app_name.to_lowercase().replace(" ", "-");
+    let sanitized_name = target.file_name().unwrap_or_default().to_string_lossy().to_string();
     let bin_dest = config.bin_dir.join(&sanitized_name);
     if bin_dest.exists() {
         let _ = fs::remove_file(&bin_dest);
@@ -263,12 +255,18 @@ pub fn install_app(
     let mut actual_tarball = PathBuf::from(source);
     let mut downloaded = false;
     let mut repo_name_opt: Option<String> = None;
+    let mut repo_package_name_opt: Option<String> = None;
 
     if !actual_tarball.exists() {
         // Try to match it to a repository
         let all_repos = crate::repo::get_all_repos(config);
         if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == source.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == source.to_lowercase())) {
             repo_name_opt = Some(repo_source.repo.name.clone());
+            if !repo_source.repo.package_name.is_empty() {
+                repo_package_name_opt = Some(repo_source.repo.package_name.clone());
+            } else {
+                repo_package_name_opt = Some(repo_source.repo.name.clone());
+            }
             let url = &repo_source.repo.url;
             if crate::download::is_supported_git_url(url) {
                 info_msg(&format!("Fetching releases for {}...", repo_source.repo.name));
@@ -333,7 +331,7 @@ pub fn install_app(
         }
     }
 
-    if let Some((target, raw_name_folder, executables)) = extract_and_scan(config, &actual_tarball, false)? {
+    if let Some((target, raw_name_folder, executables)) = extract_and_scan(config, &actual_tarball, repo_package_name_opt.as_deref(), false)? {
         let exec_path = if executables.is_empty() {
             error_msg("No executable binary found.");
             return Ok(());
@@ -441,21 +439,12 @@ pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -
     if !silent { info_msg("Searching for associated files..."); }
     // Locate and iterate through .desktop files containing this path
     let target_str = target_path.to_string_lossy().to_string();
-    if let Ok(entries) = fs::read_dir(&config.apps_dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.extension().and_then(|s| s.to_str()) == Some("desktop") {
-                if let Ok(content) = fs::read_to_string(&path) {
-                    if content.contains(&target_str) {
-                        let app_name_from_file = path.file_stem().unwrap_or_default();
-                        let associated_bin = config.bin_dir.join(app_name_from_file);
-                        let _ = fs::remove_file(&associated_bin);
-                        let _ = fs::remove_file(&path);
-                        if !silent { success_msg(&format!("Removed shortcut: {}", path.file_name().unwrap_or_default().to_string_lossy())); }
-                    }
-                }
-            }
-        }
+    for path in find_desktop_files_with_target(config, &target_str) {
+        let app_name_from_file = path.file_stem().unwrap_or_default();
+        let associated_bin = config.bin_dir.join(app_name_from_file);
+        let _ = fs::remove_file(&associated_bin);
+        let _ = fs::remove_file(&path);
+        if !silent { success_msg(&format!("Removed shortcut: {}", path.file_name().unwrap_or_default().to_string_lossy())); }
     }
 
     let _ = fs::remove_dir_all(&target_path);
@@ -481,24 +470,25 @@ pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -
 pub fn update_tm(config: &Config) -> anyhow::Result<()> {
     info_msg("Looking for the latest stable version on GitHub Releases...");
 
-    let curl_output = Command::new("curl")
-        .args(["-s", "https://api.github.com/repos/ezequielgk/Tarball-Manager/releases/latest"])
-        .output()?;
+    let client = reqwest::blocking::Client::builder()
+        .user_agent("Tarball-Manager/1.0")
+        .build()?;
 
-    if !curl_output.status.success() {
+    let response = client.get("https://api.github.com/repos/ezequielgk/Tarball-Manager/releases/latest").send();
+
+    if response.is_err() || !response.as_ref().unwrap().status().is_success() {
         error_msg("Error connecting to GitHub API.");
         return Ok(());
     }
 
-    let stdout = String::from_utf8_lossy(&curl_output.stdout);
+    let release_data: Result<crate::download::Release, _> = response.unwrap().json();
     let mut latest_url = String::new();
-    for line in stdout.lines() {
-        if line.contains("browser_download_url") && line.contains("/tm\"") {
-            if let Some(start) = line.find("https://") {
-                if let Some(end) = line[start..].find('"') {
-                    latest_url = line[start..start + end].to_string();
-                    break;
-                }
+
+    if let Ok(release) = release_data {
+        for asset in release.assets {
+            if asset.browser_download_url.ends_with("/tm") {
+                latest_url = asset.browser_download_url;
+                break;
             }
         }
     }
@@ -509,33 +499,30 @@ pub fn update_tm(config: &Config) -> anyhow::Result<()> {
     }
 
     let bin_path = config.bin_dir.join("tm");
-    let temp_bin = config.bin_dir.join("tm.tmp");
+    let temp_dir = std::env::temp_dir().join("tm_update_temp");
+    std::fs::create_dir_all(&temp_dir)?;
 
     info_msg(&format!("Downloading from: {}", latest_url));
 
-    let download_status = Command::new("curl")
-        .args(["-sSL", &latest_url, "-o"])
-        .arg(&temp_bin)
-        .status()?;
+    match crate::download::download_file(&latest_url, &temp_dir) {
+        Ok(downloaded_file) => {
+            use std::os::unix::fs::PermissionsExt;
+            if let Ok(metadata) = fs::metadata(&downloaded_file) {
+                let mut perms = metadata.permissions();
+                perms.set_mode(0o755);
+                let _ = fs::set_permissions(&downloaded_file, perms);
+            }
 
-    if !download_status.success() {
-        error_msg("Could not download the binary from GitHub.");
-        let _ = fs::remove_file(&temp_bin);
-        return Ok(());
-    }
-
-    use std::os::unix::fs::PermissionsExt;
-    if let Ok(metadata) = fs::metadata(&temp_bin) {
-        let mut perms = metadata.permissions();
-        perms.set_mode(0o755);
-        let _ = fs::set_permissions(&temp_bin, perms);
-    }
-
-    if fs::rename(&temp_bin, &bin_path).is_ok() {
-        success_msg("tm successfully updated!");
-    } else {
-        error_msg("Error replacing the current binary.");
-        let _ = fs::remove_file(&temp_bin);
+            if fs::rename(&downloaded_file, &bin_path).is_ok() {
+                success_msg("tm successfully updated!");
+            } else {
+                error_msg("Error replacing the current binary.");
+                let _ = fs::remove_file(&downloaded_file);
+            }
+        }
+        Err(_) => {
+            error_msg("Could not download the binary from GitHub.");
+        }
     }
 
     Ok(())

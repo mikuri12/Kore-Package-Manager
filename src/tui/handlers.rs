@@ -226,7 +226,7 @@ pub fn handle_key_events<B: Backend>(
                                         f.render_widget(p, area);
                                     });
 
-                                    if let Ok(Some((target, _raw, executables))) = crate::core::extract_and_scan(config, &app.pending_tarball, true) {
+                                    if let Ok(Some((target, _raw, executables))) = crate::core::extract_and_scan(config, &app.pending_tarball, None, true) {
                                         app.pending_target = target;
                                         app.pending_executables = executables;
                                         
