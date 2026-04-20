@@ -76,6 +76,20 @@
       "url": "https://github.com/localsend/localsend",
       "category": "Network",
       "requires_root": false
-    }
+    },
+    {
+      "name": "Prism Launcher",
+      "package_name": "prism-launcher",
+      "url": "https://github.com/PrismLauncher/PrismLauncher",
+      "category": "Games",
+      "requires_root": false
+    },
+    {
+      "name": "Pinecone Launcher",
+      "package_name": "pinecone-launcher",
+      "url": "https://github.com/ElyPrismLauncher/Launcher",
+      "category": "Games",
+      "requires_root": false
+    },
   ]
 }
