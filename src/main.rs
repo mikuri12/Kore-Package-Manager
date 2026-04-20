@@ -1,10 +1,10 @@
 mod cli;
-mod config;
-mod core;
-pub mod download;
-pub mod repo;
 mod tui;
-mod utils;
+
+use tm::config;
+use tm::core;
+use tm::repo;
+use tm::utils;
 
 use clap::Parser;
 use cli::{Cli, Commands};
@@ -17,7 +17,7 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     
     let is_cli_mode = cli.command.is_some() || cli.update_bin;
-    crate::utils::IS_CLI.store(is_cli_mode, std::sync::atomic::Ordering::Relaxed);
+    utils::IS_CLI.store(is_cli_mode, std::sync::atomic::Ordering::Relaxed);
     
     let _guard = config.setup_logging()?;
 

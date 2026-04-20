@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use ratatui::widgets::ListState;
-use crate::config::Config;
+use tm::config::Config;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum Route {
@@ -68,15 +68,15 @@ pub struct App {
     pub pending_selected_exec: PathBuf,
     pub pending_icon_target: String,
 
-    pub repos: Vec<crate::repo::RepoSource>,
-    pub filtered_repos: Vec<crate::repo::RepoSource>,
+    pub repos: Vec<tm::repo::RepoSource>,
+    pub filtered_repos: Vec<tm::repo::RepoSource>,
     pub pending_repo_name: String,
     pub pending_repo_package_name: String,
     pub pending_repo_url: String,
     pub pending_repo_category: String,
     pub pending_repo_root: bool,
     pub repo_category_state: ListState,
-    pub viewing_repo_type: crate::repo::RepoType,
+    pub viewing_repo_type: tm::repo::RepoType,
 }
 
 impl App {
@@ -115,7 +115,7 @@ impl App {
             pending_repo_category: String::new(),
             pending_repo_root: false,
             repo_category_state: ListState::default(),
-            viewing_repo_type: crate::repo::RepoType::Official,
+            viewing_repo_type: tm::repo::RepoType::Official,
         }
     }
 
@@ -165,7 +165,7 @@ impl App {
     }
 
     pub fn load_repos(&mut self, config: &Config) {
-        self.repos = crate::repo::get_all_repos(config);
+        self.repos = tm::repo::get_all_repos(config);
         self.input.clear();
         self.filter_repos();
     }

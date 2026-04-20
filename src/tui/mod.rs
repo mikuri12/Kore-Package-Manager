@@ -1,6 +1,7 @@
 pub mod state;
 pub mod ui;
 pub mod handlers;
+pub mod components;
 
 use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -11,7 +12,7 @@ use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 use std::path::PathBuf;
 
-use crate::config::Config;
+use tm::config::Config;
 use state::App;
 
 pub fn main_menu(config: &Config) -> anyhow::Result<()> {

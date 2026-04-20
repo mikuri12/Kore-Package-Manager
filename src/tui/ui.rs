@@ -8,8 +8,8 @@ use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
 
-use crate::config::Config;
-use crate::utils::find_executables;
+use tm::config::Config;
+use tm::utils::find_executables;
 use super::state::{App, Route, PopupType};
 
 pub fn calculate_size(path: &Path) -> u64 {
@@ -274,9 +274,9 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                 .split(chunks[0]);
 
             let title = match app.viewing_repo_type {
-                crate::repo::RepoType::Official => " 󰒋 Official Repository ",
-                crate::repo::RepoType::Community => " 󰃇 Community Repositories ",
-                crate::repo::RepoType::User => " 󰈔 My Custom Repositories ",
+                tm::repo::RepoType::Official => " 󰒋 Official Repository ",
+                tm::repo::RepoType::Community => " 󰃇 Community Repositories ",
+                tm::repo::RepoType::User => " 󰈔 My Custom Repositories ",
             };
 
             let items: Vec<ListItem> = app
@@ -307,20 +307,20 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                     "--- REPOSITORY INFO ---\nName: {}\nType: {}\nURL: {}\nCategory: {}\nRequires Root: {}\n\nPress Enter for options\n{}",
                     r.repo.name,
                     match r.repo_type {
-                        crate::repo::RepoType::Official => "Official",
-                        crate::repo::RepoType::Community => "Community",
-                        crate::repo::RepoType::User => "Custom",
+                        tm::repo::RepoType::Official => "Official",
+                        tm::repo::RepoType::Community => "Community",
+                        tm::repo::RepoType::User => "Custom",
                     },
                     r.repo.url,
                     r.repo.category,
                     if r.repo.requires_root { "Yes" } else { "No" },
-                    if app.viewing_repo_type == crate::repo::RepoType::User { "Press 'A' to add new custom repository" } else { "" }
+                    if app.viewing_repo_type == tm::repo::RepoType::User { "Press 'A' to add new custom repository" } else { "" }
                 )
             } else {
                 match app.viewing_repo_type {
-                    crate::repo::RepoType::Official => "No selection\n\nOfficial repositories are managed by the application.".to_string(),
-                    crate::repo::RepoType::Community => "No selection\n\nCommunity repositories are managed by the community.".to_string(),
-                    crate::repo::RepoType::User => "No selection\n\nPress 'A' to add new custom repository".to_string(),
+                    tm::repo::RepoType::Official => "No selection\n\nOfficial repositories are managed by the application.".to_string(),
+                    tm::repo::RepoType::Community => "No selection\n\nCommunity repositories are managed by the community.".to_string(),
+                    tm::repo::RepoType::User => "No selection\n\nPress 'A' to add new custom repository".to_string(),
                 }
             };
 

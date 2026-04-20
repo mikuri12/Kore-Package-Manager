@@ -155,7 +155,7 @@ pub fn extract_and_scan(
     tarball: &Path,
     target_folder_name: Option<&str>,
     silent: bool,
-) -> anyhow::Result<Option<(PathBuf, String, Vec<PathBuf>)>> {
+) -> Result<Option<(PathBuf, String, Vec<PathBuf>)>, crate::error::TmError> {
     if !tarball.exists() || !tarball.is_file() {
         if !silent { error_msg(&format!("The file '{}' does not exist.", tarball.display())); }
         return Ok(None);
@@ -235,7 +235,7 @@ pub fn finalize_installation(
     use_root: bool,
     category: &str,
     silent: bool,
-) -> anyhow::Result<()> {
+) -> Result<(), crate::error::TmError> {
     let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
     let icon_path = find_icon(target, app_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
@@ -288,15 +288,17 @@ pub fn install_app(
     use_root_opt: Option<&str>,
     category_opt: Option<&str>,
     is_cli: bool,
-) -> anyhow::Result<()> {
+) -> Result<(), crate::error::TmError> {
     let mut actual_tarball = PathBuf::from(source);
     let mut downloaded = false;
     let mut repo_name_opt: Option<String> = None;
     let mut repo_package_name_opt: Option<String> = None;
+    let mut repo_category_opt: Option<String> = None;
+    let mut repo_requires_root_opt: Option<bool> = None;
 
     if !actual_tarball.exists() {
         // Try to match it to a repository
-        let all_repos = crate::repo::get_all_repos(config);
+        let all_repos = crate::core::repo::get_all_repos(config);
         if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == source.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == source.to_lowercase())) {
             repo_name_opt = Some(repo_source.repo.name.clone());
             if !repo_source.repo.package_name.is_empty() {
@@ -304,10 +306,13 @@ pub fn install_app(
             } else {
                 repo_package_name_opt = Some(repo_source.repo.name.clone());
             }
+            repo_category_opt = Some(repo_source.repo.category.clone());
+            repo_requires_root_opt = Some(repo_source.repo.requires_root);
+
             let url = &repo_source.repo.url;
-            if crate::download::is_supported_git_url(url) {
+            if crate::core::download::is_supported_git_url(url) {
                 info_msg(&format!("Fetching releases for {}...", repo_source.repo.name));
-                        match crate::download::get_latest_release_assets(url) {
+                        match crate::core::download::get_latest_release_assets(url) {
                             Ok(assets) => {
                                 if assets.is_empty() {
                                     error_msg("No suitable tarball assets found in the latest release.");
@@ -325,7 +330,7 @@ pub fn install_app(
                                     std::fs::create_dir_all(&tmp_dir)?;
                                     
                                     info_msg(&format!("Downloading {}...", selected_asset.name));
-                                    match crate::download::download_file(&selected_asset.browser_download_url, &tmp_dir) {
+                                    match crate::core::download::download_file(&selected_asset.browser_download_url, &tmp_dir) {
                                         Ok(path) => {
                                             actual_tarball = path;
                                             downloaded = true;
@@ -347,7 +352,7 @@ pub fn install_app(
                 std::fs::create_dir_all(&tmp_dir)?;
                 
                 info_msg(&format!("Downloading from {}...", url));
-                match crate::download::download_file(url, &tmp_dir) {
+                match crate::core::download::download_file(url, &tmp_dir) {
                     Ok(path) => {
                         actual_tarball = path;
                         downloaded = true;
@@ -390,27 +395,14 @@ pub fn install_app(
                         }
                     });
 
-                let use_root = if downloaded && use_root_opt.is_none() {
-                    let all_repos = crate::repo::get_all_repos(config);
-                    all_repos.iter()
-                        .find(|r| r.repo.name.to_lowercase() == source.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == source.to_lowercase()))
-                        .map(|r| r.repo.requires_root)
-                        .unwrap_or(false)
-                } else {
-                    use_root_opt
-                        .map(|s| s.to_lowercase() == "si" || s.to_lowercase() == "yes" || s.to_lowercase() == "s")
-                        .unwrap_or(false)
-                };
+                let use_root = use_root_opt
+                    .map(|s| s.to_lowercase() == "si" || s.to_lowercase() == "yes" || s.to_lowercase() == "s")
+                    .unwrap_or_else(|| repo_requires_root_opt.unwrap_or(false));
 
-                let category = if downloaded && category_opt.is_none() {
-                    let all_repos = crate::repo::get_all_repos(config);
-                    all_repos.iter()
-                        .find(|r| r.repo.name.to_lowercase() == source.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == source.to_lowercase()))
-                        .map(|r| r.repo.category.clone())
-                        .unwrap_or_else(|| "Utility".to_string())
-                } else {
-                    category_opt.unwrap_or("Utility").to_string()
-                };
+                let category = category_opt
+                    .map(|s| s.to_string())
+                    .or(repo_category_opt)
+                    .unwrap_or_else(|| "Utility".to_string());
                 
                 finalize_installation(config, &target, &exec_path, &app_name, use_root, &category, false)?;
                 if !is_cli {
@@ -428,7 +420,7 @@ pub fn install_app(
     Ok(())
 }
 
-pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -> anyhow::Result<()> {
+pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -> Result<(), crate::error::TmError> {
     let mut target_path = config.install_dir.join(app_name);
 
     if !target_path.exists() {
@@ -501,7 +493,7 @@ pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -
     Ok(())
 }
 
-pub fn update_tm(config: &Config) -> anyhow::Result<()> {
+pub fn update_tm(config: &Config) -> Result<(), crate::error::TmError> {
     info_msg("Looking for the latest stable version on GitHub Releases...");
 
     let client = reqwest::blocking::Client::builder()
@@ -515,7 +507,7 @@ pub fn update_tm(config: &Config) -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let release_data: Result<crate::download::Release, _> = response.unwrap().json();
+    let release_data: Result<crate::core::download::Release, _> = response.unwrap().json();
     let mut latest_url = String::new();
 
     if let Ok(release) = release_data {
@@ -538,7 +530,7 @@ pub fn update_tm(config: &Config) -> anyhow::Result<()> {
 
     info_msg(&format!("Downloading from: {}", latest_url));
 
-    match crate::download::download_file(&latest_url, &temp_dir) {
+    match crate::core::download::download_file(&latest_url, &temp_dir) {
         Ok(downloaded_file) => {
             use std::os::unix::fs::PermissionsExt;
             if let Ok(metadata) = fs::metadata(&downloaded_file) {

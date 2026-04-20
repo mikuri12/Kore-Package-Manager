@@ -1,7 +1,7 @@
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{backend::Backend, Terminal};
-use crate::config::Config;
-use crate::core::{remove_app, update_desktop_file};
+use tm::config::Config;
+use tm::core::{remove_app, update_desktop_file};
 use super::state::{App, Route, PopupType};
 use super::ui::centered_rect;
 use ratatui::widgets::{Block, BorderType, Borders, Clear, Paragraph};
@@ -27,12 +27,12 @@ pub fn handle_key_events<B: Backend>(
                                 if selected_action == 0 {
                                     app.open_popup_input(PopupType::NameInput, "");
                                 } else if selected_action == 1 {
-                                    app.open_popup_list(PopupType::CategorySelect, crate::core::get_all_categories(config));
+                                    app.open_popup_list(PopupType::CategorySelect, tm::core::get_all_categories(config));
                                 } else if selected_action == 2 {
                                     if let Some(idx) = app.list_state.selected() {
                                         let selected_app = app.filtered[idx].clone();
                                         let target = config.install_dir.join(&selected_app);
-                                        let executables = crate::utils::find_executables(&target, 3);
+                                        let executables = tm::utils::find_executables(&target, 3);
                                         app.pending_target = target;
                                         app.pending_executables = executables.clone();
                                         if executables.is_empty() {
@@ -118,7 +118,7 @@ pub fn handle_key_events<B: Backend>(
                                             app.open_popup_info(&format!("Error creating symlink: {}", e));
                                         } else {
                                             let final_exec = bin_dest.to_string_lossy().to_string();
-                                            crate::core::update_desktop_file(config, &selected_app, &final_exec, "Exec", true);
+                                            tm::core::update_desktop_file(config, &selected_app, &final_exec, "Exec", true);
                                             app.cached_preview = None; // Reset preview
                                             app.open_popup_info("Binary successfully updated.");
                                         }
@@ -137,7 +137,7 @@ pub fn handle_key_events<B: Backend>(
                                 if let Some(ridx) = app.popup_state.selected() {
                                     if let Some(idx) = app.list_state.selected() {
                                         let selected_app = app.filtered[idx].clone();
-                                        crate::core::update_exec_modifiers(config, &selected_app, Some(ridx == 1), None, true);
+                                        tm::core::update_exec_modifiers(config, &selected_app, Some(ridx == 1), None, true);
                                         app.open_popup_info("Root requirement updated.");
                                     }
                                 } else {
@@ -153,7 +153,7 @@ pub fn handle_key_events<B: Backend>(
                             KeyCode::Enter => {
                                 if let Some(idx) = app.list_state.selected() {
                                     let selected_app = app.filtered[idx].clone();
-                                    crate::core::update_exec_modifiers(config, &selected_app, None, Some(app.popup_input.trim().to_string()), true);
+                                    tm::core::update_exec_modifiers(config, &selected_app, None, Some(app.popup_input.trim().to_string()), true);
                                     app.open_popup_info("Environment variables updated.");
                                 } else {
                                     app.popup_type = PopupType::None;
@@ -204,7 +204,7 @@ pub fn handle_key_events<B: Backend>(
                             KeyCode::Down => { app.next(); }
                             KeyCode::Enter => {
                                 app.pending_use_root = app.popup_state.selected().unwrap_or(0) == 1;
-                                app.open_popup_list(PopupType::InstallCategorySelect, crate::core::get_all_categories(config));
+                                app.open_popup_list(PopupType::InstallCategorySelect, tm::core::get_all_categories(config));
                             }
                             _ => {}
                         },
@@ -226,7 +226,7 @@ pub fn handle_key_events<B: Backend>(
                                         f.render_widget(p, area);
                                     });
 
-                                    if let Ok(Some((target, _raw, executables))) = crate::core::extract_and_scan(config, &app.pending_tarball, None, true) {
+                                    if let Ok(Some((target, _raw, executables))) = tm::core::extract_and_scan(config, &app.pending_tarball, None, true) {
                                         app.pending_target = target;
                                         app.pending_executables = executables;
                                         
@@ -234,7 +234,7 @@ pub fn handle_key_events<B: Backend>(
                                             app.open_popup_info("No executable binary found in tarball.");
                                         } else if app.pending_executables.len() == 1 {
                                             app.pending_selected_exec = app.pending_executables[0].clone();
-                                            let _ = crate::core::finalize_installation(config, &app.pending_target, &app.pending_selected_exec, &app.pending_app_name, app.pending_use_root, &app.pending_category, true);
+                                            let _ = tm::core::finalize_installation(config, &app.pending_target, &app.pending_selected_exec, &app.pending_app_name, app.pending_use_root, &app.pending_category, true);
                                             app.open_popup_info(&format!("Installation completed for: {}", app.pending_app_name));
                                         } else {
                                             let choices: Vec<String> = app.pending_executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
@@ -256,7 +256,7 @@ pub fn handle_key_events<B: Backend>(
                             KeyCode::Enter => {
                                 if let Some(bidx) = app.popup_state.selected() {
                                     app.pending_selected_exec = app.pending_executables[bidx].clone();
-                                    let _ = crate::core::finalize_installation(config, &app.pending_target, &app.pending_selected_exec, &app.pending_app_name, app.pending_use_root, &app.pending_category, true);
+                                    let _ = tm::core::finalize_installation(config, &app.pending_target, &app.pending_selected_exec, &app.pending_app_name, app.pending_use_root, &app.pending_category, true);
                                     app.open_popup_info(&format!("Installation completed for: {}", app.pending_app_name));
                                 } else {
                                     app.popup_type = PopupType::None;
@@ -283,7 +283,7 @@ pub fn handle_key_events<B: Backend>(
                                 if cidx == 0 {
                                     if let Some(idx) = app.list_state.selected() {
                                         if let Some(repo) = app.filtered_repos.get(idx) {
-                                            let _ = crate::repo::remove_user_repo(config, &repo.repo.name);
+                                            let _ = tm::repo::remove_user_repo(config, &repo.repo.name);
                                             app.open_popup_info("Repository successfully removed.");
                                             app.load_repos(config);
                                         }
@@ -356,7 +356,7 @@ pub fn handle_key_events<B: Backend>(
                             KeyCode::Down => { app.next(); }
                             KeyCode::Enter => {
                                 app.pending_repo_root = app.popup_state.selected().unwrap_or(0) == 1;
-                                match crate::repo::add_user_repo(
+                                match tm::repo::add_user_repo(
                                     config, 
                                     &app.pending_repo_name, 
                                     &app.pending_repo_package_name,
@@ -548,9 +548,9 @@ pub fn handle_key_events<B: Backend>(
                         KeyCode::Enter => {
                             let s = app.repo_category_state.selected().unwrap_or(0);
                             app.viewing_repo_type = match s {
-                                0 => crate::repo::RepoType::Official,
-                                1 => crate::repo::RepoType::Community,
-                                _ => crate::repo::RepoType::User,
+                                0 => tm::repo::RepoType::Official,
+                                1 => tm::repo::RepoType::Community,
+                                _ => tm::repo::RepoType::User,
                             };
                             app.route = Route::ManageRepos;
                             app.load_repos(config);
@@ -569,7 +569,7 @@ pub fn handle_key_events<B: Backend>(
                             app.filter_repos();
                         }
                         KeyCode::Char('A') | KeyCode::Char('a') if app.input.is_empty() => {
-                            if app.viewing_repo_type != crate::repo::RepoType::User {
+                            if app.viewing_repo_type != tm::repo::RepoType::User {
                                 app.open_popup_info("Only Custom Repositories can be modified. Go to My Custom Repositories to add your own.");
                             } else {
                                 app.open_popup_input(PopupType::RepoNameInput, "");
@@ -582,7 +582,7 @@ pub fn handle_key_events<B: Backend>(
                         KeyCode::Enter => {
                             if let Some(idx) = app.list_state.selected() {
                                 if let Some(repo) = app.filtered_repos.get(idx) {
-                                    if repo.repo_type == crate::repo::RepoType::User {
+                                    if repo.repo_type == tm::repo::RepoType::User {
                                         app.open_popup_list(PopupType::RepoActionSelect, vec![
                                             "󰆴 Remove Custom Repo".to_string(),
                                             "󰈆 Cancel".to_string()

@@ -69,7 +69,7 @@ pub fn get_user_repos(config: &Config) -> Vec<Repository> {
     Vec::new()
 }
 
-pub fn save_user_repos(config: &Config, repos: &[Repository]) -> anyhow::Result<()> {
+pub fn save_user_repos(config: &Config, repos: &[Repository]) -> Result<(), crate::error::TmError> {
     let list = RepositoryList {
         repositories: repos.to_vec(),
     };
@@ -99,11 +99,11 @@ pub fn add_user_repo(
     url: &str,
     category: &str,
     requires_root: bool,
-) -> anyhow::Result<()> {
+) -> Result<(), crate::error::TmError> {
     let mut repos = get_user_repos(config);
     // Check if it already exists
     if repos.iter().any(|r| r.name.to_lowercase() == name.to_lowercase()) {
-        return Err(anyhow::anyhow!("A repository with that name already exists"));
+        return Err(crate::error::TmError::Generic("A repository with that name already exists".to_string()));
     }
     repos.push(Repository {
         name: name.to_string(),
@@ -116,7 +116,7 @@ pub fn add_user_repo(
     Ok(())
 }
 
-pub fn remove_user_repo(config: &Config, name: &str) -> anyhow::Result<bool> {
+pub fn remove_user_repo(config: &Config, name: &str) -> Result<bool, crate::error::TmError> {
     let mut repos = get_user_repos(config);
     let original_len = repos.len();
     repos.retain(|r| r.name.to_lowercase() != name.to_lowercase());
@@ -129,7 +129,7 @@ pub fn remove_user_repo(config: &Config, name: &str) -> anyhow::Result<bool> {
     }
 }
 
-pub fn sync_repos(config: &Config) -> anyhow::Result<()> {
+pub fn sync_repos(config: &Config) -> Result<(), crate::error::TmError> {
     let client = reqwest::blocking::Client::builder()
         .user_agent("Tarball-Manager/1.0")
         .build()?;
@@ -144,7 +144,7 @@ pub fn sync_repos(config: &Config) -> anyhow::Result<()> {
         let _: RepositoryList = serde_json::from_str(&text)?;
         std::fs::write(&config.official_repos_file, text)?;
     } else {
-        return Err(anyhow::anyhow!("Failed to download official repositories"));
+        return Err(crate::error::TmError::Generic("Failed to download official repositories".to_string()));
     }
 
     let com_resp = client.get(community_url).send()?;
@@ -154,7 +154,7 @@ pub fn sync_repos(config: &Config) -> anyhow::Result<()> {
         let _: RepositoryList = serde_json::from_str(&text)?;
         std::fs::write(&config.community_repos_file, text)?;
     } else {
-        return Err(anyhow::anyhow!("Failed to download community repositories"));
+        return Err(crate::error::TmError::Generic("Failed to download community repositories".to_string()));
     }
 
     Ok(())
