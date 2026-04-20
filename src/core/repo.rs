@@ -134,8 +134,8 @@ pub fn sync_repos(config: &Config) -> Result<(), crate::error::TmError> {
         .user_agent("Tarball-Manager/1.0")
         .build()?;
 
-    let official_url = "https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/default_repos.json";
-    let community_url = "https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/community_repos.json";
+    let official_url = "https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/assets/default_repos.json";
+    let community_url = "https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/assets/community_repos.json";
 
     let off_resp = client.get(official_url).send()?;
     if off_resp.status().is_success() {

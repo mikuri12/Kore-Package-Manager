@@ -35,6 +35,46 @@ pub fn main_menu(config: &Config) -> anyhow::Result<()> {
             ui::draw(f, &mut app, config);
         })?;
 
+        if let Some(rx) = &app.install_rx {
+            while let Ok(msg) = rx.try_recv() {
+                match msg {
+                    tm::core::install::InstallMessage::Progress(status, prog) => {
+                        app.install_status = status;
+                        app.install_progress = prog;
+                        if prog >= 100.0 || prog < 0.0 {
+                            app.install_done = true;
+                        }
+                    }
+                    tm::core::install::InstallMessage::SelectAsset(names, reply_tx) => {
+                        app.popup_type = state::PopupType::InstallAssetSelect;
+                        app.popup_items = names;
+                        app.popup_state.select(Some(0));
+                        app.pending_install_reply = Some(reply_tx);
+                    }
+                    tm::core::install::InstallMessage::SelectBinary(names, reply_tx) => {
+                        app.popup_type = state::PopupType::InstallBinarySelect;
+                        app.popup_items = names;
+                        app.popup_state.select(Some(0));
+                        app.pending_install_reply = Some(reply_tx);
+                    }
+                    tm::core::install::InstallMessage::SelectDesktop(names, reply_tx) => {
+                        app.popup_type = state::PopupType::InstallDesktopSelect;
+                        app.popup_items = names;
+                        app.popup_state.select(Some(0));
+                        app.pending_install_reply = Some(reply_tx);
+                    }
+                }
+            }
+        }
+        
+        if app.install_done {
+            app.install_done = false;
+            app.install_rx = None;
+            app.popup_type = state::PopupType::Information;
+            app.popup_info = format!("Installation Finished!\n\n{}", app.install_status);
+            app.load_apps(config);
+        }
+
         let should_quit = handlers::handle_key_events(&mut terminal, &mut app, config)?;
         if should_quit {
             break;

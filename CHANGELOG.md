@@ -1,3 +1,28 @@
+## [1.4.2] - 2026-04-20
+
+### Características (Features)
+- **Soporte para archivos `.desktop` oficiales:** Ahora `tm` detecta archivos `.desktop` dentro de los archivos comprimidos. El usuario puede elegir usar el oficial del desarrollador, el cual es parcheado dinámicamente para asegurar que los campos `Exec` e `Icon` apunten a las rutas correctas.
+- **Detección Automática de Aplicaciones de Terminal:** Implementación de un escáner de dependencias dinámicas (`ldd`). Si un binario no tiene dependencias gráficas (GTK, Qt, X11, etc.), se marca automáticamente como `Terminal=true` en el acceso directo.
+- **Confirmación de Actualización de `tm`:** El comando `--update-bin` ahora muestra una comparativa de la versión actual frente a la versión encontrada en GitHub y solicita confirmación antes de descargar el nuevo binario.
+
+### Correcciones (Bug Fixes)
+- **Sincronización de Repositorios:** Se corrigieron las URLs de GitHub en el comando `repo sync`, permitiendo que los archivos de configuración se descarguen correctamente desde la carpeta `assets/` del repositorio oficial.
+
+## [1.4.1] - 2026-04-20
+
+### Características y Mejoras de UI (Features & UI Improvements)
+- **Instalaciones Asíncronas (Non-blocking):** Se eliminó por completo el congelamiento y suspensión de la terminal al instalar aplicaciones. Las instalaciones ahora ocurren en un hilo en segundo plano (background thread).
+- **Barra de Progreso Nativa:** Integración de un widget `Gauge` interactivo en la TUI que muestra el porcentaje de descarga y el progreso de extracción en tiempo real para instalaciones tanto locales como desde repositorios.
+- **Arquitectura Bidireccional de Canales (`mpsc`):** Nuevo sistema de mensajería (`InstallMessage`) que permite pausar la instalación para hacerle preguntas al usuario sin romper el renderizado de la terminal.
+- **Selección Interactiva de Tarballs:** Cuando un repositorio de GitHub tiene múltiples archivos (ej. versiones ARM o DEB), la TUI ahora te permite seleccionar cuál descargar mediante un menú emergente fluido.
+- **Selección de Binarios:** Si al extraer un archivo comprimido se detectan múltiples ejecutables, la interfaz abrirá un menú para que elijas cuál debe ser enlazado a tu sistema.
+- **Interfaz más limpia:** El menú "Manage Repositories" se simplificó a "Repositories". Se mejoró el estilo del widget de progreso usando caracteres *Unicode* y un alto contraste fijo para mejor legibilidad.
+
+### Correcciones (Bug Fixes)
+- **Flickering y Desfase Visual Solucionado:** Las funciones internas de extracción y asignación fueron puestas en "Modo Silencioso" durante el uso de la TUI, evitando que impriman texto plano a `stdout` y rompan o desfasen el dibujo de los menús.
+- **Navegación Corregida:** Arreglado el bug donde las teclas de flecha movían la lista de repositorios de fondo en lugar de interactuar con el popup de selección de tarballs.
+- **Cursor de Repositorios:** Se corrigió un detalle visual donde la lista de categorías de repositorio no mostraba ninguna selección por defecto al entrar por primera vez.
+
 ## [1.4.0] - 2026-04-20
 
 ### Correcciones (Bug Fixes)

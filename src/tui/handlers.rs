@@ -3,12 +3,9 @@ use ratatui::{backend::Backend, Terminal};
 use tm::config::Config;
 use tm::core::{remove_app, update_desktop_file};
 use super::state::{App, Route, PopupType};
-use super::ui::centered_rect;
-use ratatui::widgets::{Block, BorderType, Borders, Clear, Paragraph};
-use ratatui::style::{Color, Style};
 
 pub fn handle_key_events<B: Backend>(
-    terminal: &mut Terminal<B>,
+    _terminal: &mut Terminal<B>,
     app: &mut App,
     config: &Config,
 ) -> anyhow::Result<bool> {
@@ -216,51 +213,64 @@ pub fn handle_key_events<B: Backend>(
                                 if let Some(cidx) = app.popup_state.selected() {
                                     app.pending_category = app.popup_items[cidx].clone();
                                     
-                                    app.open_popup_info("Extracting tarball... Please wait.");
-                                    let _ = terminal.draw(|f| { 
-                                        let area = centered_rect(50, 40, f.area());
-                                        f.render_widget(Clear, area);
-                                        let p = Paragraph::new(format!("{}\n\n[ Waiting ]", app.popup_info))
-                                            .block(Block::default().borders(Borders::ALL).border_type(BorderType::Rounded).title(" Information ").border_style(Style::default().fg(Color::Yellow)))
-                                            .wrap(ratatui::widgets::Wrap { trim: true });
-                                        f.render_widget(p, area);
+                                    let (tx, rx) = std::sync::mpsc::channel();
+                                    app.install_rx = Some(rx);
+                                    app.install_status = "Starting local installation...".to_string();
+                                    app.install_progress = 0.0;
+                                    app.install_done = false;
+                                    app.popup_type = PopupType::InstallProgress;
+                                    
+                                    let config_clone = (*config).clone();
+                                    let source = app.pending_tarball.to_string_lossy().to_string();
+                                    let app_name = app.pending_app_name.clone();
+                                    let use_root = if app.pending_use_root { "yes".to_string() } else { "no".to_string() };
+                                    let category = app.pending_category.clone();
+                                    
+                                    std::thread::spawn(move || {
+                                        let _ = tm::core::install_app(
+                                            &config_clone,
+                                            &source,
+                                            Some(&app_name),
+                                            Some(&use_root),
+                                            Some(&category),
+                                            false,
+                                            Some(tx)
+                                        );
                                     });
-
-                                    if let Ok(Some((target, _raw, executables))) = tm::core::extract_and_scan(config, &app.pending_tarball, None, true) {
-                                        app.pending_target = target;
-                                        app.pending_executables = executables;
-                                        
-                                        if app.pending_executables.is_empty() {
-                                            app.open_popup_info("No executable binary found in tarball.");
-                                        } else if app.pending_executables.len() == 1 {
-                                            app.pending_selected_exec = app.pending_executables[0].clone();
-                                            let _ = tm::core::finalize_installation(config, &app.pending_target, &app.pending_selected_exec, &app.pending_app_name, app.pending_use_root, &app.pending_category, true);
-                                            app.open_popup_info(&format!("Installation completed for: {}", app.pending_app_name));
-                                        } else {
-                                            let choices: Vec<String> = app.pending_executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
-                                            app.open_popup_list(PopupType::InstallBinarySelect, choices);
-                                        }
-                                    } else {
-                                        app.open_popup_info("Extraction failed or tarball invalid.");
-                                    }
                                 } else {
                                     app.popup_type = PopupType::None;
                                 }
                             }
                             _ => {}
                         },
-                        PopupType::InstallBinarySelect => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
+                        PopupType::InstallBinarySelect | PopupType::InstallAssetSelect | PopupType::InstallDesktopSelect => match key.code {
+                            KeyCode::Esc => {
+                                if let Some(tx) = app.pending_install_reply.take() {
+                                    if app.popup_type == PopupType::InstallDesktopSelect {
+                                        let _ = tx.send(app.popup_items.len().saturating_sub(1)); // Send 'Skip' on escape
+                                    } else {
+                                        let _ = tx.send(0); // Default to 0 on escape
+                                    }
+                                }
+                                app.popup_type = PopupType::InstallProgress;
+                            }
                             KeyCode::Up => { app.previous(); }
                             KeyCode::Down => { app.next(); }
                             KeyCode::Enter => {
-                                if let Some(bidx) = app.popup_state.selected() {
-                                    app.pending_selected_exec = app.pending_executables[bidx].clone();
-                                    let _ = tm::core::finalize_installation(config, &app.pending_target, &app.pending_selected_exec, &app.pending_app_name, app.pending_use_root, &app.pending_category, true);
-                                    app.open_popup_info(&format!("Installation completed for: {}", app.pending_app_name));
+                                if let Some(idx) = app.popup_state.selected() {
+                                    if let Some(tx) = app.pending_install_reply.take() {
+                                        let _ = tx.send(idx);
+                                    }
                                 } else {
-                                    app.popup_type = PopupType::None;
+                                    if let Some(tx) = app.pending_install_reply.take() {
+                                        if app.popup_type == PopupType::InstallDesktopSelect {
+                                            let _ = tx.send(app.popup_items.len().saturating_sub(1));
+                                        } else {
+                                            let _ = tx.send(0);
+                                        }
+                                    }
                                 }
+                                app.popup_type = PopupType::InstallProgress;
                             }
                             _ => {}
                         },
@@ -279,8 +289,37 @@ pub fn handle_key_events<B: Backend>(
                             KeyCode::Up => { app.previous(); }
                             KeyCode::Down => { app.next(); }
                             KeyCode::Enter => {
-                                let cidx = app.popup_state.selected().unwrap_or(1);
-                                if cidx == 0 {
+                                let cidx = app.popup_state.selected().unwrap_or(0);
+                                if app.popup_items.is_empty() { return Ok(false); }
+                                let action = app.popup_items[cidx].clone();
+                                
+                                if action.contains("Install Application") {
+                                    if let Some(idx) = app.list_state.selected() {
+                                        if let Some(repo) = app.filtered_repos.get(idx) {
+                                            let (tx, rx) = std::sync::mpsc::channel();
+                                            app.install_rx = Some(rx);
+                                            app.install_status = "Starting download...".to_string();
+                                            app.install_progress = 0.0;
+                                            app.install_done = false;
+                                            app.popup_type = PopupType::InstallProgress;
+                                            
+                                            let config_clone = (*config).clone();
+                                            let repo_name = repo.repo.name.clone();
+                                            
+                                            std::thread::spawn(move || {
+                                                let _ = tm::core::install_app(
+                                                    &config_clone,
+                                                    &repo_name,
+                                                    Some(&repo_name),
+                                                    None,
+                                                    None,
+                                                    false,
+                                                    Some(tx)
+                                                );
+                                            });
+                                        }
+                                    }
+                                } else if action.contains("Remove Custom Repo") {
                                     if let Some(idx) = app.list_state.selected() {
                                         if let Some(repo) = app.filtered_repos.get(idx) {
                                             let _ = tm::repo::remove_user_repo(config, &repo.repo.name);
@@ -398,6 +437,7 @@ pub fn handle_key_events<B: Backend>(
                                 }
                                 3 => {
                                     app.route = Route::RepoCategorySelect;
+                                    app.repo_category_state.select(Some(0));
                                 }
                                 _ => { return Ok(true); }
                             }
@@ -584,11 +624,15 @@ pub fn handle_key_events<B: Backend>(
                                 if let Some(repo) = app.filtered_repos.get(idx) {
                                     if repo.repo_type == tm::repo::RepoType::User {
                                         app.open_popup_list(PopupType::RepoActionSelect, vec![
+                                            "󰏫 Install Application".to_string(),
                                             "󰆴 Remove Custom Repo".to_string(),
                                             "󰈆 Cancel".to_string()
                                         ]);
                                     } else {
-                                        app.open_popup_info("Official and Community repositories cannot be modified or removed.");
+                                        app.open_popup_list(PopupType::RepoActionSelect, vec![
+                                            "󰏫 Install Application".to_string(),
+                                            "󰈆 Cancel".to_string()
+                                        ]);
                                     }
                                 }
                             }

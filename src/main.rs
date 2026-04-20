@@ -34,7 +34,7 @@ fn main() -> anyhow::Result<()> {
             core::remove_app(&config, app_name, true, false)?;
         }
         Some(Commands::Install { source, app_name, use_root, category }) => {
-            core::install_app(&config, source, app_name.as_deref(), use_root.as_deref(), category.as_deref(), true)?;
+            core::install_app(&config, source, app_name.as_deref(), use_root.as_deref(), category.as_deref(), true, None)?;
         }
         Some(Commands::Repo { repo_command }) => {
             match repo_command {
@@ -104,7 +104,7 @@ fn main() -> anyhow::Result<()> {
             let all_repos = repo::get_all_repos(&config);
             if let Some(target) = app_name {
                 if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == target.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == target.to_lowercase())) {
-                    let _ = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true);
+                    let _ = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true, None);
                 } else {
                     utils::error_msg(&format!("Application '{}' does not belong to any repository.", target));
                 }
@@ -116,7 +116,7 @@ fn main() -> anyhow::Result<()> {
                             let app = entry.file_name().to_string_lossy().to_string();
                             if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == app.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == app.to_lowercase())) {
                                 utils::info_msg(&format!("Updating {}...", repo_source.repo.name));
-                                let _ = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true);
+                                let _ = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true, None);
                                 updated_any = true;
                             }
                         }

@@ -1,6 +1,7 @@
 use directories::BaseDirs;
 use std::path::PathBuf;
 
+#[derive(Clone)]
 pub struct Config {
     pub install_dir: PathBuf,
     pub bin_dir: PathBuf,

@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::utils::{error_msg, find_executables, find_icon, info_msg, success_msg};
+use crate::utils::{error_msg, find_executables, find_bundled_desktop_files, find_icon, info_msg, success_msg, is_gui_app};
 use dialoguer::{Select, Confirm, Input};
 use std::collections::HashSet;
 use std::fs;
@@ -8,6 +8,12 @@ use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+pub enum InstallMessage {
+    Progress(String, f64),
+    SelectAsset(Vec<String>, std::sync::mpsc::Sender<usize>),
+    SelectBinary(Vec<String>, std::sync::mpsc::Sender<usize>),
+    SelectDesktop(Vec<String>, std::sync::mpsc::Sender<usize>),
+}
 fn find_desktop_files_with_target(config: &Config, target_str: &str) -> Vec<PathBuf> {
     let mut found = Vec::new();
     if let Ok(entries) = fs::read_dir(&config.apps_dir) {
@@ -155,7 +161,7 @@ pub fn extract_and_scan(
     tarball: &Path,
     target_folder_name: Option<&str>,
     silent: bool,
-) -> Result<Option<(PathBuf, String, Vec<PathBuf>)>, crate::error::TmError> {
+) -> Result<Option<(PathBuf, String, Vec<PathBuf>, Vec<PathBuf>)>, crate::error::TmError> {
     if !tarball.exists() || !tarball.is_file() {
         if !silent { error_msg(&format!("The file '{}' does not exist.", tarball.display())); }
         return Ok(None);
@@ -224,7 +230,8 @@ pub fn extract_and_scan(
     }
 
     let executables = find_executables(&target, 3);
-    Ok(Some((target, raw_name_folder, executables)))
+    let desktop_files = find_bundled_desktop_files(&target, 3);
+    Ok(Some((target, raw_name_folder, executables, desktop_files)))
 }
 
 pub fn finalize_installation(
@@ -234,6 +241,7 @@ pub fn finalize_installation(
     app_name: &str,
     use_root: bool,
     category: &str,
+    bundled_desktop: Option<PathBuf>,
     silent: bool,
 ) -> Result<(), crate::error::TmError> {
     let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
@@ -255,21 +263,40 @@ pub fn finalize_installation(
         final_exec = format!("pkexec {}", final_exec);
     }
 
-    let desktop_content = format!(
+    let desktop_content = if let Some(bd_path) = bundled_desktop {
+        let content = fs::read_to_string(bd_path).unwrap_or_default();
+        let mut new_lines = Vec::new();
+        for line in content.lines() {
+            if line.trim_start().starts_with("Exec=") {
+                new_lines.push(format!("Exec={}", final_exec));
+            } else if line.trim_start().starts_with("TryExec=") {
+                new_lines.push(format!("TryExec={}", final_exec));
+            } else if line.trim_start().starts_with("Icon=") {
+                new_lines.push(format!("Icon={}", icon_path));
+            } else {
+                new_lines.push(line.to_string());
+            }
+        }
+        new_lines.join("\n")
+    } else {
+        let is_terminal = !is_gui_app(exec_path);
+        format!(
 r#"[Desktop Entry]
 Name={}
 Exec={}
 Icon={}
 Type=Application
-Terminal=false
+Terminal={}
 Path={}
 Categories={};"#,
-        app_name,
-        final_exec,
-        icon_path,
-        target.display(),
-        category
-    );
+            app_name,
+            final_exec,
+            icon_path,
+            if is_terminal { "true" } else { "false" },
+            target.display(),
+            category
+        )
+    };
 
     let desktop_path = config.apps_dir.join(format!("{}.desktop", sanitized_name));
     fs::write(desktop_path, desktop_content)?;
@@ -288,6 +315,7 @@ pub fn install_app(
     use_root_opt: Option<&str>,
     category_opt: Option<&str>,
     is_cli: bool,
+    tx: Option<std::sync::mpsc::Sender<InstallMessage>>,
 ) -> Result<(), crate::error::TmError> {
     let mut actual_tarball = PathBuf::from(source);
     let mut downloaded = false;
@@ -311,75 +339,143 @@ pub fn install_app(
 
             let url = &repo_source.repo.url;
             if crate::core::download::is_supported_git_url(url) {
-                info_msg(&format!("Fetching releases for {}...", repo_source.repo.name));
+                if is_cli { info_msg(&format!("Fetching releases for {}...", repo_source.repo.name)); }
                         match crate::core::download::get_latest_release_assets(url) {
                             Ok(assets) => {
                                 if assets.is_empty() {
-                                    error_msg("No suitable tarball assets found in the latest release.");
+                                    if is_cli { error_msg("No suitable tarball assets found in the latest release."); }
                                 } else {
-                                    let selected_asset = if assets.len() == 1 {
-                                        &assets[0]
+                                    let selected_asset_idx = if assets.len() == 1 {
+                                        0
                                     } else {
-                                        let choices: Vec<String> = assets.iter().map(|a| a.name.clone()).collect();
-                                        info_msg("Multiple tarballs found. Please select one:");
-                                        let sel = Select::new().with_prompt("Tarball").items(&choices).default(0).interact().unwrap_or(0);
-                                        &assets[sel]
+                                        if !is_cli {
+                                            if let Some(t) = &tx {
+                                                let (reply_tx, reply_rx) = std::sync::mpsc::channel();
+                                                let names: Vec<String> = assets.iter().map(|a| a.name.clone()).collect();
+                                                let _ = t.send(InstallMessage::SelectAsset(names, reply_tx));
+                                                match reply_rx.recv() {
+                                                    Ok(idx) => idx,
+                                                    Err(_) => 0,
+                                                }
+                                            } else {
+                                                0
+                                            }
+                                        } else {
+                                            let choices: Vec<String> = assets.iter().map(|a| a.name.clone()).collect();
+                                            info_msg("Multiple tarballs found. Please select one:");
+                                            Select::new().with_prompt("Tarball").items(&choices).default(0).interact().unwrap_or(0)
+                                        }
                                     };
+                                    let selected_asset = &assets[selected_asset_idx];
                                     
                                     let tmp_dir = std::env::temp_dir().join("tm_downloads");
                                     std::fs::create_dir_all(&tmp_dir)?;
                                     
-                                    info_msg(&format!("Downloading {}...", selected_asset.name));
-                                    match crate::core::download::download_file(&selected_asset.browser_download_url, &tmp_dir) {
+                                    if is_cli { info_msg(&format!("Downloading {}...", selected_asset.name)); }
+                                    match crate::core::download::download_file(&selected_asset.browser_download_url, &tmp_dir, tx.clone()) {
                                         Ok(path) => {
                                             actual_tarball = path;
                                             downloaded = true;
-                                            info_msg("Download complete!");
+                                            if is_cli { info_msg("Download complete!"); }
                                         }
                                         Err(e) => {
-                                            error_msg(&format!("Failed to download: {}", e));
+                                            if is_cli { error_msg(&format!("Failed to download: {}", e)); }
+                                            if let Some(t) = &tx { let _ = t.send(InstallMessage::Progress(format!("Error: {}", e), -1.0)); }
+                                            return Err(crate::error::TmError::Generic(e.to_string()));
                                         }
                                     }
                                 }
                             }
                             Err(e) => {
-                                error_msg(&format!("Failed to query release API: {}", e));
+                                if is_cli { error_msg(&format!("Failed to query release API: {}", e)); }
+                                if let Some(t) = &tx { let _ = t.send(InstallMessage::Progress(format!("Error: {}", e), -1.0)); }
+                                return Err(crate::error::TmError::Generic(e.to_string()));
                             }
                         }
             } else {
-                info_msg(&format!("{} is not a known Git provider. Treating as direct download link...", url));
+                if is_cli { info_msg(&format!("{} is not a known Git provider. Treating as direct download link...", url)); }
                 let tmp_dir = std::env::temp_dir().join("tm_downloads");
                 std::fs::create_dir_all(&tmp_dir)?;
                 
-                info_msg(&format!("Downloading from {}...", url));
-                match crate::core::download::download_file(url, &tmp_dir) {
+                if is_cli { info_msg(&format!("Downloading from {}...", url)); }
+                match crate::core::download::download_file(url, &tmp_dir, tx.clone()) {
                     Ok(path) => {
                         actual_tarball = path;
                         downloaded = true;
-                        info_msg("Download complete!");
+                        if is_cli { info_msg("Download complete!"); }
                     }
                     Err(e) => {
-                        error_msg(&format!("Failed to download: {}", e));
+                        if is_cli { error_msg(&format!("Failed to download: {}", e)); }
+                        if let Some(t) = &tx { let _ = t.send(InstallMessage::Progress(format!("Error: {}", e), -1.0)); }
+                        return Err(crate::error::TmError::Generic(e.to_string()));
                     }
                 }
             }
         } else {
-            error_msg(&format!("The file '{}' does not exist, and no repository matches this name.", source));
+            if is_cli { error_msg(&format!("The file '{}' does not exist, and no repository matches this name.", source)); }
+            if let Some(t) = &tx { let _ = t.send(InstallMessage::Progress("File or repository not found".to_string(), -1.0)); }
+            return Err(crate::error::TmError::Generic("Not found".into()));
         }
     }
 
     if actual_tarball.exists() {
-        if let Some((target, raw_name_folder, executables)) = extract_and_scan(config, &actual_tarball, repo_package_name_opt.as_deref(), false)? {
+        if let Some(t) = &tx {
+            let _ = t.send(InstallMessage::Progress("Extracting archive... Please wait".to_string(), 50.0));
+        }
+        if let Some((target, raw_name_folder, executables, desktop_files)) = extract_and_scan(config, &actual_tarball, repo_package_name_opt.as_deref(), !is_cli)? {
             let exec_path = if executables.is_empty() {
-                error_msg("No executable binary found.");
+                if is_cli { error_msg("No executable binary found."); }
                 None
             } else if executables.len() == 1 {
                 Some(executables[0].clone())
             } else {
-                info_msg("Select the main executable binary:");
-                let choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
-                let sel = Select::new().with_prompt("Binary").items(&choices).default(0).interact().unwrap_or(0);
-                Some(executables[sel].clone())
+                if !is_cli {
+                    if let Some(t) = &tx {
+                        let (reply_tx, reply_rx) = std::sync::mpsc::channel();
+                        let choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
+                        let _ = t.send(InstallMessage::SelectBinary(choices, reply_tx));
+                        match reply_rx.recv() {
+                            Ok(idx) => Some(executables[idx].clone()),
+                            Err(_) => Some(executables[0].clone()),
+                        }
+                    } else {
+                        Some(executables[0].clone())
+                    }
+                } else {
+                    info_msg("Select the main executable binary:");
+                    let choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
+                    let sel = Select::new().with_prompt("Binary").items(&choices).default(0).interact().unwrap_or(0);
+                    Some(executables[sel].clone())
+                }
+            };
+
+            let bundled_desktop = if desktop_files.is_empty() {
+                None
+            } else {
+                if !is_cli {
+                    if let Some(t) = &tx {
+                        let (reply_tx, reply_rx) = std::sync::mpsc::channel();
+                        let mut choices: Vec<String> = desktop_files.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
+                        choices.push("Skip / Generate New".to_string());
+                        let _ = t.send(InstallMessage::SelectDesktop(choices, reply_tx));
+                        match reply_rx.recv() {
+                            Ok(idx) if idx < desktop_files.len() => Some(desktop_files[idx].clone()),
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    info_msg("Desktop file(s) found in the archive. Do you want to use one?");
+                    let mut choices: Vec<String> = desktop_files.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
+                    choices.push("Skip / Generate New".to_string());
+                    let sel = Select::new().with_prompt("Desktop File").items(&choices).default(0).interact().unwrap_or(choices.len() - 1);
+                    if sel < desktop_files.len() {
+                        Some(desktop_files[sel].clone())
+                    } else {
+                        None
+                    }
+                }
             };
 
             if let Some(exec_path) = exec_path {
@@ -404,9 +500,15 @@ pub fn install_app(
                     .or(repo_category_opt)
                     .unwrap_or_else(|| "Utility".to_string());
                 
-                finalize_installation(config, &target, &exec_path, &app_name, use_root, &category, false)?;
+                if let Some(t) = &tx {
+                    let _ = t.send(InstallMessage::Progress("Finalizing installation...".to_string(), 90.0));
+                }
+                finalize_installation(config, &target, &exec_path, &app_name, use_root, &category, bundled_desktop, !is_cli)?;
+                if let Some(t) = &tx {
+                    let _ = t.send(InstallMessage::Progress(format!("Successfully installed {}", app_name), 100.0));
+                }
                 if !is_cli {
-                    std::thread::sleep(std::time::Duration::from_secs(2));
+                    std::thread::sleep(std::time::Duration::from_secs(1));
                 }
             }
         }
@@ -509,8 +611,10 @@ pub fn update_tm(config: &Config) -> Result<(), crate::error::TmError> {
 
     let release_data: Result<crate::core::download::Release, _> = response.unwrap().json();
     let mut latest_url = String::new();
+    let mut latest_version = String::new();
 
     if let Ok(release) = release_data {
+        latest_version = release.tag_name;
         for asset in release.assets {
             if asset.browser_download_url.ends_with("/tm") {
                 latest_url = asset.browser_download_url;
@@ -524,13 +628,29 @@ pub fn update_tm(config: &Config) -> Result<(), crate::error::TmError> {
         return Ok(());
     }
 
+    let current_version = env!("CARGO_PKG_VERSION");
+    
+    println!("\x1b[1;36mUpdate available:\x1b[0m");
+    println!("  - Current version: v{}", current_version);
+    println!("  - Latest version:  {}", latest_version);
+
+    if !Confirm::new()
+        .with_prompt("Do you want to proceed with the update?")
+        .default(true)
+        .interact()
+        .unwrap_or(false)
+    {
+        info_msg("Update cancelled by user.");
+        return Ok(());
+    }
+
     let bin_path = config.bin_dir.join("tm");
     let temp_dir = config.bin_dir.join(".tm_update"); // Use a dir in the same filesystem
     std::fs::create_dir_all(&temp_dir)?;
 
-    info_msg(&format!("Downloading from: {}", latest_url));
+    info_msg(&format!("Downloading update..."));
 
-    match crate::core::download::download_file(&latest_url, &temp_dir) {
+    match crate::core::download::download_file(&latest_url, &temp_dir, None) {
         Ok(downloaded_file) => {
             use std::os::unix::fs::PermissionsExt;
             if let Ok(metadata) = fs::metadata(&downloaded_file) {

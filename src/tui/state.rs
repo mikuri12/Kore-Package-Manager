@@ -2,6 +2,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use ratatui::widgets::ListState;
 use tm::config::Config;
+use std::sync::mpsc;
+use tm::core::install::InstallMessage;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum Route {
@@ -27,6 +29,9 @@ pub enum PopupType {
     InstallRootSelect,
     InstallCategorySelect,
     InstallBinarySelect,
+    InstallProgress,
+    InstallAssetSelect,
+    InstallDesktopSelect,
     EnvVarInput,
     Information,
     RepoActionSelect,
@@ -77,6 +82,12 @@ pub struct App {
     pub pending_repo_root: bool,
     pub repo_category_state: ListState,
     pub viewing_repo_type: tm::repo::RepoType,
+
+    pub install_status: String,
+    pub install_progress: f64,
+    pub install_rx: Option<mpsc::Receiver<InstallMessage>>,
+    pub pending_install_reply: Option<mpsc::Sender<usize>>,
+    pub install_done: bool,
 }
 
 impl App {
@@ -116,6 +127,11 @@ impl App {
             pending_repo_root: false,
             repo_category_state: ListState::default(),
             viewing_repo_type: tm::repo::RepoType::Official,
+            install_status: String::new(),
+            install_progress: 0.0,
+            install_rx: None,
+            pending_install_reply: None,
+            install_done: false,
         }
     }
 
@@ -247,7 +263,8 @@ impl App {
           || self.popup_type == PopupType::ChangeBinarySelect || self.popup_type == PopupType::ChangeRootSelect
           || self.popup_type == PopupType::ConfirmUninstall || self.popup_type == PopupType::InstallRootSelect 
           || self.popup_type == PopupType::InstallCategorySelect || self.popup_type == PopupType::InstallBinarySelect
-          || self.popup_type == PopupType::RepoActionSelect || self.popup_type == PopupType::RepoRootInput {
+          || self.popup_type == PopupType::RepoActionSelect || self.popup_type == PopupType::RepoRootInput
+          || self.popup_type == PopupType::InstallAssetSelect || self.popup_type == PopupType::InstallDesktopSelect {
             let i = match self.popup_state.selected() {
                 Some(i) => (i + 1) % self.popup_items.len(),
                 None => 0,
@@ -298,7 +315,8 @@ impl App {
           || self.popup_type == PopupType::ChangeBinarySelect || self.popup_type == PopupType::ChangeRootSelect
           || self.popup_type == PopupType::ConfirmUninstall || self.popup_type == PopupType::InstallRootSelect 
           || self.popup_type == PopupType::InstallCategorySelect || self.popup_type == PopupType::InstallBinarySelect
-          || self.popup_type == PopupType::RepoActionSelect || self.popup_type == PopupType::RepoRootInput {
+          || self.popup_type == PopupType::RepoActionSelect || self.popup_type == PopupType::RepoRootInput
+          || self.popup_type == PopupType::InstallAssetSelect || self.popup_type == PopupType::InstallDesktopSelect {
             let i = match self.popup_state.selected() {
                 Some(i) => {
                     if i == 0 { self.popup_items.len().saturating_sub(1) } else { i - 1 }

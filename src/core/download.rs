@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize)]
 pub struct Release {
+    pub tag_name: String,
     pub assets: Vec<Asset>,
 }
 
@@ -91,7 +92,7 @@ pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
     Ok(valid_assets)
 }
 
-pub fn download_file(url: &str, dest_dir: &Path) -> Result<PathBuf> {
+pub fn download_file(url: &str, dest_dir: &Path, tx: Option<std::sync::mpsc::Sender<crate::core::install::InstallMessage>>) -> Result<PathBuf> {
     let client = reqwest::blocking::Client::builder()
         .user_agent("Tarball-Manager/1.0")
         .build()?;
@@ -109,7 +110,28 @@ pub fn download_file(url: &str, dest_dir: &Path) -> Result<PathBuf> {
     let dest_path = dest_dir.join(file_name);
     
     let mut file = File::create(&dest_path).context("Failed to create download file")?;
-    response.copy_to(&mut file).context("Failed to download file content")?;
+    
+    let total_size = response.content_length().unwrap_or(0);
+    let mut downloaded: u64 = 0;
+    let mut buffer = [0; 8192];
+    use std::io::{Read, Write};
+
+    while let Ok(bytes_read) = response.read(&mut buffer) {
+        if bytes_read == 0 {
+            break; // EOF
+        }
+        file.write_all(&buffer[..bytes_read]).context("Failed to write to file")?;
+        downloaded += bytes_read as u64;
+        
+        if let Some(tx) = &tx {
+            if total_size > 0 {
+                let progress = (downloaded as f64 / total_size as f64) * 100.0;
+                let _ = tx.send(crate::core::install::InstallMessage::Progress(format!("Downloading: {:.1}%", progress), progress));
+            } else {
+                let _ = tx.send(crate::core::install::InstallMessage::Progress(format!("Downloading: {} bytes", downloaded), 0.0));
+            }
+        }
+    }
     
     Ok(dest_path)
 }

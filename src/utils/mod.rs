@@ -47,6 +47,18 @@ pub fn find_executables(target: &Path, max_depth: usize) -> Vec<PathBuf> {
         .collect()
 }
 
+/// Busca archivos .desktop empaquetados en el directorio extraído
+pub fn find_bundled_desktop_files(target: &Path, max_depth: usize) -> Vec<PathBuf> {
+    WalkDir::new(target)
+        .max_depth(max_depth)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+        .filter(|e| e.path().extension().and_then(|ext| ext.to_str()) == Some("desktop"))
+        .map(|e| e.path().to_path_buf())
+        .collect()
+}
+
 /// Busca el mejor ícono coincidente explorando profundamente el directorio
 pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<String> {
     let mut best_icon: Option<String> = None;
@@ -126,4 +138,20 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
         }
     }
     best_icon
+}
+
+/// Determina si un binario es una aplicación gráfica (GUI) o de terminal (CLI)
+/// Analiza las bibliotecas dinámicas compartidas (ldd) buscando dependencias gráficas.
+pub fn is_gui_app(executable: &Path) -> bool {
+    if let Ok(output) = std::process::Command::new("ldd").arg(executable).output() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let gui_libs = ["libgtk", "libQt", "libX11", "libwayland", "libSDL", "libxcb", "libcairo", "libpango", "libEGL"];
+        for lib in gui_libs {
+            if stdout.contains(lib) {
+                return true;
+            }
+        }
+    }
+    // Si no enlaza dinámicamente con bibliotecas gráficas, asumimos que es de terminal.
+    false
 }

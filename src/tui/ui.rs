@@ -142,6 +142,26 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1]
 }
 
+pub fn centered_rect_fixed_height(percent_x: u16, fixed_height: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length((r.height.saturating_sub(fixed_height)) / 2),
+            Constraint::Length(fixed_height),
+            Constraint::Min(0),
+        ])
+        .split(r);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(popup_layout[1])[1]
+}
+
 pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
     let current_route = &app.route;
 
@@ -151,7 +171,7 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                 ListItem::new("󰉍 Install New Tarball"),
                 ListItem::new("󰏗 Manage Installed"),
                 ListItem::new("󰆴 Uninstall Application"),
-                ListItem::new("󰒋 Manage Repositories"),
+                ListItem::new("󰒋 Repositories"),
                 ListItem::new("󰈆 Exit"),
             ];
             let list = List::new(items)
@@ -438,7 +458,7 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
         f.render_widget(Clear, area);
 
         match app.popup_type {
-            PopupType::ActionSelect | PopupType::CategorySelect | PopupType::ChangeBinarySelect | PopupType::ChangeRootSelect | PopupType::ConfirmUninstall | PopupType::InstallRootSelect | PopupType::InstallCategorySelect | PopupType::InstallBinarySelect | PopupType::RepoActionSelect | PopupType::RepoRootInput => {
+            PopupType::ActionSelect | PopupType::CategorySelect | PopupType::ChangeBinarySelect | PopupType::ChangeRootSelect | PopupType::ConfirmUninstall | PopupType::InstallRootSelect | PopupType::InstallCategorySelect | PopupType::InstallBinarySelect | PopupType::InstallAssetSelect | PopupType::InstallDesktopSelect | PopupType::RepoActionSelect | PopupType::RepoRootInput => {
                 let popup_title = match app.popup_type {
                     PopupType::ActionSelect => " Action ",
                     PopupType::RepoActionSelect => " Repo Action ",
@@ -446,6 +466,8 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                     PopupType::ConfirmUninstall => " Are you sure? ",
                     PopupType::InstallRootSelect | PopupType::ChangeRootSelect | PopupType::RepoRootInput => " Needs Root? ",
                     PopupType::InstallBinarySelect | PopupType::ChangeBinarySelect => " Select Main Binary ",
+                    PopupType::InstallAssetSelect => " Select Tarball ",
+                    PopupType::InstallDesktopSelect => " Select Desktop File ",
                     _ => " Options ",
                 };
 
@@ -498,6 +520,22 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                         .border_style(Style::default().fg(Color::Yellow)))
                     .wrap(ratatui::widgets::Wrap { trim: true });
                 f.render_widget(p, area);
+            }
+            PopupType::InstallProgress => {
+                let progress = app.install_progress;
+                let valid_progress = progress.max(0.0).min(100.0);
+                let label = format!("{} ({:.1}%)", app.install_status, progress);
+                
+                let gauge = ratatui::widgets::Gauge::default()
+                    .block(Block::default().borders(Borders::ALL).title(" 󰏫 Installing... ").border_type(BorderType::Rounded).border_style(Style::default().fg(Color::Cyan)))
+                    .gauge_style(Style::default().fg(Color::Cyan).bg(Color::Black).add_modifier(Modifier::BOLD))
+                    .use_unicode(true)
+                    .ratio(valid_progress / 100.0)
+                    .label(label);
+                
+                let p_area = centered_rect_fixed_height(70, 3, f.area());
+                f.render_widget(Clear, p_area);
+                f.render_widget(gauge, p_area);
             }
             _ => {}
         }
