@@ -55,6 +55,13 @@
       "url": "https://github.com/supertuxkart/stk-code",
       "category": "Games",
       "requires_root": false
+    },
+    {
+      "name": "Bottom",
+      "package_name": "bottom",
+      "url": "https://github.com/ClementTsang/bottom",
+      "category": "Utility",
+      "requires_root": false
     }
   ]
 }
