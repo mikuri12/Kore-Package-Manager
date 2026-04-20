@@ -16,7 +16,7 @@
     },
     {
       "name": "Neovim",
-      "package_name": "neovim",
+      "package_name": "nvim",
       "url": "https://github.com/neovim/neovim",
       "category": "Development",
       "requires_root": false
