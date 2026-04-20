@@ -80,8 +80,8 @@ pub fn generate_preview(config: &Config, app_name: &str) -> String {
     preview
 }
 
-pub fn generate_tar_preview(file_path: &Path) -> String {
-    let mut preview = format!("--- TARBALL DETAILS ---\n");
+pub fn generate_archive_preview(file_path: &Path) -> String {
+    let mut preview = format!("--- ARCHIVE DETAILS ---\n");
     if let Ok(metadata) = fs::metadata(file_path) {
         preview.push_str(&format!("Size: {}\n", format_size(metadata.len())));
     }
@@ -90,12 +90,23 @@ pub fn generate_tar_preview(file_path: &Path) -> String {
     use std::process::{Command, Stdio};
     use std::io::{BufReader, BufRead};
     
-    if let Ok(mut child) = Command::new("tar")
-        .args(["-tf", file_path.to_str().unwrap()])
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-    {
+    let is_zip = file_path.to_string_lossy().ends_with(".zip");
+    
+    let child_res = if is_zip {
+        Command::new("unzip")
+            .args(["-Z1", file_path.to_str().unwrap()])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+    } else {
+        Command::new("tar")
+            .args(["-tf", file_path.to_str().unwrap()])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+    };
+    
+    if let Ok(mut child) = child_res {
         if let Some(stdout) = child.stdout.take() {
             let reader = BufReader::new(stdout);
             for line in reader.lines().take(15) {
@@ -381,17 +392,17 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                     } else {
                         "Unsupported File".to_string()
                     }
-                } else if name.contains(".tar.") {
+                } else if name.contains(".tar.") || name.ends_with(".zip") {
                     if let Some((cached_name, cached_text)) = &app.cached_preview {
                         if cached_name == name {
                             cached_text.clone()
                         } else {
-                            let text = generate_tar_preview(&app.current_dir.join(name));
+                            let text = generate_archive_preview(&app.current_dir.join(name));
                             app.cached_preview = Some((name.clone(), text.clone()));
                             text
                         }
                     } else {
-                        let text = generate_tar_preview(&app.current_dir.join(name));
+                        let text = generate_archive_preview(&app.current_dir.join(name));
                         app.cached_preview = Some((name.clone(), text.clone()));
                         text
                     }

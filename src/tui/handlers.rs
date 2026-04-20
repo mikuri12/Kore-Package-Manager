@@ -486,12 +486,13 @@ pub fn handle_key_events<B: Backend>(
                                 } else if choice.ends_with('/') {
                                     app.current_dir = app.current_dir.join(&choice[..choice.len() - 1]);
                                     app.load_dir();
-                                } else if choice.contains(".tar.") {
+                                } else if choice.contains(".tar.") || choice.ends_with(".zip") {
                                     let tarball_path = app.current_dir.join(choice);
                                     app.pending_tarball = tarball_path;
                                     app.pending_raw_name = choice.replace(".tar.gz", "")
                                         .replace(".tar.xz", "")
-                                        .replace(".tar.bz2", "");
+                                        .replace(".tar.bz2", "")
+                                        .replace(".zip", "");
                                         
                                     app.open_popup_input(PopupType::InstallNameInput, "");
                                 }

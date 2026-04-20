@@ -162,11 +162,14 @@ pub fn extract_and_scan(
     }
 
     let file_name = tarball.file_name().unwrap_or_default().to_string_lossy();
+    let is_zip = file_name.ends_with(".zip");
+    
     let raw_name_folder = target_folder_name.map(|s| s.to_string()).unwrap_or_else(|| {
         file_name
             .replace(".tar.gz", "")
             .replace(".tar.xz", "")
             .replace(".tar.bz2", "")
+            .replace(".zip", "")
     });
 
     let target = config.install_dir.join(&raw_name_folder);
@@ -177,11 +180,45 @@ pub fn extract_and_scan(
 
     fs::create_dir_all(&target)?;
     
-    let tar_status = Command::new("tar")
-        .args(["-xf", tarball.to_str().unwrap(), "-C", target.to_str().unwrap(), "--strip-components=1"])
-        .status()?;
+    let success = if is_zip {
+        Command::new("unzip")
+            .args(["-q", tarball.to_str().unwrap(), "-d", target.to_str().unwrap()])
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false)
+    } else {
+        let output = Command::new("tar").arg("-tf").arg(tarball).output()?;
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        
+        let mut first_components = std::collections::HashSet::new();
+        for line in stdout.lines() {
+            if line.is_empty() { continue; }
+            let parts: Vec<&str> = line.split('/').collect();
+            if !parts.is_empty() {
+                first_components.insert(parts[0]);
+            }
+        }
+        
+        let mut should_strip = false;
+        if first_components.len() == 1 {
+            let root = first_components.into_iter().next().unwrap();
+            if stdout.lines().any(|l| l.starts_with(&format!("{}/", root))) {
+                should_strip = true;
+            }
+        }
 
-    if !tar_status.success() {
+        let mut tar_args = vec!["-xf", tarball.to_str().unwrap(), "-C", target.to_str().unwrap()];
+        if should_strip {
+            tar_args.push("--strip-components=1");
+        }
+
+        Command::new("tar")
+            .args(&tar_args)
+            .status()?
+            .success()
+    };
+
+    if !success {
         let _ = fs::remove_dir_all(&target); // Clean up residue on failure
         return Ok(None);
     }
