@@ -1,3 +1,17 @@
+## [1.4.4-1.4.5] - 2026-04-21
+
+### Características (Features)
+- **Migración a Arquitectura Asíncrona:** El núcleo del programa ha sido migrado completamente a un modelo asíncrono utilizando `Tokio` y `reqwest`. Esto mejora la estabilidad, la concurrencia y permite una TUI más fluida sin bloqueos durante operaciones pesadas de red.
+- **Soporte Multi-Paquete en CLI:** Ahora es posible instalar o eliminar múltiples aplicaciones en un solo comando (ej: `tm install zen waterfox` o `tm remove discord vesktop`).
+- **Vista Master-Detail (Repositorios):** Se rediseñó la interfaz de navegación de repositorios con un diseño de 40/60. Ahora puedes ver la lista a la izquierda y todos los detalles (incluyendo la nueva descripción) a la derecha.
+- **Descripciones de Aplicaciones:** Se añadió un campo de descripción detallada para cada repositorio en los archivos `default_repos.json` y `community_repos.json`.
+- **Visor de Logs Interno (F12):** Nueva herramienta de diagnóstico integrada que permite ver en tiempo real qué está ocurriendo "bajo el capó" (descargas, extracciones, errores detallados). Soporta scroll y navegación independiente.
+
+### Mejoras (Improvements)
+- **Comunicación entre Core y TUI:** Implementación de canales bidireccionales asíncronos (`tokio::sync::mpsc` y `oneshot`) para una gestión de eventos más limpia y profesional.
+- **Ayuda Documentada:** Se agregó el acceso a los logs (`F12`) en el menú de ayuda global (`?`).
+- **Prioridad de Metadatos:** En instalaciones masivas vía CLI, el sistema ahora prioriza automáticamente la configuración definida en los repositorios oficiales sobre los flags manuales, garantizando instalaciones correctas.
+
 ## [1.4.3] - 2026-04-20
 
 ### Características (Features)
