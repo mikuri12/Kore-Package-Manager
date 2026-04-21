@@ -1,89 +1,108 @@
 # Tarball Manager (tm)
 ![License](https://img.shields.io/badge/license-BSD-cyan)
 ![Rust](https://img.shields.io/badge/language-Rust-orange)
-[![Changelog](https://img.shields.io/badge/Changelog-v1.3.0-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG.md)
+[![Changelog](https://img.shields.io/badge/Changelog-v1.4.6-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG.md)
+[![Readme](https://img.shields.io/badge/Readme-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/README_es.md)
+[![Historial de cambios](https://img.shields.io/badge/Changelog-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
 
-Un gestor de programas minimalista y universal para Linux, rediseñado completamente en **Rust**. Está diseñado específicamente para manejar aplicaciones distribuidas en **tarballs** (.tar.gz, .tar.xz, .tar.bz2). 
 
-Ideal para usuarios de **Void Linux**, **Arch** o cualquier sistema donde necesites instalar software pre-compilado de forma aislada, limpia y con una interfaz de terminal interactiva (TUI) elegante basada en `ratatui`.
+A minimalist and universal program manager for Linux, completely redesigned in **Rust**. It is specifically designed to handle applications distributed in **tarballs** (.tar.gz, .tar.xz, .tar.bz2).
 
-## Características principales
+Ideal for users of **Void Linux**, **Arch**, or any system where you need to install pre-compiled software in an isolated, clean way, featuring an elegant interactive terminal interface (TUI) based on `ratatui`.
 
-* **Navegación TUI**: Explora tus archivos y carpetas con una interfaz de terminal inmersiva de alto rendimiento.
-* **Interfaz CLI Híbrida**: Usa el menú interactivo o ejecuta comandos directos por terminal.
-* **Instalación Inteligente**: Extrae archivos en `~/.local/share/binaries` manteniendo tu HOME limpio.
-* **Gestión de Binarios**: Crea enlaces simbólicos automáticamente en `~/.local/bin`.
-* **Integración con el Menú**: Genera archivos `.desktop` de forma automatizada.
-* **Extracción Libre de Ruido**: Ejecuta subcomandos en segundo plano (`tar`) omitiendo salidas de terminal que puedan ensuciar la interfaz (`stdout`/`stderr`).
-* **Desinstalación Atómica**: Elimina la aplicación, el enlace simbólico y el acceso directo de forma limpia.
+## Main Features
 
-## Instalación rápida
+* **TUI Navigation**: Explore your files and folders with a high-performance, immersive terminal interface.
+* **Hybrid CLI Interface**: Use the interactive menu or run direct commands via terminal.
+* **Smart Installation**: Extracts files to `~/.local/share/binaries`, keeping your HOME directory clean.
+* **Binary Management**: Automatically creates symlinks in `~/.local/bin`.
+* **Menu Integration**: Automatically generates `.desktop` shortcut files.
+* **Noise-Free Extraction**: Runs background subcommands (`tar`), omitting terminal outputs that could clutter the interface (`stdout`/`stderr`).
+* **Atomic Uninstallation**: Cleanly removes the application, symlink, and shortcut.
 
-Puedes instalar la última versión pre-compilada directamente ejecutando:
+## Quick Installation
+
+You can install the latest pre-compiled version directly by running:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/install.sh | bash
 ```
 
-> **Nota**: Este script descarga automáticamente la versión correcta desde *GitHub Releases*. Asegúrate de que tu carpeta `~/.local/bin` esté en tu `$PATH` del sistema.
+> **Note**: This script automatically downloads the correct version from *GitHub Releases*. Make sure your `~/.local/bin` folder is in your system's `$PATH`.
 
-## Uso
+## Usage
 
-### Modo Interactivo (TUI)
-Solo tienes que llamar a la herramienta sin argumentos para abrir la interfaz:
+### Interactive Mode (TUI)
+You just need to call the tool with no arguments to open the interface:
 ```bash
 tm
 ```
-* Sigue las instrucciones generadas en pantalla usando tus teclas de flechas, `ENTER` (para confirmar) y `ESC` (para regresar/salir). El flujo dinámico te permite seleccionar la app, extraer y definir el binario a linkear todo de manera guiada.
+* Follow the on-screen instructions using your arrow keys, `ENTER` (to confirm), and `ESC` (to go back/exit). The dynamic flow allows you to select the app, extract it, and define the binary to link—all in a guided way.
 
 ---
 
-### Interfaz de Línea de Comandos (CLI)
+### Command Line Interface (CLI)
 
-Para operaciones rápidas y no interactivas, soporta los siguientes comandos definidos (`clap`):
+For fast, non-interactive operations, `tm` supports the following defined commands (`clap`):
 
-| Comando | Alias Corto | Descripción | Ejemplo de Uso |
+| Command | Short Alias | Description | Usage Example |
 | :--- | :--- | :--- | :--- |
-| `list` | `-l`, `list-installed`| Lista las aplicaciones instaladas actualmente desde tm. | `tm list` |
-| `remove` | `-r` | Desinstala completamente una app instalada. | `tm remove discord` |
-| `install` | `-i` | Instala y extrae directamente una app desde un tarball. | `tm install app.tar.gz` |
-| `help` | `-h`, `--help` | Imprime las opciones de ayuda completas del programa. | `tm --help` |
-| *(ninguno)* | `-V`, `--version` | Muestra la versión actual de instalación. | `tm -V` |
-| `--update-bin` | *(ninguno)* | Actualizara el Binario a su ultima version. | `tm --update-bin` |
+| `list` | `-l`, `list-installed`| Lists currently installed applications. | `tm list` |
+| `remove` | `-r` | Uninstalls one or multiple installed apps. | `tm remove discord waterfox` |
+| `install` | `-i` | Installs one or multiple apps from local tarballs or **repositories**. | `tm install obsidian` |
+| `update` | `-u` | Updates installed apps from repositories. | `tm update` or `tm update obsidian` |
+| `repo` | *(none)* | Manages repositories (official, community, and custom). | `tm repo list` |
+| `help` | `-h`, `--help` | Prints complete help options for the program. | `tm --help` |
+| *(none)* | `-V`, `--version` | Displays the current installation version. | `tm -V` |
+| `--update-bin` | *(none)* | Updates the Tarball Manager binary to its latest version. | `tm --update-bin` |
 
-
-#### Instalación Directa
-Si no quieres usar el modo interactivo, puedes instalar pasándole los argumentos directamente (el orden es: *Ruta*, *Nombre*, *PermisosRoot*, *Categoría*):
+#### Direct Installation (Multiple & Repositories)
+You can install multiple applications directly by typing their name (if they exist in the repositories) or the path of a `.tar.gz` file:
 ```bash
-tm install "app.tar.gz" "NombreApp" "No" "Network"
-# O usando el alias:
-tm -i "app.tar.gz" "NombreApp" "No" "Network"
+tm install obsidian waterfox discord
+# Or using the alias:
+tm -i discord
 ```
-* **Nombre App**: Nombre que tendrá la aplicación en el sistema.
-* **Permisos Root (No/Yes)**: Define si el atajo `.desktop` utilizará `pkexec` para requerir privilegios de superusuario cada vez que se ejecute.
-* **Categoría**: Categoría XDG para el menú de aplicaciones (`Utility`, `Network`, `Game`, `Development`, `Graphics`, `AudioVideo`, `System`, `Office`).
-
-#### Desinstalación Inteligente
+If you want to install a specific local tarball and customize its metadata (this applies to single installations only), you can use the following flags:
 ```bash
-# Borrará la carpeta, el binario y el desktop sin necesidad de usar directorios
-tm remove nombre_app
-# Ej usando el sub-comando corto:
-tm -r nombre_app
+tm install "app.tar.gz" --app-name "AppName" --use-root "No" --category "Network"
+```
+* **--app-name (-a)**: Name the application will have in the system.
+* **--use-root (-u)**: Defines whether the `.desktop` shortcut will require `pkexec` (superuser).
+* **--category (-c)**: XDG Category for the applications menu (`Utility`, `Network`, `Game`, etc).
+
+#### Smart Uninstallation
+You can delete the folder, binary, and `.desktop` file of one or more applications simultaneously:
+```bash
+tm remove app_name another_app
+# E.g. using the alias:
+tm -r app_name
 ```
 
+#### Repository Management (`tm repo`)
+The manager now supports repositories to download and install apps with a single command.
+* `tm repo list`: Lists the amount of available packages by type (official, community, user).
+* `tm repo pkg-list`: Shows the list of all packages available to install.
+* `tm repo pkg-search <query>`: Searches for a package in all repositories by name.
+* `tm repo sync`: Synchronizes/updates the list of official and community repositories.
+* `tm repo add <name> <pkg_name> <url> <category> [--requires-root]`: Adds a third-party repository.
+* `tm repo remove <name>`: Removes a custom repository.
+
+#### Shell Completions (Bash, Zsh, Fish)
+When installing `tm` via `install.sh`, autocomplete scripts for Bash, Zsh, and Fish are automatically configured locally on your system, allowing you to press `TAB` to effortlessly complete commands and flags.
 ---
 
-## Estructura de directorios
+## Directory Structure
 
-Por defecto, la herramienta aísla los archivos instalados en la estructura correcta del usuario:
-- **Archivos extraídos**: `~/.local/share/binaries/[app-name]`
-- **Binarios globales (Symlinks)**: `~/.local/bin/[app-name]`
-- **Accesos directos (XDG Desktop)**: `~/.local/share/applications/[app-name].desktop`
+By default, the tool isolates installed files into the proper user structure:
+- **Extracted files**: `~/.local/share/binaries/[app-name]`
+- **Global binaries (Symlinks)**: `~/.local/bin/[app-name]`
+- **Shortcuts (XDG Desktop)**: `~/.local/share/applications/[app-name].desktop`
 
-## Requisitos del sistema
+## System Requirements
 
-Al estar escrito en Rust, se ha eliminado la necesidad de utilizar dependencias externas de entorno (como `fzf` o `bash`). Los únicos requisitos en tu sistema (la inmensa mayoría vienen pre-instalados por defecto en Linux) son:
+Since it is written in Rust, the need for external environment dependencies (like `fzf` or `bash`) has been eliminated. The only requirements on your system (the vast majority come pre-installed by default on Linux) are:
 
-- `tar`: Utilizado de fondo para la descompresión.
-- `pkexec` (Opcional): Requerido únicamente si marcas una aplicación para que solicite permisos de superusuario.
-- `desktop-file-utils` (`update-desktop-database`): Sirve para notificar al sistema cuando una aplicación es "desinstalada" y refrescar el menú de aplicaciones.
+- `tar`: Used in the background for decompression.
+- `pkexec` (Optional): Required only if you mark an application to prompt for superuser permissions.
+- `desktop-file-utils` (`update-desktop-database`): Used to notify the system when an application is "uninstalled" and to refresh the applications menu.

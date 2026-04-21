@@ -78,7 +78,7 @@ pub enum RepoCommands {
         package_name: String,
         url: String,
         category: String,
-        #[arg(default_value_t = false)]
+        #[arg(long, default_value_t = false)]
         requires_root: bool,
     },
     /// Remove a third-party repository

@@ -50,6 +50,42 @@ setup_path() {
     fi
 }
 
+install_completions() {
+    title "Instalando autocompletados..."
+    
+    local RAW_URL="https://raw.githubusercontent.com/$REPO/main/assets/completions"
+    
+    # Bash
+    if [ -f "$HOME/.bashrc" ]; then
+        local bash_dir="$HOME/.local/share/bash-completion/completions"
+        mkdir -p "$bash_dir"
+        curl -sSL "$RAW_URL/bash/tm" -o "$bash_dir/tm"
+        info "Autocompletado de bash instalado."
+    fi
+
+    # Zsh
+    if [ -f "$HOME/.zshrc" ]; then
+        local zsh_dir="$HOME/.local/share/zsh/site-functions"
+        mkdir -p "$zsh_dir"
+        curl -sSL "$RAW_URL/zsh/_tm" -o "$zsh_dir/_tm"
+        info "Autocompletado de zsh instalado."
+        
+        if ! grep -q "$zsh_dir" "$HOME/.zshrc" 2>/dev/null; then
+            echo -e "\n# Tarball Manager Autocompletions\nfpath=($zsh_dir \$fpath)\nautoload -Uz compinit && compinit" >> "$HOME/.zshrc"
+        fi
+    fi
+
+    # Fish
+    if [ -d "$HOME/.config/fish" ]; then
+        local fish_dir="$HOME/.config/fish/completions"
+        mkdir -p "$fish_dir"
+        curl -sSL "$RAW_URL/fish/tm.fish" -o "$fish_dir/tm.fish"
+        info "Autocompletado de fish instalado."
+    fi
+    
+    success "Autocompletados configurados exitosamente."
+}
+
 install_tm() {
     local mode=${1:-"Instalando"}
     title "$mode Tarball Manager..."
@@ -72,6 +108,7 @@ install_tm() {
     if [[ "$mode" == "Instalando" ]]; then
                 echo ""
                 setup_path
+                install_completions
             fi
     else
         error "No se pudo descargar el binario desde GitHub."

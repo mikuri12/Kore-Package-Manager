@@ -1,5 +1,3 @@
-[![Historial de cambios](https://img.shields.io/badge/Changelog-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
-
 ## [1.4.4-1.4.6] - 2026-04-21
 
 ### Características (Features)
