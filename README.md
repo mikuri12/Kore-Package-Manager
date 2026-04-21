@@ -90,7 +90,7 @@ The manager now supports repositories to download and install apps with a single
 
 #### Shell Completions (Bash, Zsh, Fish)
 When installing `tm` via `install.sh`, autocomplete scripts for Bash, Zsh, and Fish are automatically configured locally on your system, allowing you to press `TAB` to effortlessly complete commands and flags.
----
+
 
 ## Directory Structure
 
