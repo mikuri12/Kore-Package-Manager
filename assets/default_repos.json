@@ -159,6 +159,14 @@
       "category": "Utility",
       "requires_root": false,
       "description": "A fast, lightweight, and minimalistic Wayland terminal emulator."
+    },
+    {
+      "name": "yt-dlp",
+      "package_name": "yt-dlp",
+      "url": "https://github.com/yt-dlp/yt-dlp",
+      "category": "Utility",
+      "requires_root": false,
+      "description": "A feature-rich command-line audio/video downloader with support for thousands of sites."
     }
   ]
 }
