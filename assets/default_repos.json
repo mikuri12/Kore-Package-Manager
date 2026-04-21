@@ -5,140 +5,160 @@
       "package_name": "vscodium",
       "url": "https://github.com/VSCodium/vscodium",
       "category": "Development",
-      "requires_root": false
+      "requires_root": false,
+      "description": "Free/Libre Open Source Software Binaries of VS Code. A code editor with a massive ecosystem of extensions."
     },
     {
       "name": "vesktop",
       "package_name": "vesktop",
       "url": "https://github.com/Vencord/Vesktop",
       "category": "Utility",
-      "requires_root": true
+      "requires_root": true,
+      "description": "An all-in-one Discord client with built-in Vencord and plugins for a better experience."
     },
     {
       "name": "Neovim",
       "package_name": "nvim",
       "url": "https://github.com/neovim/neovim",
       "category": "Development",
-      "requires_root": false
+      "requires_root": false,
+      "description": "Hyperextensible Vim-based text editor focused on extensibility and usability."
     },
     {
       "name": "scrcpy",
       "package_name": "scrcpy",
       "url": "https://github.com/Genymobile/scrcpy",
       "category": "Development",
-      "requires_root": false
+      "requires_root": false,
+      "description": "Display and control Android devices connected via USB or TCP/IP from your desktop."
     },
     {
       "name": "Ranger",
       "package_name": "ranger",
       "url": "https://ranger.fm/ranger-stable.tar.gz",
       "category": "Utility",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A console file manager with VI key bindings and a multi-pane minimalistic interface."
     },
     {
       "name": "Croc",
       "package_name": "croc",
       "url": "https://github.com/schollz/croc",
       "category": "Utility",
-      "requires_root": false
+      "requires_root": false,
+      "description": "Easily and securely send files and folders from one computer to another."
     },
     {
       "name": "Strawberry",
       "package_name": "strawberry",
       "url": "https://github.com/strawberrymusicplayer/strawberry",
       "category": "Music",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A music player and collection organizer focused on high-fidelity audio playback."
     },
     {
       "name": "Waterfox",
       "package_name": "waterfox",
       "url": "https://cdn.waterfox.com/waterfox/releases/6.6.11/Linux_x86_64/waterfox-6.6.11.tar.bz2",
       "category": "Network",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A privacy-focused web browser based on Firefox, optimized for performance and customization."
     },
     {
       "name": "Krita",
       "package_name": "krita",
       "url": "https://download.kde.org/stable/krita/6.0.1/krita-6.0.1.tar.xz",
       "category": "Graphics",
-      "requires_root": false
+      "requires_root": false,
+      "description": "Professional open-source painting program designed for digital artists and illustrators."
     },
     {
       "name": "ClamAv",
       "package_name": "clamav",
       "url": "https://github.com/Cisco-Talos/clamav",
       "category": "Utility",
-      "requires_root": false
+      "requires_root": false,
+      "description": "An open-source antivirus engine for detecting trojans, viruses, and other malware."
     },
     {
       "name": "Micro",
       "package_name": "micro",
       "url": "https://github.com/micro-editor/micro",
       "category": "Development",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A modern and intuitive terminal-based text editor with mouse support and intuitive shortcuts."
     },
     {
       "name": "Helix",
       "package_name": "helix",
       "url": "https://github.com/helix-editor/helix",
       "category": "Development",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A post-modern modal text editor written in Rust with built-in LSP support."
     },
     {
       "name": "Bat",
       "package_name": "bat",
       "url": "https://github.com/sharkdp/bat",
       "category": "Utility",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A cat(1) clone with syntax highlighting and Git integration for the terminal."
     },
     {
       "name": "Zen Browser",
       "package_name": "zen",
       "url": "https://github.com/zen-browser/desktop/",
       "category": "Network",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A beautiful and fast web browser built on top of Firefox, focused on productivity and privacy."
     },
     {
       "name": "Stoat",
       "package_name": "stoat",
       "url": "https://github.com/stoatchat/for-desktop",
       "category": "Network",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A decentralized and secure chat application for privacy-conscious communication."
     },
     {
       "name": "Discord",
       "package_name": "discord",
       "url": "https://discord.com/api/download?platform=linux&format=tar.gz",
       "category": "Network",
-      "requires_root": false
+      "requires_root": false,
+      "description": "The official communication platform for communities to talk, chat, and hang out."
     },
     {
       "name": "Floorp",
       "package_name": "floorp",
       "url": "https://github.com/Floorp-Projects/Floorp",
       "category": "Network",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A highly customizable and privacy-oriented Firefox fork with advanced workspace features."
     },
     {
       "name": "Basalt",
       "package_name": "basalt",
       "url": "https://github.com/erikjuhani/basalt",
       "category": "Office",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A lightweight and fast desktop application for project and task management."
     },
     {
       "name": "Obsidian",
       "package_name": "obsidian",
       "url": "https://github.com/obsidianmd/obsidian-releases",
       "category": "Office",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A powerful knowledge base that works on top of a local folder of plain text Markdown files."
     },
     {
       "name": "Foot",
       "package_name": "foot",
       "url": "https://codeberg.org/dnkl/foot",
       "category": "Utility",
-      "requires_root": false
+      "requires_root": false,
+      "description": "A fast, lightweight, and minimalistic Wayland terminal emulator."
     }
   ]
 }

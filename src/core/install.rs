@@ -10,9 +10,9 @@ use std::process::Command;
 
 pub enum InstallMessage {
     Progress(String, f64),
-    SelectAsset(Vec<String>, std::sync::mpsc::Sender<usize>),
-    SelectBinary(Vec<String>, std::sync::mpsc::Sender<usize>),
-    SelectDesktop(Vec<String>, std::sync::mpsc::Sender<usize>),
+    SelectAsset(Vec<String>, tokio::sync::oneshot::Sender<usize>),
+    SelectBinary(Vec<String>, tokio::sync::oneshot::Sender<usize>),
+    SelectDesktop(Vec<String>, tokio::sync::oneshot::Sender<usize>),
 }
 fn find_desktop_files_with_target(config: &Config, target_str: &str) -> Vec<PathBuf> {
     let mut found = Vec::new();
@@ -308,14 +308,14 @@ Categories={};"#,
     Ok(())
 }
 
-pub fn install_app(
+pub async fn install_app(
     config: &Config,
     source: &str,
     app_name_opt: Option<&str>,
     use_root_opt: Option<&str>,
     category_opt: Option<&str>,
     is_cli: bool,
-    tx: Option<std::sync::mpsc::Sender<InstallMessage>>,
+    tx: Option<tokio::sync::mpsc::UnboundedSender<InstallMessage>>,
 ) -> Result<(), crate::error::TmError> {
     let mut actual_tarball = PathBuf::from(source);
     let mut downloaded = false;
@@ -340,7 +340,7 @@ pub fn install_app(
             let url = &repo_source.repo.url;
             if crate::core::download::is_supported_git_url(url) {
                 if is_cli { info_msg(&format!("Fetching releases for {}...", repo_source.repo.name)); }
-                        match crate::core::download::get_latest_release_assets(url) {
+                        match crate::core::download::get_latest_release_assets(url).await {
                             Ok(assets) => {
                                 if assets.is_empty() {
                                     if is_cli { error_msg("No suitable tarball assets found in the latest release."); }
@@ -350,10 +350,10 @@ pub fn install_app(
                                     } else {
                                         if !is_cli {
                                             if let Some(t) = &tx {
-                                                let (reply_tx, reply_rx) = std::sync::mpsc::channel();
+                                                let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
                                                 let names: Vec<String> = assets.iter().map(|a| a.name.clone()).collect();
                                                 let _ = t.send(InstallMessage::SelectAsset(names, reply_tx));
-                                                match reply_rx.recv() {
+                                                match reply_rx.await {
                                                     Ok(idx) => idx,
                                                     Err(_) => 0,
                                                 }
@@ -372,7 +372,7 @@ pub fn install_app(
                                     std::fs::create_dir_all(&tmp_dir)?;
                                     
                                     if is_cli { info_msg(&format!("Downloading {}...", selected_asset.name)); }
-                                    match crate::core::download::download_file(&selected_asset.browser_download_url, &tmp_dir, tx.clone()) {
+                                    match crate::core::download::download_file(&selected_asset.browser_download_url, &tmp_dir, tx.clone()).await {
                                         Ok(path) => {
                                             actual_tarball = path;
                                             downloaded = true;
@@ -398,7 +398,7 @@ pub fn install_app(
                 std::fs::create_dir_all(&tmp_dir)?;
                 
                 if is_cli { info_msg(&format!("Downloading from {}...", url)); }
-                match crate::core::download::download_file(url, &tmp_dir, tx.clone()) {
+                match crate::core::download::download_file(url, &tmp_dir, tx.clone()).await {
                     Ok(path) => {
                         actual_tarball = path;
                         downloaded = true;
@@ -429,11 +429,11 @@ pub fn install_app(
             } else {
                 if !is_cli {
                     if let Some(t) = &tx {
-                        let (reply_tx, reply_rx) = std::sync::mpsc::channel();
+                        let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
                         let mut choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
                         choices.push("Skip / Manual link later".to_string());
                         let _ = t.send(InstallMessage::SelectBinary(choices, reply_tx));
-                        match reply_rx.recv() {
+                        match reply_rx.await {
                             Ok(idx) if idx < executables.len() => Some(executables[idx].clone()),
                             _ => None,
                         }
@@ -458,11 +458,11 @@ pub fn install_app(
             } else {
                 if !is_cli {
                     if let Some(t) = &tx {
-                        let (reply_tx, reply_rx) = std::sync::mpsc::channel();
+                        let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
                         let mut choices: Vec<String> = desktop_files.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
                         choices.push("Skip / Generate New".to_string());
                         let _ = t.send(InstallMessage::SelectDesktop(choices, reply_tx));
-                        match reply_rx.recv() {
+                        match reply_rx.await {
                             Ok(idx) if idx < desktop_files.len() => Some(desktop_files[idx].clone()),
                             _ => None,
                         }
@@ -599,21 +599,21 @@ pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -
     Ok(())
 }
 
-pub fn update_tm(config: &Config) -> Result<(), crate::error::TmError> {
+pub async fn update_tm(config: &Config) -> Result<(), crate::error::TmError> {
     info_msg("Looking for the latest stable version on GitHub Releases...");
 
-    let client = reqwest::blocking::Client::builder()
+    let client = reqwest::Client::builder()
         .user_agent("Tarball-Manager/1.0")
         .build()?;
 
-    let response = client.get("https://api.github.com/repos/ezequielgk/Tarball-Manager/releases/latest").send();
+    let response = client.get("https://api.github.com/repos/ezequielgk/Tarball-Manager/releases/latest").send().await;
 
     if response.is_err() || !response.as_ref().unwrap().status().is_success() {
         error_msg("Error connecting to GitHub API.");
         return Ok(());
     }
 
-    let release_data: Result<crate::core::download::Release, _> = response.unwrap().json();
+    let release_data: Result<crate::core::download::Release, _> = response.unwrap().json().await;
     let mut latest_url = String::new();
     let mut latest_version = String::new();
 
@@ -654,7 +654,7 @@ pub fn update_tm(config: &Config) -> Result<(), crate::error::TmError> {
 
     info_msg(&format!("Downloading update..."));
 
-    match crate::core::download::download_file(&latest_url, &temp_dir, None) {
+    match crate::core::download::download_file(&latest_url, &temp_dir, None).await {
         Ok(downloaded_file) => {
             use std::os::unix::fs::PermissionsExt;
             if let Ok(metadata) = fs::metadata(&downloaded_file) {

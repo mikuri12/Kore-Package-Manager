@@ -23,18 +23,23 @@ pub enum Commands {
     #[command(name = "list", visible_alias = "list-installed", short_flag = 'l')]
     List,
     
-    /// Uninstall app (Ex: tm remove discord)
+    /// Uninstall apps (Ex: tm remove discord waterfox)
     #[command(name = "remove", short_flag = 'r')]
     Remove {
-        app_name: String,
+        #[arg(required = true, num_args = 1..)]
+        app_names: Vec<String>,
     },
     
-    /// Install application from a specific tarball
+    /// Install applications from specific tarballs or repositories
     #[command(name = "install", short_flag = 'i')]
     Install {
-        source: String,
+        #[arg(required = true, num_args = 1..)]
+        sources: Vec<String>,
+        #[arg(short, long, help = "Custom name for the application (single install only)")]
         app_name: Option<String>,
+        #[arg(short, long, help = "Whether to use root/pkexec (single install only)")]
         use_root: Option<String>,
+        #[arg(short, long, help = "Category for the application (single install only)")]
         category: Option<String>,
     },
     

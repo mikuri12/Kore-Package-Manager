@@ -185,6 +185,12 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
 
             let area = centered_rect(50, 40, f.area());
             f.render_stateful_widget(list, area, &mut app.list_state);
+
+            let help_rect = ratatui::layout::Rect::new(0, f.area().height.saturating_sub(2), f.area().width, 1);
+            let help_text = ratatui::widgets::Paragraph::new("Press (?) for help")
+                .style(ratatui::style::Style::default().fg(ratatui::style::Color::DarkGray).add_modifier(ratatui::style::Modifier::ITALIC))
+                .alignment(ratatui::layout::Alignment::Center);
+            f.render_widget(help_text, help_rect);
         }
         Route::ManageApps | Route::RemoveApps => {
             let chunks = Layout::default()
@@ -290,7 +296,7 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
 
             let main_chunks = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+                .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
                 .split(chunks[0]);
 
             let title = match app.viewing_repo_type {
@@ -323,8 +329,8 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
             };
 
             let preview_text = if let Some(r) = selected_repo {
-                format!(
-                    "--- REPOSITORY INFO ---\nName: {}\nType: {}\nURL: {}\nCategory: {}\nRequires Root: {}\n\nPress Enter for options\n{}",
+                let mut info = format!(
+                    "--- REPOSITORY INFO ---\n\nName: {}\nType: {}\nURL: {}\nCategory: {}\nRequires Root: {}\n\n",
                     r.repo.name,
                     match r.repo_type {
                         tm::repo::RepoType::Official => "Official",
@@ -334,8 +340,17 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                     r.repo.url,
                     r.repo.category,
                     if r.repo.requires_root { "Yes" } else { "No" },
-                    if app.viewing_repo_type == tm::repo::RepoType::User { "Press 'A' to add new custom repository" } else { "" }
-                )
+                );
+
+                if let Some(desc) = &r.repo.description {
+                    info.push_str(&format!("Description:\n{}\n\n", desc));
+                }
+
+                info.push_str("Press Enter for options\n");
+                if app.viewing_repo_type == tm::repo::RepoType::User {
+                    info.push_str("Press 'A' to add new custom repository");
+                }
+                info
             } else {
                 match app.viewing_repo_type {
                     tm::repo::RepoType::Official => "No selection\n\nOfficial repositories are managed by the application.".to_string(),
@@ -454,7 +469,11 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
     }
 
     if app.popup_type != PopupType::None {
-        let area = centered_rect(50, 40, f.area());
+        let area = if app.popup_type == PopupType::Help {
+            centered_rect(65, 60, f.area())
+        } else {
+            centered_rect(50, 40, f.area())
+        };
         f.render_widget(Clear, area);
 
         match app.popup_type {
@@ -520,6 +539,106 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                         .border_style(Style::default().fg(Color::Yellow)))
                     .wrap(ratatui::widgets::Wrap { trim: true });
                 f.render_widget(p, area);
+            }
+            PopupType::Help => {
+                let version = env!("CARGO_PKG_VERSION");
+                let bold_style = Style::default().add_modifier(Modifier::BOLD);
+                let center = ratatui::layout::Alignment::Center;
+                let dark_gray = Style::default().fg(Color::DarkGray);
+                
+                let lines = vec![
+                    ratatui::text::Line::from("").alignment(center),
+                    ratatui::text::Line::from("· Tarball Manager ·").alignment(center),
+                    ratatui::text::Line::from("").alignment(center),
+                    ratatui::text::Line::from("TUI Application to manage Linux tarballs,").alignment(center),
+                    ratatui::text::Line::from("AppImages and binaries directly from the terminal.").alignment(center),
+                    ratatui::text::Line::from("").alignment(center),
+                    ratatui::text::Line::from(ratatui::text::Span::styled("─────────────────────────────────────────────────────────", dark_gray)).alignment(center),
+                    ratatui::text::Line::from("").alignment(center),
+                    ratatui::text::Line::from(ratatui::text::Span::styled(version, bold_style)).alignment(center),
+                    ratatui::text::Line::from(""),
+                    ratatui::text::Line::from(""),
+                    ratatui::text::Line::from(ratatui::text::Span::styled("DISCLAIMER", bold_style)),
+                    ratatui::text::Line::from(""),
+                    ratatui::text::Line::from("  Tarball Manager is in an early alpha phase. It is highly susceptible"),
+                    ratatui::text::Line::from("  to bugs and unexpected behavior. Please report any issues or feedback"),
+                    ratatui::text::Line::from("  by opening an issue on the official GitHub repository."),
+                    ratatui::text::Line::from(""),
+                    ratatui::text::Line::from(ratatui::text::Span::styled("BASIC USAGE & KEYBINDS", bold_style)),
+                    ratatui::text::Line::from(""),
+                    ratatui::text::Line::from("  • Navigate Lists: Up/Down Arrows or 'k'/'j'"),
+                    ratatui::text::Line::from("  • Select/Confirm: Enter"),
+                    ratatui::text::Line::from("  • Back/Cancel: Esc"),
+                    ratatui::text::Line::from("  • Search/Filter: Type directly when a search bar is visible"),
+                    ratatui::text::Line::from("  • Quit Application: 'q' or Esc (from Main Menu)"),
+                    ratatui::text::Line::from("  • View this Help: '?'"),
+                    ratatui::text::Line::from("  • Internal Logs: F12"),
+                    ratatui::text::Line::from(""),
+                    ratatui::text::Line::from(ratatui::text::Span::styled("Press Enter or Esc to close", dark_gray)).alignment(center),
+                ];
+                let help_area = centered_rect(65, 75, f.area());
+                
+                let max_scroll = lines.len().saturating_sub(help_area.height.saturating_sub(4) as usize) as u16;
+                app.help_scroll = app.help_scroll.min(max_scroll);
+
+                let p = Paragraph::new(lines)
+                    .block(Block::default()
+                        .borders(Borders::ALL)
+                        .border_type(BorderType::Rounded)
+                        .padding(ratatui::widgets::Padding::new(4, 4, 1, 1))
+                        .title(ratatui::text::Line::from(ratatui::text::Span::styled(" Help ", Style::default().add_modifier(Modifier::ITALIC))).alignment(ratatui::layout::Alignment::Left))
+                        .title(ratatui::text::Line::from(ratatui::text::Span::styled(" (?) ", Style::default().add_modifier(Modifier::ITALIC))).alignment(ratatui::layout::Alignment::Right))
+                        .border_style(Style::default().fg(Color::DarkGray)))
+                    .wrap(ratatui::widgets::Wrap { trim: true })
+                    .scroll((app.help_scroll, 0));
+                
+                f.render_widget(Clear, help_area);
+                f.render_widget(p, help_area);
+
+                let mut scrollbar_state = ratatui::widgets::ScrollbarState::new(max_scroll as usize).position(app.help_scroll as usize);
+                let scrollbar = ratatui::widgets::Scrollbar::new(ratatui::widgets::ScrollbarOrientation::VerticalRight)
+                    .begin_symbol(Some("▲"))
+                    .end_symbol(Some("▼"));
+                
+                f.render_stateful_widget(
+                    scrollbar,
+                    help_area.inner(ratatui::layout::Margin { vertical: 1, horizontal: 0 }),
+                    &mut scrollbar_state,
+                );
+            }
+            PopupType::Logs => {
+                let area = centered_rect(80, 80, f.area());
+                let logs_text: String = app.logs.iter()
+                    .map(|l| format!("> {}\n", l))
+                    .collect::<Vec<String>>()
+                    .join("");
+                
+                let lines_count = app.logs.len();
+                let max_scroll = lines_count.saturating_sub(area.height.saturating_sub(2) as usize) as u16;
+                app.logs_scroll = app.logs_scroll.min(max_scroll);
+
+                let p = Paragraph::new(logs_text)
+                    .block(Block::default()
+                        .borders(Borders::ALL)
+                        .border_type(BorderType::Rounded)
+                        .title(" 󰈔 Internal Logs ")
+                        .border_style(Style::default().fg(Color::Yellow)))
+                    .wrap(ratatui::widgets::Wrap { trim: true })
+                    .scroll((app.logs_scroll, 0));
+                
+                f.render_widget(Clear, area);
+                f.render_widget(p, area);
+
+                let mut scrollbar_state = ratatui::widgets::ScrollbarState::new(max_scroll as usize).position(app.logs_scroll as usize);
+                let scrollbar = ratatui::widgets::Scrollbar::new(ratatui::widgets::ScrollbarOrientation::VerticalRight)
+                    .begin_symbol(Some("▲"))
+                    .end_symbol(Some("▼"));
+                
+                f.render_stateful_widget(
+                    scrollbar,
+                    area.inner(ratatui::layout::Margin { vertical: 1, horizontal: 0 }),
+                    &mut scrollbar_state,
+                );
             }
             PopupType::InstallProgress => {
                 let progress = app.install_progress;

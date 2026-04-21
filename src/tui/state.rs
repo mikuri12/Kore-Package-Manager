@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use ratatui::widgets::ListState;
 use tm::config::Config;
-use std::sync::mpsc;
+
 use tm::core::install::InstallMessage;
 
 #[derive(PartialEq, Clone, Copy)]
@@ -34,12 +34,14 @@ pub enum PopupType {
     InstallDesktopSelect,
     EnvVarInput,
     Information,
+    Help,
     RepoActionSelect,
     RepoNameInput,
     RepoPackageNameInput,
     RepoUrlInput,
     RepoCategoryInput,
     RepoRootInput,
+    Logs,
 }
 
 pub struct App {
@@ -85,9 +87,12 @@ pub struct App {
 
     pub install_status: String,
     pub install_progress: f64,
-    pub install_rx: Option<mpsc::Receiver<InstallMessage>>,
-    pub pending_install_reply: Option<mpsc::Sender<usize>>,
+    pub install_rx: Option<tokio::sync::mpsc::UnboundedReceiver<InstallMessage>>,
+    pub pending_install_reply: Option<tokio::sync::oneshot::Sender<usize>>,
     pub install_done: bool,
+    pub help_scroll: u16,
+    pub logs_scroll: u16,
+    pub logs: Vec<String>,
 }
 
 impl App {
@@ -132,6 +137,9 @@ impl App {
             install_rx: None,
             pending_install_reply: None,
             install_done: false,
+            help_scroll: 0,
+            logs_scroll: 0,
+            logs: Vec::new(),
         }
     }
 

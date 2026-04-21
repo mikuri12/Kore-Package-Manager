@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use serde::Deserialize;
-use std::fs::File;
 
 use std::path::{Path, PathBuf};
 
@@ -44,7 +43,7 @@ pub fn is_supported_git_url(url: &str) -> bool {
     url.contains("github.com") || url.contains("gitlab.") || url.contains("codeberg.org")
 }
 
-pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
+pub async fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
     let mut parts: Vec<&str> = url.trim_end_matches('/').split('/').collect();
     if parts.len() < 2 {
         return Err(anyhow::anyhow!("Invalid Git URL"));
@@ -52,7 +51,6 @@ pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
     let repo = parts.pop().unwrap();
     let owner = parts.pop().unwrap();
 
-    // Determinar el host (ej: gitlab.gnome.org o github.com)
     let host = if url.contains("github.com") {
         "github.com"
     } else if url.contains("codeberg.org") {
@@ -63,17 +61,17 @@ pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
         "gitlab.com"
     };
 
-    let client = reqwest::blocking::Client::builder()
+    let client = reqwest::Client::builder()
         .user_agent("Tarball-Manager/1.0")
         .build()?;
 
     let valid_assets = if url.contains("gitlab.") {
         let api_url = format!("https://{}/api/v4/projects/{}%2F{}/releases", host, owner, repo);
-        let response = client.get(&api_url).send()?;
+        let response = client.get(&api_url).send().await?;
         if !response.status().is_success() {
             return Err(anyhow::anyhow!("Failed to fetch GitLab release: {}", response.status()));
         }
-        let mut releases: Vec<GitlabRelease> = response.json()?;
+        let mut releases: Vec<GitlabRelease> = response.json().await?;
         if releases.is_empty() {
             return Err(anyhow::anyhow!("No releases found on GitLab instance {}", host));
         }
@@ -81,7 +79,6 @@ pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
         let first = releases.remove(0);
         let mut assets = Vec::new();
 
-        // Agregar links (binarios subidos manualmente)
         for link in first.assets.links {
             let n = link.name.to_lowercase();
             if n.ends_with(".tar.gz") || n.ends_with(".tar.xz") || n.ends_with(".tar.bz2") || n.ends_with(".zip") {
@@ -92,7 +89,6 @@ pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
             }
         }
 
-        // Agregar sources (archivos generados automáticamente por GitLab)
         for source in first.assets.sources {
             let name = format!("{}.{}", repo, source.format);
             assets.push(Asset {
@@ -108,11 +104,11 @@ pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
         } else {
             format!("https://api.github.com/repos/{}/{}/releases/latest", owner, repo)
         };
-        let response = client.get(&api_url).send()?;
+        let response = client.get(&api_url).send().await?;
         if !response.status().is_success() {
             return Err(anyhow::anyhow!("Failed to fetch release: {}", response.status()));
         }
-        let release: Release = response.json()?;
+        let release: Release = response.json().await?;
         release.assets
             .into_iter()
             .filter(|a| {
@@ -125,36 +121,31 @@ pub fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
     Ok(valid_assets)
 }
 
-pub fn download_file(url: &str, dest_dir: &Path, tx: Option<std::sync::mpsc::Sender<crate::core::install::InstallMessage>>) -> Result<PathBuf> {
-    let client = reqwest::blocking::Client::builder()
+pub async fn download_file(url: &str, dest_dir: &Path, tx: Option<tokio::sync::mpsc::UnboundedSender<crate::core::install::InstallMessage>>) -> Result<PathBuf> {
+    let client = reqwest::Client::builder()
         .user_agent("Tarball-Manager/1.0")
         .build()?;
         
-    let mut response = client.get(url).send()?;
+    let mut response = client.get(url).send().await?;
     if !response.status().is_success() {
         return Err(anyhow::anyhow!("Failed to download file: {}", response.status()));
     }
     
-    // Extract filename from URL more safely, avoiding query parameters
     let file_name = url.split('?').next().unwrap_or(url)
         .split('/').last()
         .unwrap_or("downloaded_file.tar.gz");
         
     let dest_path = dest_dir.join(file_name);
     
-    let mut file = File::create(&dest_path).context("Failed to create download file")?;
+    let mut file = tokio::fs::File::create(&dest_path).await.context("Failed to create download file")?;
     
     let total_size = response.content_length().unwrap_or(0);
     let mut downloaded: u64 = 0;
-    let mut buffer = [0; 8192];
-    use std::io::{Read, Write};
+    use tokio::io::AsyncWriteExt;
 
-    while let Ok(bytes_read) = response.read(&mut buffer) {
-        if bytes_read == 0 {
-            break; // EOF
-        }
-        file.write_all(&buffer[..bytes_read]).context("Failed to write to file")?;
-        downloaded += bytes_read as u64;
+    while let Some(chunk) = response.chunk().await? {
+        file.write_all(&chunk).await.context("Failed to write to file")?;
+        downloaded += chunk.len() as u64;
         
         if let Some(tx) = &tx {
             if total_size > 0 {

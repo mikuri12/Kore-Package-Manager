@@ -10,7 +10,8 @@ use clap::Parser;
 use cli::{Cli, Commands};
 use config::Config;
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let config = Config::new();
     config.setup_dirs()?;
 
@@ -22,7 +23,7 @@ fn main() -> anyhow::Result<()> {
     let _guard = config.setup_logging()?;
 
     if cli.update_bin {
-        core::update_tm(&config)?;
+        core::update_tm(&config).await?;
         return Ok(());
     }
 
@@ -30,11 +31,27 @@ fn main() -> anyhow::Result<()> {
         Some(Commands::List) => {
             core::list_cli(&config);
         }
-        Some(Commands::Remove { app_name }) => {
-            core::remove_app(&config, app_name, true, false)?;
+        Some(Commands::Remove { app_names }) => {
+            for name in app_names {
+                if let Err(e) = core::remove_app(&config, name, true, false) {
+                    utils::error_msg(&format!("Failed to remove {}: {}", name, e));
+                }
+            }
         }
-        Some(Commands::Install { source, app_name, use_root, category }) => {
-            core::install_app(&config, source, app_name.as_deref(), use_root.as_deref(), category.as_deref(), true, None)?;
+        Some(Commands::Install { sources, app_name, use_root, category }) => {
+            let multi = sources.len() > 1;
+            for source in sources {
+                let res = if multi {
+                    // For bulk installs, prioritize repo metadata by passing None for manual overrides
+                    core::install_app(&config, source, None, None, None, true, None).await
+                } else {
+                    core::install_app(&config, source, app_name.as_deref(), use_root.as_deref(), category.as_deref(), true, None).await
+                };
+
+                if let Err(e) = res {
+                    utils::error_msg(&format!("Failed to install {}: {}", source, e));
+                }
+            }
         }
         Some(Commands::Repo { repo_command }) => {
             match repo_command {
@@ -114,13 +131,13 @@ fn main() -> anyhow::Result<()> {
                 }
                 cli::RepoCommands::Sync => {
                     utils::info_msg("Syncing repositories from GitHub...");
-                    match repo::sync_repos(&config) {
+                    match repo::sync_repos(&config).await {
                         Ok(_) => utils::success_msg("Repositories successfully synced!"),
                         Err(e) => utils::error_msg(&format!("Failed to sync repositories: {}", e)),
                     }
                 }
                 cli::RepoCommands::Add { name, package_name, url, category, requires_root } => {
-                    match repo::add_user_repo(&config, name, package_name, url, category, *requires_root) {
+                    match repo::add_user_repo(&config, name, package_name, url, category, *requires_root).await {
                         Ok(_) => utils::success_msg(&format!("Repository '{}' added.", name)),
                         Err(e) => utils::error_msg(&format!("Failed to add repository: {}", e)),
                     }
@@ -150,7 +167,7 @@ fn main() -> anyhow::Result<()> {
                             let app = entry.file_name().to_string_lossy().to_string();
                             if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == app.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == app.to_lowercase())) {
                                 utils::info_msg(&format!("Updating {}...", repo_source.repo.name));
-                                let _ = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true, None);
+                                let _ = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true, None).await;
                                 updated_any = true;
                             }
                         }
@@ -165,7 +182,7 @@ fn main() -> anyhow::Result<()> {
         }
         None => {
             // If there are no arguments, open the TUI (Terminal User Interface)
-            tui::main_menu(&config)?;
+            tui::main_menu(&config).await?;
         }
     }
     

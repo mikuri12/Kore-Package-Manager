@@ -10,6 +10,8 @@ pub struct Repository {
     pub url: String,
     pub category: String,
     pub requires_root: bool,
+    #[serde(default)]
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -92,7 +94,7 @@ pub fn get_all_repos(config: &Config) -> Vec<RepoSource> {
     all
 }
 
-pub fn add_user_repo(
+pub async fn add_user_repo(
     config: &Config,
     name: &str,
     package_name: &str,
@@ -107,12 +109,12 @@ pub fn add_user_repo(
     }
 
     // Validate URL reachability
-    let client = reqwest::blocking::Client::builder()
+    let client = reqwest::Client::builder()
         .user_agent("Tarball-Manager/1.0")
         .timeout(std::time::Duration::from_secs(5))
         .build()?;
     
-    match client.get(url).send() {
+    match client.get(url).send().await {
         Ok(resp) => {
             if !resp.status().is_success() {
                 return Err(crate::error::TmError::Generic(format!("The URL '{}' returned status {}. Please verify it exists.", url, resp.status())));
@@ -129,6 +131,7 @@ pub fn add_user_repo(
         url: url.to_string(),
         category: category.to_string(),
         requires_root,
+        description: None,
     });
     save_user_repos(config, &repos)?;
     Ok(())
@@ -147,17 +150,17 @@ pub fn remove_user_repo(config: &Config, name: &str) -> Result<bool, crate::erro
     }
 }
 
-pub fn sync_repos(config: &Config) -> Result<(), crate::error::TmError> {
-    let client = reqwest::blocking::Client::builder()
+pub async fn sync_repos(config: &Config) -> Result<(), crate::error::TmError> {
+    let client = reqwest::Client::builder()
         .user_agent("Tarball-Manager/1.0")
         .build()?;
 
     let official_url = "https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/assets/default_repos.json";
     let community_url = "https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/assets/community_repos.json";
 
-    let off_resp = client.get(official_url).send()?;
+    let off_resp = client.get(official_url).send().await?;
     if off_resp.status().is_success() {
-        let text = off_resp.text()?;
+        let text = off_resp.text().await?;
         // validate json
         let _: RepositoryList = serde_json::from_str(&text)?;
         std::fs::write(&config.official_repos_file, text)?;
@@ -165,9 +168,9 @@ pub fn sync_repos(config: &Config) -> Result<(), crate::error::TmError> {
         return Err(crate::error::TmError::Generic("Failed to download official repositories".to_string()));
     }
 
-    let com_resp = client.get(community_url).send()?;
+    let com_resp = client.get(community_url).send().await?;
     if com_resp.status().is_success() {
-        let text = com_resp.text()?;
+        let text = com_resp.text().await?;
         // validate json
         let _: RepositoryList = serde_json::from_str(&text)?;
         std::fs::write(&config.community_repos_file, text)?;

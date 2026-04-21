@@ -15,7 +15,7 @@ use std::path::PathBuf;
 use tm::config::Config;
 use state::App;
 
-pub fn main_menu(config: &Config) -> anyhow::Result<()> {
+pub async fn main_menu(config: &Config) -> anyhow::Result<()> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     stdout.execute(EnterAlternateScreen)?;
@@ -35,11 +35,12 @@ pub fn main_menu(config: &Config) -> anyhow::Result<()> {
             ui::draw(f, &mut app, config);
         })?;
 
-        if let Some(rx) = &app.install_rx {
+        if let Some(rx) = &mut app.install_rx {
             while let Ok(msg) = rx.try_recv() {
                 match msg {
                     tm::core::install::InstallMessage::Progress(status, prog) => {
-                        app.install_status = status;
+                        app.install_status = status.clone();
+                        app.logs.push(status);
                         app.install_progress = prog;
                         if prog >= 100.0 || prog < 0.0 {
                             app.install_done = true;
@@ -75,7 +76,7 @@ pub fn main_menu(config: &Config) -> anyhow::Result<()> {
             app.load_apps(config);
         }
 
-        let should_quit = handlers::handle_key_events(&mut terminal, &mut app, config)?;
+        let should_quit = handlers::handle_key_events(&mut terminal, &mut app, config).await?;
         if should_quit {
             break;
         }
