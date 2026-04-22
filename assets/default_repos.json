@@ -65,14 +65,6 @@
       "description": "A privacy-focused web browser based on Firefox, optimized for performance and customization."
     },
     {
-      "name": "ClamAv",
-      "package_name": "clamav",
-      "url": "https://github.com/Cisco-Talos/clamav",
-      "category": "Utility",
-      "requires_root": false,
-      "description": "An open-source antivirus engine for detecting trojans, viruses, and other malware."
-    },
-    {
       "name": "Micro",
       "package_name": "micro",
       "url": "https://github.com/micro-editor/micro",
