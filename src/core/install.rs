@@ -394,11 +394,20 @@ pub async fn install_app(
                         }
             } else {
                 if is_cli { info_msg(&format!("{} is not a known Git provider. Treating as direct download link...", url)); }
+                
+                let resolved_url = match crate::core::download::resolve_dynamic_url(url).await {
+                    Ok(u) => u,
+                    Err(e) => {
+                        if is_cli { error_msg(&format!("Failed to resolve dynamic URL: {}", e)); }
+                        return Err(crate::error::TmError::Generic(e.to_string()));
+                    }
+                };
+
                 let tmp_dir = std::env::temp_dir().join("tm_downloads");
                 std::fs::create_dir_all(&tmp_dir)?;
                 
-                if is_cli { info_msg(&format!("Downloading from {}...", url)); }
-                match crate::core::download::download_file(url, &tmp_dir, tx.clone()).await {
+                if is_cli { info_msg(&format!("Downloading from {}...", resolved_url)); }
+                match crate::core::download::download_file(&resolved_url, &tmp_dir, tx.clone()).await {
                     Ok(path) => {
                         actual_tarball = path;
                         downloaded = true;

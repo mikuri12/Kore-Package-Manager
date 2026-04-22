@@ -11,7 +11,7 @@
     {
       "name": "JetBrains Toolbox",
       "package_name": "jetbrains-toolbox",
-      "url": "https://download.jetbrains.com/toolbox/jetbrains-toolbox-3.4.3.81140.tar.gz",
+      "url": "https://www.jetbrains.com/toolbox-app/download/download-thanks.html?platform=linux",
       "category": "Development",
       "requires_root": false,
       "description": "A central dashboard to manage JetBrains IDEs, updates, and projects effortlessly."
@@ -43,7 +43,7 @@
     {
       "name": "Sublime Text",
       "package_name": "sublime-text",
-      "url": "https://download.sublimetext.com/sublime_text_build_4200_x64.tar.xz",
+      "url": "https://download.sublimetext.com/sublime_text_build_$st_build_x64.tar.xz",
       "category": "Development",
       "requires_root": false,
       "description": "A sophisticated text editor for code, markup, and prose with ultra-fast performance."
@@ -75,10 +75,18 @@
     {
       "name": "Tor Browser",
       "package_name": "tor-browser",
-      "url": "https://www.torproject.org/dist/torbrowser/15.0.9/tor-browser-linux-x86_64-15.0.9.tar.xz",
+      "url": "https://www.torproject.org/dist/torbrowser/$tor_ver/tor-browser-linux-x86_64-$tor_ver.tar.xz",
       "category": "Network",
       "requires_root": false,
       "description": "Privacy-focused browser that protects you against tracking, surveillance, and censorship."
+    },
+    {
+      "name": "Tor Expert Bundle",
+      "package_name": "tor-expert-bundle",
+      "url": "https://archive.torproject.org/tor-package-archive/torbrowser/$tor_ver/tor-expert-bundle-linux-x86_64-$tor_ver.tar.gz",
+      "category": "Network",
+      "requires_root": false,
+      "description": "The Tor binary and supporting files, without the graphical browser interface."
     },
     {
       "name": "Local Send",

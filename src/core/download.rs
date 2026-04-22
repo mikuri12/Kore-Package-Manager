@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use serde::Deserialize;
+use regex::Regex;
 
 use std::path::{Path, PathBuf};
 
@@ -158,4 +159,84 @@ pub async fn download_file(url: &str, dest_dir: &Path, tx: Option<tokio::sync::m
     }
     
     Ok(dest_path)
+}
+
+pub async fn resolve_dynamic_url(url: &str) -> Result<String> {
+    let mut resolved_url = url.to_string();
+
+    if resolved_url.contains("$tor_ver") {
+        let client = reqwest::Client::builder()
+            .user_agent("Tarball-Manager/1.0")
+            .build()?;
+        
+        let resp = client.get("https://dist.torproject.org/torbrowser/").send().await?;
+        if resp.status().is_success() {
+            let body = resp.text().await?;
+            let re = Regex::new(r"1[0-9]\.[0-9]\.[0-9]+")?;
+            
+            let mut versions: Vec<String> = re.find_iter(&body)
+                .map(|m| m.as_str().to_string())
+                .collect();
+            
+            if !versions.is_empty() {
+                versions.sort_by(|a, b| {
+                    let a_parts: Vec<u32> = a.split('.').filter_map(|s| s.parse().ok()).collect();
+                    let b_parts: Vec<u32> = b.split('.').filter_map(|s| s.parse().ok()).collect();
+                    a_parts.cmp(&b_parts)
+                });
+
+                if let Some(latest) = versions.last() {
+                    resolved_url = resolved_url.replace("$tor_ver", latest);
+                }
+            }
+        }
+    }
+
+    if resolved_url.contains("$st_build") {
+        let client = reqwest::Client::builder()
+            .user_agent("Mozilla/5.0")
+            .build()?;
+        
+        let resp = client.get("https://www.sublimetext.com/download").send().await?;
+        if resp.status().is_success() {
+            let body = resp.text().await?;
+            let re = Regex::new(r"sublime_text_build_([0-9]{4})_x64.tar.xz")?;
+            if let Some(caps) = re.captures(&body) {
+                let build = &caps[1];
+                resolved_url = resolved_url.replace("$st_build", build);
+            }
+        }
+    }
+
+    if resolved_url.contains("$wf_ver") {
+        let client = reqwest::Client::builder()
+            .user_agent("Tarball-Manager/1.0")
+            .build()?;
+        
+        let resp = client.get("https://cdn.waterfox.com/waterfox/releases/").send().await?;
+        if resp.status().is_success() {
+            let body = resp.text().await?;
+            let re = Regex::new(r"G[0-9]+\.[0-9]+\.[0-9]+")?;
+            
+            let mut versions: Vec<String> = re.find_iter(&body)
+                .map(|m| m.as_str().to_string())
+                .collect();
+            
+            if !versions.is_empty() {
+                versions.sort_by(|a, b| {
+                    let a_v = &a[1..];
+                    let b_v = &b[1..];
+                    let a_parts: Vec<u32> = a_v.split('.').filter_map(|s| s.parse().ok()).collect();
+                    let b_parts: Vec<u32> = b_v.split('.').filter_map(|s| s.parse().ok()).collect();
+                    a_parts.cmp(&b_parts)
+                });
+
+                if let Some(latest) = versions.last() {
+                    resolved_url = resolved_url.replace("$wf_ver", latest);
+                }
+            }
+        }
+    }
+
+    Ok(resolved_url)
 }
