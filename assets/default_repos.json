@@ -152,5 +152,21 @@
       "requires_root": false,
       "description": "A feature-rich command-line audio/video downloader with support for thousands of sites."
     }
+    {
+      "name": "nnn",
+      "package_name": "nnn",
+      "url": "https://github.com/jarun/nnn",
+      "category": "Utility",
+      "requires_root": false,
+      "description": "nnn (n³) is a full-featured terminal file manager. It's tiny, nearly 0-config and incredibly fast."
+    },
+    {
+      "name": "lf",
+      "package_name": "lf",
+      "url": "https://github.com/gokcehan/lf",
+      "category": "Utility",
+      "requires_root": false,
+      "description": "lf (as in list files) is a terminal file manager written in Go with a heavy inspiration from ranger file manager. "
+    }
   ]
 }
