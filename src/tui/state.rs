@@ -58,6 +58,8 @@ pub struct App {
     pub fb_input: String,
 
     pub cached_preview: Option<(String, String)>,
+    pub preview_tx: tokio::sync::mpsc::UnboundedSender<(String, String)>,
+    pub preview_rx: Option<tokio::sync::mpsc::UnboundedReceiver<(String, String)>>,
 
     pub popup_type: PopupType,
     pub popup_state: ListState,
@@ -97,6 +99,7 @@ pub struct App {
 
 impl App {
     pub fn new(start_dir: &Path) -> Self {
+        let (preview_tx, preview_rx) = tokio::sync::mpsc::unbounded_channel();
         App {
             route: Route::MainMenu,
             apps: Vec::new(),
@@ -109,6 +112,8 @@ impl App {
             fb_state: ListState::default(),
             fb_input: String::new(),
             cached_preview: None,
+            preview_tx,
+            preview_rx: Some(preview_rx),
             popup_type: PopupType::None,
             popup_state: ListState::default(),
             popup_items: Vec::new(),

@@ -22,11 +22,38 @@ pub async fn handle_key_events<B: Backend>(
                 }
 
                 if app.popup_type != PopupType::None {
+                    let is_list_popup = matches!(app.popup_type,
+                        PopupType::ActionSelect | PopupType::CategorySelect | PopupType::ChangeBinarySelect |
+                        PopupType::ChangeRootSelect | PopupType::ConfirmUninstall | PopupType::InstallRootSelect |
+                        PopupType::InstallCategorySelect | PopupType::RepoActionSelect | PopupType::RepoRootInput
+                    );
+
+                    let is_input_popup = matches!(app.popup_type,
+                        PopupType::NameInput | PopupType::EnvVarInput | PopupType::InstallNameInput |
+                        PopupType::RepoNameInput | PopupType::RepoPackageNameInput | PopupType::RepoUrlInput |
+                        PopupType::RepoCategoryInput
+                    );
+
+                    if is_list_popup {
+                        if matches!(key.code, KeyCode::Esc) {
+                            app.popup_type = PopupType::None;
+                            return Ok(false);
+                        } else if matches!(key.code, KeyCode::Up | KeyCode::Char('k')) {
+                            app.previous();
+                            return Ok(false);
+                        } else if matches!(key.code, KeyCode::Down | KeyCode::Char('j')) {
+                            app.next();
+                            return Ok(false);
+                        }
+                    } else if is_input_popup {
+                        if matches!(key.code, KeyCode::Esc) {
+                            app.popup_type = PopupType::None;
+                            return Ok(false);
+                        }
+                    }
+
                     match app.popup_type {
                         PopupType::ActionSelect => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
-                            KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                            KeyCode::Down | KeyCode::Char('j') => { app.next(); }
                             KeyCode::Enter => {
                                 let selected_action = app.popup_state.selected().unwrap_or(0);
                                 if selected_action == 0 {
@@ -70,7 +97,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::NameInput => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
                             KeyCode::Backspace => { app.popup_input.pop(); }
                             KeyCode::Char(c) => { 
                                 if !['@', '$', '/', '\\', '|', '*', '?', '<', '>', ':', '\"'].contains(&c) {
@@ -90,9 +116,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::CategorySelect => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
-                            KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                            KeyCode::Down | KeyCode::Char('j') => { app.next(); }
                             KeyCode::Enter => {
                                 if let Some(cidx) = app.popup_state.selected() {
                                     if let Some(idx) = app.list_state.selected() {
@@ -107,9 +130,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::ChangeBinarySelect => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
-                            KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                            KeyCode::Down | KeyCode::Char('j') => { app.next(); }
                             KeyCode::Enter => {
                                 if let Some(bidx) = app.popup_state.selected() {
                                     app.pending_selected_exec = app.pending_executables[bidx].clone();
@@ -135,9 +155,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::ChangeRootSelect => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
-                            KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                            KeyCode::Down | KeyCode::Char('j') => { app.next(); }
                             KeyCode::Enter => {
                                 if let Some(ridx) = app.popup_state.selected() {
                                     if let Some(idx) = app.list_state.selected() {
@@ -152,7 +169,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::EnvVarInput => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
                             KeyCode::Backspace => { app.popup_input.pop(); }
                             KeyCode::Char(c) => { app.popup_input.push(c); }
                             KeyCode::Enter => {
@@ -167,9 +183,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::ConfirmUninstall => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
-                            KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                            KeyCode::Down | KeyCode::Char('j') => { app.next(); }
                             KeyCode::Enter => {
                                 let cidx = app.popup_state.selected().unwrap_or(1);
                                 if cidx == 0 {
@@ -186,7 +199,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::InstallNameInput => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
                             KeyCode::Backspace => { app.popup_input.pop(); }
                             KeyCode::Char(c) => { 
                                 if !['@', '$', '/', '\\', '|', '*', '?', '<', '>', ':', '\"'].contains(&c) {
@@ -204,9 +216,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::InstallRootSelect => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
-                            KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                            KeyCode::Down | KeyCode::Char('j') => { app.next(); }
                             KeyCode::Enter => {
                                 app.pending_use_root = app.popup_state.selected().unwrap_or(0) == 1;
                                 app.open_popup_list(PopupType::InstallCategorySelect, tm::core::get_all_categories(config));
@@ -214,9 +223,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::InstallCategorySelect => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
-                            KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                            KeyCode::Down | KeyCode::Char('j') => { app.next(); }
                             KeyCode::Enter => {
                                 if let Some(cidx) = app.popup_state.selected() {
                                     app.pending_category = app.popup_items[cidx].clone();
@@ -306,9 +312,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::RepoActionSelect => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
-                            KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                            KeyCode::Down | KeyCode::Char('j') => { app.next(); }
                             KeyCode::Enter => {
                                 let cidx = app.popup_state.selected().unwrap_or(0);
                                 if app.popup_items.is_empty() { return Ok(false); }
@@ -355,7 +358,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::RepoNameInput => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
                             KeyCode::Backspace => { app.popup_input.pop(); }
                             KeyCode::Char(c) => { 
                                 if !['@', '$', '/', '\\', '|', '*', '?', '<', '>', ':', '\"'].contains(&c) {
@@ -371,7 +373,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::RepoPackageNameInput => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
                             KeyCode::Backspace => { app.popup_input.pop(); }
                             KeyCode::Char(c) => { 
                                 if !['@', '$', '/', '\\', '|', '*', '?', '<', '>', ':', '\"', ' '].contains(&c) {
@@ -387,7 +388,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::RepoUrlInput => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
                             KeyCode::Backspace => { app.popup_input.pop(); }
                             KeyCode::Char(c) => { app.popup_input.push(c); }
                             KeyCode::Enter => {
@@ -399,7 +399,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::RepoCategoryInput => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
                             KeyCode::Backspace => { app.popup_input.pop(); }
                             KeyCode::Char(c) => { app.popup_input.push(c); }
                             KeyCode::Enter => {
@@ -411,9 +410,6 @@ pub async fn handle_key_events<B: Backend>(
                             _ => {}
                         },
                         PopupType::RepoRootInput => match key.code {
-                            KeyCode::Esc => { app.popup_type = PopupType::None; }
-                            KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                            KeyCode::Down | KeyCode::Char('j') => { app.next(); }
                             KeyCode::Enter => {
                                 app.pending_repo_root = app.popup_state.selected().unwrap_or(0) == 1;
                                 match tm::repo::add_user_repo(

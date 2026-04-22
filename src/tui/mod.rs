@@ -68,6 +68,12 @@ pub async fn main_menu(config: &Config) -> anyhow::Result<()> {
             }
         }
         
+        if let Some(rx) = &mut app.preview_rx {
+            while let Ok((name, text)) = rx.try_recv() {
+                app.cached_preview = Some((name, text));
+            }
+        }
+        
         if app.install_done {
             app.install_done = false;
             app.install_rx = None;

@@ -212,7 +212,7 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
             let items: Vec<ListItem> = app
                 .filtered
                 .iter()
-                .map(|i| ListItem::new(i.clone()))
+                .map(|i| ListItem::new(i.as_str()))
                 .collect();
 
             let list = List::new(items)
@@ -237,14 +237,26 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                     if cached_name == name {
                         cached_text.clone()
                     } else {
-                        let text = generate_preview(config, name);
-                        app.cached_preview = Some((name.clone(), text.clone()));
-                        text
+                        app.cached_preview = Some((name.clone(), "Loading preview...".to_string()));
+                        let name_clone = name.clone();
+                        let tx = app.preview_tx.clone();
+                        let config_clone = config.clone();
+                        tokio::task::spawn_blocking(move || {
+                            let text = generate_preview(&config_clone, &name_clone);
+                            let _ = tx.send((name_clone, text));
+                        });
+                        "Loading preview...".to_string()
                     }
                 } else {
-                    let text = generate_preview(config, name);
-                    app.cached_preview = Some((name.clone(), text.clone()));
-                    text
+                    app.cached_preview = Some((name.clone(), "Loading preview...".to_string()));
+                    let name_clone = name.clone();
+                    let tx = app.preview_tx.clone();
+                    let config_clone = config.clone();
+                    tokio::task::spawn_blocking(move || {
+                        let text = generate_preview(&config_clone, &name_clone);
+                        let _ = tx.send((name_clone, text));
+                    });
+                    "Loading preview...".to_string()
                 }
             } else {
                 "No selection".to_string()
@@ -392,7 +404,7 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
             let items: Vec<ListItem> = app
                 .fb_filtered
                 .iter()
-                .map(|i| ListItem::new(i.clone()))
+                .map(|i| ListItem::new(i.as_str()))
                 .collect();
 
             let title = if *current_route == Route::FileBrowser {
@@ -432,14 +444,26 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                         if cached_name == name {
                             cached_text.clone()
                         } else {
-                            let text = generate_archive_preview(&app.current_dir.join(name));
-                            app.cached_preview = Some((name.clone(), text.clone()));
-                            text
+                            app.cached_preview = Some((name.clone(), "Loading archive preview...".to_string()));
+                            let name_clone = name.clone();
+                            let target_path = app.current_dir.join(name);
+                            let tx = app.preview_tx.clone();
+                            tokio::task::spawn_blocking(move || {
+                                let text = generate_archive_preview(&target_path);
+                                let _ = tx.send((name_clone, text));
+                            });
+                            "Loading archive preview...".to_string()
                         }
                     } else {
-                        let text = generate_archive_preview(&app.current_dir.join(name));
-                        app.cached_preview = Some((name.clone(), text.clone()));
-                        text
+                        app.cached_preview = Some((name.clone(), "Loading archive preview...".to_string()));
+                        let name_clone = name.clone();
+                        let target_path = app.current_dir.join(name);
+                        let tx = app.preview_tx.clone();
+                        tokio::task::spawn_blocking(move || {
+                            let text = generate_archive_preview(&target_path);
+                            let _ = tx.send((name_clone, text));
+                        });
+                        "Loading archive preview...".to_string()
                     }
                 } else {
                     "File".to_string()
@@ -493,7 +517,7 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
                 let p_items: Vec<ListItem> = app
                     .popup_items
                     .iter()
-                    .map(|i| ListItem::new(i.clone()))
+                    .map(|i| ListItem::new(i.as_str()))
                     .collect();
 
                 let p_list = List::new(p_items)

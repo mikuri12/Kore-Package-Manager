@@ -422,7 +422,15 @@ pub async fn install_app(
         if let Some(t) = &tx {
             let _ = t.send(InstallMessage::Progress("Extracting archive... Please wait".to_string(), 50.0));
         }
-        if let Some((target, raw_name_folder, executables, desktop_files)) = extract_and_scan(config, &actual_tarball, repo_package_name_opt.as_deref(), !is_cli)? {
+        let config_clone = config.clone();
+        let tarball_clone = actual_tarball.clone();
+        let repo_package_clone = repo_package_name_opt.clone();
+        let is_cli_clone = is_cli;
+        let extract_result = tokio::task::spawn_blocking(move || {
+            extract_and_scan(&config_clone, &tarball_clone, repo_package_clone.as_deref(), !is_cli_clone)
+        }).await.map_err(|e| crate::error::TmError::Generic(e.to_string()))??;
+
+        if let Some((target, raw_name_folder, executables, desktop_files)) = extract_result {
             let exec_path = if executables.is_empty() {
                 if is_cli { error_msg("No executable binary found."); }
                 None
@@ -507,14 +515,37 @@ pub async fn install_app(
                 if let Some(t) = &tx {
                     let _ = t.send(InstallMessage::Progress("Finalizing installation...".to_string(), 90.0));
                 }
-                finalize_installation(config, &target, &exec_path, &app_name, use_root, &category, bundled_desktop, !is_cli)?;
+                let config_clone = config.clone();
+                let target_clone = target.clone();
+                let exec_path_clone = exec_path.clone();
+                let app_name_clone = app_name.clone();
+                let use_root_clone = use_root;
+                let category_clone = category.clone();
+                let bundled_desktop_clone = bundled_desktop.clone();
+                let is_cli_clone = is_cli;
+
+                tokio::task::spawn_blocking(move || {
+                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &app_name_clone, use_root_clone, &category_clone, bundled_desktop_clone, !is_cli_clone)
+                }).await.map_err(|e| crate::error::TmError::Generic(e.to_string()))??;
                 if let Some(t) = &tx {
                     let _ = t.send(InstallMessage::Progress(format!("Successfully installed {}", app_name), 100.0));
                 }
                 if !is_cli {
                     std::thread::sleep(std::time::Duration::from_secs(1));
                 }
+            } else {
+                if let Some(t) = &tx {
+                    let _ = t.send(InstallMessage::Progress("Installation cancelled: No binary selected".to_string(), -1.0));
+                }
             }
+        } else {
+            if let Some(t) = &tx {
+                let _ = t.send(InstallMessage::Progress("Failed to extract the archive".to_string(), -1.0));
+            }
+        }
+    } else {
+        if let Some(t) = &tx {
+            let _ = t.send(InstallMessage::Progress("Archive file not found after download".to_string(), -1.0));
         }
     }
     

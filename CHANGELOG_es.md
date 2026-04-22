@@ -1,3 +1,14 @@
+## [1.5.0] - 2026-04-21
+
+### Características (Features)
+- **Perfil de Compilación Optimizada:** Se configuró un perfil `release` avanzado (`opt-level=3`, `lto=true`, `strip=true`) para generar binarios sustancialmente más rápidos y de menor tamaño.
+
+### Mejoras de Rendimiento y Estructura (Performance & Refactoring)
+- **Aislamiento I/O Asíncrono:** Funciones pesadas del núcleo como la extracción de tarballs y la configuración del sistema han sido migradas a `tokio::task::spawn_blocking`, solucionando de forma definitiva el "congelamiento" de la barra de progreso.
+- **Caché Asíncrona en TUI:** El cálculo de tamaños de directorio y la vista previa de archivos grandes ahora se procesan en segundo plano, mostrando un estado temporal ("Loading preview...") y eliminando al 100% el *micro-stuttering* al navegar.
+- **Limpieza de Reservas (Memory Allocation):** Refactorizado intensivo del bucle de renderizado para evitar clonación excesiva de cadenas de texto (`String::clone()`) en tiempo real, logrando una reducción masiva del consumo en memoria RAM.
+- **Refactorización Global de Navegación:** Eliminado medio centenar de líneas de código duplicado e irrelevante en el gestor de ventanas (`handlers.rs`) mediante la creación de un interceptor de teclado limpio para popups genéricos.
+
 ## [1.4.4-1.4.6] - 2026-04-21
 
 ### Características (Features)

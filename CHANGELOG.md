@@ -1,129 +1,163 @@
 [![Historial de cambios](https://img.shields.io/badge/Changelog-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
 
+## [1.5.0] - 2026-04-21
+
+### Features
+
+  - **Optimized Compilation Profile:** Configured an advanced `release` profile (utilizing `opt-level=3`, `lto=true`, and `strip=true`) to generate substantially faster binaries with a significantly smaller footprint.
+
+### Performance & Refactoring
+
+  - **Asynchronous I/O Isolation:** Heavy core functions, such as tarball extraction and system configuration, have been migrated to `tokio::task::spawn_blocking`. This definitively resolves the progress bar "freezing" issue.
+  - **Asynchronous TUI Caching:** Directory size calculations and large file previews are now processed in the background. A temporary state ("Loading preview...") is displayed, 100% eliminating micro-stuttering during navigation.
+  - **Memory Allocation Cleanup:** Intensive refactoring of the rendering loop to prevent excessive string cloning (`String::clone()`) in real-time, resulting in a massive reduction in RAM consumption.
+  - **Global Navigation Refactoring:** Removed over fifty lines of redundant and irrelevant code within the window manager (`handlers.rs`) by implementing a clean keyboard interceptor for generic popups.
+
 ## [1.4.4-1.4.6] - 2026-04-21
 
-### Características (Features)
-- **Migración a Arquitectura Asíncrona:** El núcleo del programa ha sido migrado completamente a un modelo asíncrono utilizando `Tokio` y `reqwest`. Esto mejora la estabilidad, la concurrencia y permite una TUI más fluida sin bloqueos durante operaciones pesadas de red.
-- **Soporte Multi-Paquete en CLI:** Ahora es posible instalar o eliminar múltiples aplicaciones en un solo comando (ej: `tm install zen waterfox` o `tm remove discord vesktop`).
-- **Vista Master-Detail (Repositorios):** Se rediseñó la interfaz de navegación de repositorios con un diseño de 40/60. Ahora puedes ver la lista a la izquierda y todos los detalles (incluyendo la nueva descripción) a la derecha.
-- **Descripciones de Aplicaciones:** Se añadió un campo de descripción detallada para cada repositorio en los archivos `default_repos.json` y `community_repos.json`.
-- **Visor de Logs Interno (F12):** Nueva herramienta de diagnóstico integrada que permite ver en tiempo real qué está ocurriendo "bajo el capó" (descargas, extracciones, errores detallados). Soporta scroll y navegación independiente.
+### Features
 
-### Mejoras (Improvements)
-- **Comunicación entre Core y TUI:** Implementación de canales bidireccionales asíncronos (`tokio::sync::mpsc` y `oneshot`) para una gestión de eventos más limpia y profesional.
-- **Ayuda Documentada:** Se agregó el acceso a los logs (`F12`) en el menú de ayuda global (`?`).
-- **Prioridad de Metadatos:** En instalaciones masivas vía CLI, el sistema ahora prioriza automáticamente la configuración definida en los repositorios oficiales sobre los flags manuales, garantizando instalaciones correctas.
+  - **Migration to Async Architecture:** The program core has been fully migrated to an asynchronous model using `Tokio` and `reqwest`. This improves stability, concurrency, and enables a smoother TUI without hangs during heavy network operations.
+  - **CLI Multi-Package Support:** It is now possible to install or remove multiple applications in a single command (e.g., `tm install zen waterfox` or `tm remove discord vesktop`).
+  - **Master-Detail View (Repositories):** Redesigned the repository navigation interface with a 40/60 layout. You can now see the list on the left and full details (including the new description) on the right.
+  - **Application Descriptions:** Added a detailed description field for each repository in the `default_repos.json` and `community_repos.json` files.
+  - **Internal Log Viewer (F12):** New integrated diagnostic tool to see what is happening "under the hood" in real-time (downloads, extractions, detailed errors). Supports independent scrolling and navigation.
+
+### Improvements
+
+  - **Core-to-TUI Communication:** Implementation of asynchronous bidirectional channels (`tokio::sync::mpsc` and `oneshot`) for cleaner and more professional event management.
+  - **Documented Help:** Added access to logs (`F12`) in the global help menu (`?`).
+  - **Metadata Priority:** In bulk CLI installations, the system now automatically prioritizes the configuration defined in official repositories over manual flags, ensuring correct installations.
 
 ## [1.4.3] - 2026-04-20
 
-### Características (Features)
-- **Control Total sobre Binarios:** Se eliminó la autoselección automática de ejecutables. Ahora el usuario siempre debe confirmar qué binario desea vincular, incluso si solo se detecta uno en el tarball.
-- **Opciones de Omisión (Skip):** Se agregó la capacidad de saltar la selección de binarios o de archivos `.desktop` durante la instalación interactiva, permitiendo una extracción "limpia" sin crear enlaces en el sistema.
-- **Validación de Repositorios:** Ahora el sistema verifica que la URL sea válida y accesible antes de permitir agregar un nuevo repositorio personalizado, evitando errores futuros durante la instalación.
-- **Nuevos Repositorios Oficiales:** Inclusión de **Zen Browser**, **Stoat**, **Discord** y **Floorp** en la lista de paquetes predeterminados.
+### Features
 
-### Mejoras (Improvements)
-- **Robustez en la Selección:** Mejorado el manejo de canales de respuesta (`mpsc`) para evitar cierres inesperados de popups durante la instalación.
+  - **Full Binary Control:** Removed automatic executable selection. The user must now always confirm which binary they wish to link, even if only one is detected in the tarball.
+  - **Skip Options:** Added the ability to skip binary or `.desktop` file selection during interactive installation, allowing for a "clean" extraction without creating system links.
+  - **Repository Validation:** The system now verifies that a URL is valid and accessible before allowing a new custom repository to be added, preventing future installation errors.
+  - **New Official Repositories:** Included **Zen Browser**, **Stoat**, **Discord**, and **Floorp** in the default package list.
+
+### Improvements
+
+  - **Selection Robustness:** Improved handling of response channels (`mpsc`) to prevent unexpected popup closures during installation.
 
 ## [1.4.2] - 2026-04-20
 
-### Características (Features)
-- **Soporte para archivos `.desktop` oficiales:** Ahora `tm` detecta archivos `.desktop` dentro de los archivos comprimidos. El usuario puede elegir usar el oficial del desarrollador, el cual es parcheado dinámicamente para asegurar que los campos `Exec` e `Icon` apunten a las rutas correctas.
-- **Detección Automática de Aplicaciones de Terminal:** Implementación de un escáner de dependencias dinámicas (`ldd`). Si un binario no tiene dependencias gráficas (GTK, Qt, X11, etc.), se marca automáticamente como `Terminal=true` en el acceso directo.
-- **Confirmación de Actualización de `tm`:** El comando `--update-bin` ahora muestra una comparativa de la versión actual frente a la versión encontrada en GitHub y solicita confirmación antes de descargar el nuevo binario.
+### Features
 
-### Correcciones (Bug Fixes)
-- **Sincronización de Repositorios:** Se corrigieron las URLs de GitHub en el comando `repo sync`, permitiendo que los archivos de configuración se descarguen correctamente desde la carpeta `assets/` del repositorio oficial.
+  - **Support for Official `.desktop` Files:** `tm` now detects `.desktop` files within compressed archives. Users can choose to use the developer's official file, which is dynamically patched to ensure `Exec` and `Icon` fields point to the correct paths.
+  - **Automatic Terminal App Detection:** Implemented a dynamic dependency scanner (`ldd`). If a binary lacks graphical dependencies (GTK, Qt, X11, etc.), it is automatically marked as `Terminal=true` in the shortcut.
+  - **`tm` Update Confirmation:** The `--update-bin` command now shows a comparison between the current version and the version found on GitHub, requesting confirmation before downloading the new binary.
+
+### Bug Fixes
+
+  - **Repository Sync:** Fixed GitHub URLs in the `repo sync` command, allowing configuration files to be correctly downloaded from the official repository's `assets/` folder.
 
 ## [1.4.1] - 2026-04-20
 
-### Características y Mejoras de UI (Features & UI Improvements)
-- **Instalaciones Asíncronas (Non-blocking):** Se eliminó por completo el congelamiento y suspensión de la terminal al instalar aplicaciones. Las instalaciones ahora ocurren en un hilo en segundo plano (background thread).
-- **Barra de Progreso Nativa:** Integración de un widget `Gauge` interactivo en la TUI que muestra el porcentaje de descarga y el progreso de extracción en tiempo real para instalaciones tanto locales como desde repositorios.
-- **Arquitectura Bidireccional de Canales (`mpsc`):** Nuevo sistema de mensajería (`InstallMessage`) que permite pausar la instalación para hacerle preguntas al usuario sin romper el renderizado de la terminal.
-- **Selección Interactiva de Tarballs:** Cuando un repositorio de GitHub tiene múltiples archivos (ej. versiones ARM o DEB), la TUI ahora te permite seleccionar cuál descargar mediante un menú emergente fluido.
-- **Selección de Binarios:** Si al extraer un archivo comprimido se detectan múltiples ejecutables, la interfaz abrirá un menú para que elijas cuál debe ser enlazado a tu sistema.
-- **Interfaz más limpia:** El menú "Manage Repositories" se simplificó a "Repositories". Se mejoró el estilo del widget de progreso usando caracteres *Unicode* y un alto contraste fijo para mejor legibilidad.
+### Features & UI Improvements
 
-### Correcciones (Bug Fixes)
-- **Flickering y Desfase Visual Solucionado:** Las funciones internas de extracción y asignación fueron puestas en "Modo Silencioso" durante el uso de la TUI, evitando que impriman texto plano a `stdout` y rompan o desfasen el dibujo de los menús.
-- **Navegación Corregida:** Arreglado el bug donde las teclas de flecha movían la lista de repositorios de fondo en lugar de interactuar con el popup de selección de tarballs.
-- **Cursor de Repositorios:** Se corrigió un detalle visual donde la lista de categorías de repositorio no mostraba ninguna selección por defecto al entrar por primera vez.
+  - **Asynchronous Installations (Non-blocking):** Completely eliminated terminal freezing and suspension when installing apps. Installations now occur in a background thread.
+  - **Native Progress Bar:** Integrated an interactive `Gauge` widget in the TUI that displays download percentage and extraction progress in real-time for both local and repository installations.
+  - **Bidirectional Channel Architecture (`mpsc`):** New messaging system (`InstallMessage`) that allows pausing the installation to prompt the user without breaking the terminal rendering.
+  - **Interactive Tarball Selection:** When a GitHub repository contains multiple files (e.g., ARM or DEB versions), the TUI now lets you select which one to download via a fluid popup menu.
+  - **Binary Selection:** If multiple executables are detected upon extraction, the interface will open a menu for you to choose which one should be linked to your system.
+  - **Cleaner Interface:** Simplified the "Manage Repositories" menu to "Repositories." Improved the progress widget style using *Unicode* characters and fixed high contrast for better readability.
+
+### Bug Fixes
+
+  - **Visual Flickering and Lag Resolved:** Internal extraction and assignment functions were set to "Silent Mode" during TUI usage, preventing them from printing plain text to `stdout` and breaking the menu layout.
+  - **Navigation Fix:** Fixed a bug where arrow keys moved the background repository list instead of interacting with the tarball selection popup.
+  - **Repository Cursor:** Corrected a visual detail where the repository category list showed no default selection upon first entry.
 
 ## [1.4.0] - 2026-04-20
 
-### Correcciones (Bug Fixes)
-- **Descargas de Gran Tamaño:** Se migró el motor de descarga a un sistema de transmisión de flujo (streaming). Esto resuelve el error "error decoding response body" al descargar archivos pesados al evitar cargar todo el archivo en la memoria RAM.
-- **Normalización de URLs:** Mejora en la extracción de nombres de archivos desde URLs que contienen parámetros de consulta o redirecciones complejas.
+### Bug Fixes
+
+  - **Large Downloads:** Migrated the download engine to a streaming system. This resolves the "error decoding response body" error when downloading large files by avoiding loading the entire file into RAM.
+  - **URL Normalization:** Improved filename extraction from URLs containing query parameters or complex redirects.
 
 ## [1.3.1-1.3.9] - 2026-04-19
 
-### Mejoras e Integración (Improvements & Integration)
-- **Perfeccionamiento del Sistema de Íconos:** Se rediseñó el buscador para soportar variantes de nombres con guiones (ej: `sublime-text.png` para "Sublime Text") y se aumentó la prioridad de las rutas estándar como `/icons/`, `/share/icons/` y `/pixmaps/`.
-- **Soporte para Aplicaciones Electron:** Se eliminaron las restricciones de búsqueda en carpetas `/build/` y `/out/`, permitiendo que aplicaciones como *Heroic Launcher* detecten sus íconos correctamente.
-- **Normalización de Accesos Directos:** Los archivos `.desktop` ahora usan el nombre del repositorio (ej: "Reaper") en lugar del nombre del paquete técnico para el campo visual del menú.
-- **Sanitización de Archivos:** Tanto los archivos `.desktop` como los binarios en `~/.local/bin` ahora usan nombres normalizados (minúsculas y sin espacios) para garantizar la compatibilidad con todos los lanzadores y terminales.
-- **Refresco Automático:** Integración de `update-desktop-database` tras cada instalación para que los cambios en íconos y menús se reflejen instantáneamente sin necesidad de reiniciar la sesión.
-- **Compatibilidad Ampliada:** Soporte restaurado para íconos `.ico` y nuevo soporte para archivos `.xpm`.
+### Improvements & Integration
+
+  - **Icon System Refinement:** Redesigned the searcher to support hyphenated name variants (e.g., `sublime-text.png` for "Sublime Text") and increased the priority of standard paths like `/icons/`, `/share/icons/`, and `/pixmaps/`.
+  - **Electron App Support:** Removed search restrictions on `/build/` and `/out/` folders, allowing apps like *Heroic Launcher* to detect their icons correctly.
+  - **Shortcut Normalization:** `.desktop` files now use the repository name (e.g., "Reaper") instead of the technical package name for the menu display field.
+  - **File Sanitization:** Both `.desktop` files and binaries in `~/.local/bin` now use normalized names (lowercase, no spaces) to ensure compatibility with all launchers and terminals.
+  - **Automatic Refresh:** Integration of `update-desktop-database` after each installation so that icon and menu changes reflect instantly without requiring a session restart.
+  - **Extended Compatibility:** Restored support for `.ico` icons and added new support for `.xpm` files.
 
 ## [1.3.0] - 2026-04-19
 
-### Características (Features)
-- **Sistema de Repositorios de 3 Niveles:** Clasificación en repositorios *Official*, *Community* y *User Custom*. Los oficiales y comunitarios ahora están protegidos en modo "Solo Lectura", asegurando que las listas base no puedan romperse accidentalmente.
-- **Sincronización Remota de Repositorios:** Nuevo comando CLI `tm repo sync` para descargar las listas de aplicaciones predeterminadas directamente desde la rama `main` del proyecto en GitHub, sin necesidad de actualizar el binario completo.
-- **Actualización Automática de Apps:** Nuevo comando CLI `tm update [app_name]` que escanea tus aplicaciones instaladas y descarga/reinstala automáticamente sus últimas versiones desde sus respectivos repositorios.
-- **Soporte Multi-Forja (GitLab & Codeberg):** El motor de descarga ahora es capaz de consultar e interpretar las APIs de lanzamientos (Releases) de `gitlab.com` y `codeberg.org`, además de GitHub.
-- **Direct Download Fallback:** Soporte universal para instalar aplicaciones desde cualquier URL estática de internet. Si el enlace no proviene de un proveedor Git conocido, Tarball-Manager simplemente descargará el archivo directamente.
+### Features
 
-### Mejoras (Enhancements)
-- **Búsqueda Profunda de Íconos:** Se rediseñó el algoritmo de búsqueda de íconos. Ahora escanea todo el tarball sin límite de profundidad utilizando un sistema inteligente de "puntuación", logrando encontrar los íconos ocultos incluso en las estructuras de carpetas más complejas.
-- **Limpieza de CLI:** Se eliminaron los íconos de fuentes especiales (Nerd Fonts) de la salida estándar del CLI (`tm`) para maximizar la compatibilidad con terminales simples, reemplazándolos por corchetes limpios (`[i]`, `[+]`, `[x]`).
+  - **3-Tier Repository System:** Categorization into *Official*, *Community*, and *User Custom* repositories. Official and community lists are now "Read-Only" to prevent accidental corruption.
+  - **Remote Repository Sync:** New CLI command `tm repo sync` to download default app lists directly from the `main` branch on GitHub without needing to update the entire binary.
+  - **Automatic App Updates:** New CLI command `tm update [app_name]` that scans installed apps and automatically downloads/reinstalls their latest versions from their respective repositories.
+  - **Multi-Forge Support (GitLab & Codeberg):** The download engine can now query and interpret Release APIs from `gitlab.com` and `codeberg.org` in addition to GitHub.
+  - **Direct Download Fallback:** Universal support for installing apps from any static URL. If the link is not from a known Git provider, Tarball-Manager will simply download the file directly.
+
+### Enhancements
+
+  - **Deep Icon Search:** Redesigned the icon search algorithm. It now scans the entire tarball without depth limits using an intelligent "scoring" system, finding hidden icons even in complex folder structures.
+  - **CLI Cleanup:** Removed special font icons (Nerd Fonts) from the CLI (`tm`) standard output to maximize compatibility with simple terminals, replacing them with clean brackets (`[i]`, `[+]`, `[x]`).
 
 ## [1.2.3] - 2026-04-19
 
-### Mejoras (Enhancements)
-- **Categorías Dinámicas:** La TUI ahora escanea automáticamente los archivos `.desktop` existentes para descubrir y mostrar categorías personalizadas creadas por el usuario, además de las opciones predeterminadas.
-- **Mensaje de Validación:** Se agregó un mensaje de advertencia visual `(No special characters allowed)` en los diálogos de entrada de texto (al instalar o renombrar) para prevenir errores al nombrar las aplicaciones.
+### Enhancements
+
+  - **Dynamic Categories:** The TUI now automatically scans existing `.desktop` files to discover and display user-created custom categories alongside default options.
+  - **Validation Message:** Added a visual warning `(No special characters allowed)` in text input dialogs (during installation or renaming) to prevent naming errors.
 
 ## [1.2.2] - 2026-04-18
 
-### Características (Features)
-- **Refactorización Mayor de la Arquitectura:** Se modularizó la TUI en una estructura basada en componentes (`src/tui/`). La lógica ahora está separada en `state.rs`, `ui.rs`, `handlers.rs` y `mod.rs`.
-- **Gestor de Íconos Personalizados:** Nueva acción en la TUI dentro de "Manage Installed Apps" para buscar y seleccionar manualmente íconos personalizados (`.png`, `.svg`, `.ico`) para las aplicaciones instaladas.
-- **Inyección de Variables de Entorno:** Soporte para inyectar variables de entorno personalizadas (ej: `OZONE_PLATFORM=wayland`) directamente en los archivos `.desktop` desde la TUI.
-- **CLI para Actualizar Binario:** Nuevo comando `--update-bin` en la CLI para actualizar automáticamente el programa a la última versión desde el repositorio de GitHub.
+### Features
 
-### Mejoras Técnicas (Technical Improvements)
-- **Manejo de Errores Robusto:** Migración completa a `anyhow` para un reporte de errores estandarizado y detallado en todo el core y la TUI.
-- **Sistema de Logging Profesional:** Integración de `tracing` y `tracing-appender`. Los logs ahora se escriben en `~/.local/state/tm/tm.log` para evitar que la salida de la terminal corrompa la TUI.
-- **Mensajería Inteligente:** Implementación del flag `IS_CLI` para alternar condicionalmente entre logs solo en archivo (modo TUI) y salida por terminal (modo CLI).
+  - **Major Architecture Refactoring:** Modularized the TUI into a component-based structure (`src/tui/`). Logic is now separated into `state.rs`, `ui.rs`, `handlers.rs`, and `mod.rs`.
+  - **Custom Icon Manager:** New TUI action within "Manage Installed Apps" to manually search and select custom icons (`.png`, `.svg`, `.ico`) for installed applications.
+  - **Environment Variable Injection:** Support for injecting custom environment variables (e.g., `OZONE_PLATFORM=wayland`) directly into `.desktop` files from the TUI.
+  - **CLI Binary Updater:** New `--update-bin` command in the CLI to automatically update the program to the latest version from the GitHub repository.
 
-### Correcciones (Bug Fixes)
-- Se corrigieron problemas de resolución de rutas y del "borrow checker" en `config.rs`.
-- Limpieza de importaciones no utilizadas y refinamiento del actualizador de archivos desktop para que sea aditivo (preservando modificadores existentes).
+### Technical Improvements
+
+  - **Robust Error Handling:** Full migration to `anyhow` for standardized and detailed error reporting across the core and TUI.
+  - **Professional Logging System:** Integrated `tracing` and `tracing-appender`. Logs are now written to `~/.local/state/tm/tm.log` to prevent terminal output from corrupting the TUI.
+  - **Smart Messaging:** Implemented the `IS_CLI` flag to conditionally toggle between file-only logs (TUI mode) and terminal output (CLI mode).
+
+### Bug Fixes
+
+  - Fixed path resolution and borrow checker issues in `config.rs`.
+  - Cleaned up unused imports and refined the desktop file updater to be additive (preserving existing modifiers).
 
 ## [1.2.1] - 2026-04-14
 
-### Mejoras (Enhancements)
-- Se refactorizó la metadata de `clap` (`src/cli.rs`) para que tome dinámicamente la versión desde `Cargo.toml`. De este modo, al actualizar el paquete principal, los comandos de la CLI (como `tm -v`) reportan automáticamente la última versión sin depender de valores codificados internamente.
+### Enhancements
 
-### Correcciones (Bug Fixes)
-- Se corrigió el argumento de versión en la línea de comandos para que soporte la bandera corta `-v` de forma nativa (`tm -v`), además de `-V` y `--version`.
+  - Refactored `clap` metadata (`src/cli.rs`) to dynamically pull the version from `Cargo.toml`. This ensures CLI commands (like `tm -v`) report the latest version automatically upon core package updates.
+
+### Bug Fixes
+
+  - Fixed the version argument in the command line to natively support the short flag `-v` (`tm -v`), in addition to `-V` and `--version`.
 
 ## [1.2.0] - 2026-04-13 (Rust TUI Edition)
 
 ### Features
-- **Migración Completa a Rust:** Se reescribió todo el core de la aplicación de Bash a Rust, mejorando sustancialmente el rendimiento y la mantenibilidad.
-- **Terminal User Interface (TUI):** Implementación de una interfaz gráfica de terminal interactiva utilizando `ratatui` y `crossterm`.
-- **Flujo de Selección Dinámico:** Nuevo sistema de menús y diálogos interactivos impulsados por `dialoguer` para facilitar la selección de binarios y rutas de instalación sin escribir comandos manuales.
-- **Ajuste de Texto Inteligente:** Renderizado de texto y contenedores con "text-wrapping" que se adaptan dinámicamente a las dimensiones de la terminal.
 
-### Improvements (Mejoras)
-- **Bloqueo de Corrupción Visual:** Se suprimió la salida estándar (`stdout`) y de error (`stderr`) de los comandos externos (como `tar`) ejecutados en segundo plano, evitando que ensuciaran la interfaz interactiva.
-- **CI/CD Automatizado:** Incorporación de flujos de trabajo de GitHub Actions para compilar automáticamente el código y generar binarios listos para los releases.
-- **Script de Instalación Inteligente (`install.sh`):** Se rediseñó el instalador para descargar automáticamente el binario precompilado adecuado desde *GitHub Releases*, acelerando y garantizando una instalación más limpia.
-- **Limpieza del Código:** Resolución de múltiples *warnings* de compilación y limpieza de dependencias garantizando un entorno profesional.
+  - **Full Rust Migration:** Rewrote the entire application core from Bash to Rust, substantially improving performance and maintainability.
+  - **Terminal User Interface (TUI):** Implementation of an interactive graphical terminal interface using `ratatui` and `crossterm`.
+  - **Dynamic Selection Flow:** New menu system and interactive dialogs powered by `dialoguer` to facilitate binary and installation path selection without manual commands.
+  - **Smart Text Wrapping:** Text and container rendering with dynamic wrapping that adapts to terminal dimensions.
+
+### Improvements
+
+  - **Visual Corruption Prevention:** Suppressed standard output (`stdout`) and error output (`stderr`) from external commands (like `tar`) running in the background, preventing them from cluttering the interactive UI.
+  - **Automated CI/CD:** Incorporated GitHub Actions workflows to automatically compile code and generate release-ready binaries.
+  - **Smart Installation Script (`install.sh`):** Redesigned the installer to automatically download the appropriate pre-compiled binary from *GitHub Releases*, ensuring a faster and cleaner setup.
+  - **Code Cleanup:** Resolved multiple compilation warnings and cleaned up dependencies for a professional environment.
 
 ### Bug Fixes
-- **Detección de Versiones y Ramas:** Arreglo en el script de instalación para consultar adecuadamente los releases y usar el flag de versión correcto (`-V`).
-- Manejo seguro de directorios y permisos durante la extracción de archivos comprimidos.
+
+  - **Version and Branch Detection:** Fixed the installation script to properly query releases and use the correct version flag (`-V`).
+  - Safe handling of directories and permissions during compressed file extraction.
