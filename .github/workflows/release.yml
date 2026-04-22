@@ -29,6 +29,7 @@ jobs:
         with:
           files: target/release/tm
           name: Tarball Manager ${{ github.ref_name }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
           body: |
             ### Nueva actualización de Tarball Manager
             Binary ejecutable listo para descargar en Linux.
