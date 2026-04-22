@@ -151,7 +151,7 @@
       "category": "Utility",
       "requires_root": false,
       "description": "A feature-rich command-line audio/video downloader with support for thousands of sites."
-    }
+    },
     {
       "name": "nnn",
       "package_name": "nnn",
