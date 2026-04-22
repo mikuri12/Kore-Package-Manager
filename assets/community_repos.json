@@ -11,7 +11,7 @@
     {
       "name": "JetBrains Toolbox",
       "package_name": "jetbrains-toolbox",
-      "url": "https://www.jetbrains.com/toolbox-app/download/download-thanks.html?platform=linux",
+      "url": "https://download.jetbrains.com/toolbox/jetbrains-toolbox-$jb_ver.tar.gz",
       "category": "Development",
       "requires_root": false,
       "description": "A central dashboard to manage JetBrains IDEs, updates, and projects effortlessly."
