@@ -111,6 +111,14 @@
       "category": "Games",
       "requires_root": false,
       "description": "A specialized fork of Prism Launcher optimized for specific community features and modpacks."
+    },
+    {
+      "name": "Blender",
+      "package_name": "blender",
+      "url": "https://mirrors.dotsrc.org/blender/release/$blender_major/blender-$blender_ver-linux-x64.tar.xz",
+      "category": "Graphics",
+      "requires_root": false,
+      "description": "The free and open source 3D creation suite, supporting the entirety of the 3D pipeline."
     }
   ]
 }
