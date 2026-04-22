@@ -229,8 +229,8 @@ pub fn extract_and_scan(
         return Ok(None);
     }
 
-    let executables = find_executables(&target, 3);
-    let desktop_files = find_bundled_desktop_files(&target, 3);
+    let executables = find_executables(&target, 5);
+    let desktop_files = find_bundled_desktop_files(&target, 5);
     Ok(Some((target, raw_name_folder, executables, desktop_files)))
 }
 
@@ -440,33 +440,56 @@ pub async fn install_app(
         }).await.map_err(|e| crate::error::TmError::Generic(e.to_string()))??;
 
         if let Some((target, raw_name_folder, executables, desktop_files)) = extract_result {
-            let exec_path = if executables.is_empty() {
-                if is_cli { error_msg("No executable binary found."); }
-                None
-            } else {
-                if !is_cli {
-                    if let Some(t) = &tx {
-                        let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
-                        let mut choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
-                        choices.push("Skip / Manual link later".to_string());
-                        let _ = t.send(InstallMessage::SelectBinary(choices, reply_tx));
-                        match reply_rx.await {
-                            Ok(idx) if idx < executables.len() => Some(executables[idx].clone()),
-                            _ => None,
-                        }
-                    } else {
-                        Some(executables[0].clone())
-                    }
-                } else {
-                    info_msg("Select the main executable binary:");
+            let exec_path = if !is_cli {
+                if executables.is_empty() {
+                    None
+                } else if let Some(t) = &tx {
+                    let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
                     let mut choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
                     choices.push("Skip / Manual link later".to_string());
-                    let sel = Select::new().with_prompt("Binary").items(&choices).default(0).interact().unwrap_or(choices.len() - 1);
-                    if sel < executables.len() {
-                        Some(executables[sel].clone())
-                    } else {
-                        None
+                    let _ = t.send(InstallMessage::SelectBinary(choices, reply_tx));
+                    match reply_rx.await {
+                        Ok(idx) if idx < executables.len() => Some(executables[idx].clone()),
+                        _ => None,
                     }
+                } else {
+                    Some(executables[0].clone())
+                }
+            } else {
+                info_msg("Select the main executable binary:");
+                let mut choices: Vec<String> = executables.iter().map(|p| p.file_name().unwrap_or_default().to_string_lossy().to_string()).collect();
+                choices.push("Enter path manually".to_string());
+                choices.push("Skip / Manual link later".to_string());
+                
+                let sel = Select::new()
+                    .with_prompt("Binary")
+                    .items(&choices)
+                    .default(0)
+                    .interact()
+                    .unwrap_or(choices.len() - 1);
+                
+                if sel < executables.len() {
+                    Some(executables[sel].clone())
+                } else if sel == executables.len() {
+                    // Manual input
+                    let path_str: String = Input::new()
+                        .with_prompt("Enter the relative path to the binary (e.g. bin/myapp)")
+                        .interact_text()
+                        .unwrap_or_default();
+                    
+                    if path_str.is_empty() {
+                        None
+                    } else {
+                        let full_path = target.join(path_str);
+                        if full_path.exists() {
+                            Some(full_path)
+                        } else {
+                            error_msg("The specified path does not exist.");
+                            None
+                        }
+                    }
+                } else {
+                    None
                 }
             };
 
