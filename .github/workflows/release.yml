@@ -1,43 +1,25 @@
-name: Release Tarball Manager
-
+name: Generate README
 on:
   push:
-    tags:
-      - 'v*' # Se activa solo cuando publicas un Tag estilo "v1.2.0"
+    branches:
+      - main 
 
 jobs:
-  build-and-release:
-    name: Build Linux Binary
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
       
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Rust Toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
+      - uses: actions/checkout@v3
       
-      - name: Build Release Binary
-        run: cargo build --release
-      
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: target/release/tm
-          name: Tarball Manager ${{ github.ref_name }}
-          prerelease: ${{ contains(github.ref_name, '-') }}
-          body: |
-            ### Nueva actualización de Tarball Manager
-            Binary ejecutable listo para descargar en Linux.
-            
-            **Instalación Rápida:**
-            ```bash
-            chmod +x tm
-            sudo mv tm /usr/local/bin/
-            ```
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run script
+        run: python3 generate_readme.py
+        
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore: update readme with new wallpapers" || exit 0
+          git push
