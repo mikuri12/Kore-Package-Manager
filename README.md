@@ -35,7 +35,7 @@ curl -sSL https://raw.githubusercontent.com/ezequielgk/Kore-Package-Manager/main
 ### Interactive Mode (TUI)
 You just need to call the tool with no arguments to open the interface:
 ```bash
-tm
+kpm
 ```
 * Follow the on-screen instructions using your arrow keys, `ENTER` (to confirm), and `ESC` (to go back/exit). The dynamic flow allows you to select the app, extract it, and define the binary to link—all in a guided way.
 
