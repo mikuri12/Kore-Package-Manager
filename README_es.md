@@ -1,8 +1,9 @@
-# Tarball Manager (tm)
+# Kore Package Manager (kpm)
 
 ![License](https://img.shields.io/badge/license-BSD-cyan)
 ![Rust](https://img.shields.io/badge/language-Rust-orange)
-[![Changelog](https://img.shields.io/badge/Changelog-v1.4.6-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
+[![Changelog](https://img.shields.io/badge/Changelog-v2.0.0-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/CHANGELOG_es.md)
+[![Contributing](https://img.shields.io/badge/Contribuye-aquí-green)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/CONTRIBUTING_es.md)
 
 
 Un gestor de programas minimalista y universal para Linux, rediseñado completamente en **Rust**. Está diseñado específicamente para manejar aplicaciones distribuidas en **tarballs** (.tar.gz, .tar.xz, .tar.bz2).
@@ -36,7 +37,7 @@ curl -sSL https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/inst
 Solo necesitas llamar a la herramienta sin argumentos para abrir la interfaz:
 
 ```bash
-tm
+kpm
 ```
 
   * Sigue las instrucciones en pantalla usando las teclas de flecha, `ENTER` (para confirmar) y `ESC` (para retroceder/salir). El flujo dinámico te permite seleccionar la app, extraerla y definir qué binario enlazar, todo de forma guiada.
@@ -49,29 +50,29 @@ Para operaciones rápidas no interactivas, `tm` soporta los siguientes comandos 
 
 | Comando | Alias Corto | Descripción | Ejemplo de Uso |
 | :--- | :--- | :--- | :--- |
-| `list` | `-l`, `list-installed`| Lista las aplicaciones instaladas actualmente. | `tm list` |
-| `remove` | `-r` | Desinstala una o varias apps instaladas. | `tm remove discord waterfox` |
-| `install` | `-i` | Instala una o varias apps desde tarballs locales o **repositorios**. | `tm install obsidian` |
-| `update` | `-u` | Actualiza apps instaladas desde los repositorios. | `tm update` o `tm update obsidian` |
-| `repo` | *(ninguno)* | Gestiona repositorios (oficiales, comunidad y personalizados). | `tm repo list` |
-| `help` | `-h`, `--help` | Muestra todas las opciones de ayuda del programa. | `tm --help` |
-| *(ninguno)* | `-V`, `--version` | Muestra la versión actual instalada. | `tm -V` |
-| `--update-bin` | *(ninguno)* | Actualiza el binario de Tarball Manager a su última versión. | `tm --update-bin` |
+| `list` | `-l`, `list-installed`| Lista las aplicaciones instaladas actualmente. | `kpm list` |
+| `remove` | `-r` | Desinstala una o varias apps instaladas. | `kpm remove discord waterfox` |
+| `install` | `-i` | Instala una o varias apps desde tarballs locales o **repositorios**. | `kpm install obsidian` |
+| `update` | `-u` | Actualiza apps instaladas desde los repositorios. | `kpm update` o `kpm update obsidian` |
+| `repo` | *(ninguno)* | Gestiona repositorios (oficiales, comunidad y personalizados). | `kpm repo list` |
+| `help` | `-h`, `--help` | Muestra todas las opciones de ayuda del programa. | `kpm --help` |
+| *(ninguno)* | `-V`, `--version` | Muestra la versión actual instalada. | `kpm -V` |
+| `--update-bin` | *(ninguno)* | Actualiza el binario de Kore Package Manager a su última versión. | `kpm --update-bin` |
 
 #### Instalación Directa (Múltiple y Repositorios)
 
 Puedes instalar varias aplicaciones directamente escribiendo su nombre (si existen en los repositorios) o la ruta de un archivo `.tar.gz`:
 
 ```bash
-tm install obsidian waterfox discord
+kpm install obsidian waterfox discord
 # O usando el alias:
-tm -i discord
+kpm -i discord
 ```
 
 Si deseas instalar un tarball local específico y personalizar sus metadatos (esto aplica solo a instalaciones individuales), puedes usar las siguientes banderas:
 
 ```bash
-tm install "app.tar.gz" --app-name "NombreApp" --use-root "No" --category "Network"
+kpm install "app.tar.gz" --app-name "NombreApp" --use-root "No" --category "Network"
 ```
 
   * **--app-name (-a)**: Nombre que tendrá la aplicación en el sistema.
@@ -83,25 +84,25 @@ tm install "app.tar.gz" --app-name "NombreApp" --use-root "No" --category "Netwo
 Puedes borrar la carpeta, el binario y el archivo `.desktop` de una o más aplicaciones simultáneamente:
 
 ```bash
-tm remove nombre_app otra_app
+kpm remove nombre_app otra_app
 # Ej. usando el alias:
-tm -r nombre_app
+kpm -r nombre_app
 ```
 
 #### Gestión de Repositorios (`tm repo`)
 
 El gestor ahora soporta repositorios para descargar e instalar apps con un solo comando.
 
-  * `tm repo list`: Lista la cantidad de paquetes disponibles por tipo (oficial, comunidad, usuario).
-  * `tm repo pkg-list`: Muestra la lista de todos los paquetes disponibles para instalar.
-  * `tm repo pkg-search <busqueda>`: Busca un paquete en todos los repositorios por nombre.
-  * `tm repo sync`: Sincroniza/actualiza la lista de repositorios oficiales y de la comunidad.
-  * `tm repo add <nombre> <nombre_pkg> <url> <categoria> [--requires-root]`: Añade un repositorio de terceros.
-  * `tm repo remove <nombre>`: Elimina un repositorio personalizado.
+  * `kpm repo list`: Lista la cantidad de paquetes disponibles por tipo (oficial, comunidad, usuario).
+  * `kpm repo pkg-list`: Muestra la lista de todos los paquetes disponibles para instalar.
+  * `kpm repo pkg-search <busqueda>`: Busca un paquete en todos los repositorios por nombre.
+  * `kpm repo sync`: Sincroniza/actualiza la lista de repositorios oficiales y de la comunidad.
+  * `kpm repo add <nombre> <nombre_pkg> <url> <categoria> [--requires-root]`: Añade un repositorio de terceros.
+  * `kpm repo remove <nombre>`: Elimina un repositorio personalizado.
 
 #### Autocompletado (Bash, Zsh, Fish)
 
-Al instalar `tm` mediante `install.sh`, los scripts de autocompletado para Bash, Zsh y Fish se configuran automáticamente de forma local en tu sistema, permitiéndote presionar `TAB` para completar comandos y banderas sin esfuerzo.
+Al instalar `kpm` mediante `install.sh`, los scripts de autocompletado para Bash, Zsh y Fish se configuran automáticamente de forma local en tu sistema, permitiéndote presionar `TAB` para completar comandos y banderas sin esfuerzo.
 
 -----
 

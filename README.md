@@ -1,9 +1,9 @@
 # Kore Package Manager (kpm)
 ![License](https://img.shields.io/badge/license-BSD-cyan)
 ![Rust](https://img.shields.io/badge/language-Rust-orange)
-[![Changelog](https://img.shields.io/badge/Changelog-v1.4.6-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG.md)
-[![Readme](https://img.shields.io/badge/Readme-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/README_es.md)
-[![Historial de cambios](https://img.shields.io/badge/Changelog-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
+[![Changelog](https://img.shields.io/badge/Changelog-v2.0.0-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/CHANGELOG.md)
+[![Contributing](https://img.shields.io/badge/Contributing-here-green)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/CONTRIBUTING.md)
+[![Readme](https://img.shields.io/badge/Readme-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/README_es.md)
 
 
 A minimalist and universal program manager for Linux, completely redesigned in **Rust**. It is specifically designed to handle applications distributed in **tarballs** (.tar.gz, .tar.xz, .tar.bz2).
@@ -43,7 +43,7 @@ kpm
 
 ### Command Line Interface (CLI)
 
-For fast, non-interactive operations, `tm` supports the following defined commands (`clap`):
+For fast, non-interactive operations, `kpm` supports the following defined commands (`clap`):
 
 | Command | Short Alias | Description | Usage Example |
 | :--- | :--- | :--- | :--- |
@@ -54,7 +54,7 @@ For fast, non-interactive operations, `tm` supports the following defined comman
 | `repo` | *(none)* | Manages repositories (official, community, and custom). | `kpm repo list` |
 | `help` | `-h`, `--help` | Prints complete help options for the program. | `kpm --help` |
 | *(none)* | `-V`, `--version` | Displays the current installation version. | `kpm -V` |
-| `--update-bin` | *(none)* | Updates the Tarball Manager binary to its latest version. | `kpm --update-bin` |
+| `--update-bin` | *(none)* | Updates the Kore Package Manager binary to its latest version. | `kpm --update-bin` |
 
 #### Direct Installation (Multiple & Repositories)
 You can install multiple applications directly by typing their name (if they exist in the repositories) or the path of a `.tar.gz` file:
