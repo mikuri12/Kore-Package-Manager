@@ -93,7 +93,21 @@ pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
                                 let icons_dir = PathBuf::from(&home_dir).join(".local/share/icons");
                                 let _ = fs::create_dir_all(&apps_dir);
                                 let _ = fs::create_dir_all(&icons_dir);
-                                let _ = fs::copy(&desktop_file, apps_dir.join("kpm.desktop"));
+                                
+                                if let Ok(content) = fs::read_to_string(&desktop_file) {
+                                    let icon_path = icons_dir.join("kore.ico");
+                                    let new_content = content.lines().map(|line| {
+                                        if line.starts_with("Icon=") {
+                                            format!("Icon={}", icon_path.display())
+                                        } else {
+                                            line.to_string()
+                                        }
+                                    }).collect::<Vec<_>>().join("\n");
+                                    let _ = fs::write(apps_dir.join("kpm.desktop"), new_content);
+                                } else {
+                                    let _ = fs::copy(&desktop_file, apps_dir.join("kpm.desktop"));
+                                }
+
                                 if icon_file.exists() {
                                     let _ = fs::copy(&icon_file, icons_dir.join("kore.ico"));
                                 }

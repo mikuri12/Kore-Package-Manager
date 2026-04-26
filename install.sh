@@ -109,6 +109,7 @@ install_tm() {
         # Instalar accesos directos si vienen en el tar
         if [ -f "$tmp_dir/kpm.desktop" ]; then
             mkdir -p "$HOME/.local/share/applications" "$HOME/.local/share/icons"
+            sed -i "s|Icon=.*|Icon=$HOME/.local/share/icons/kore.ico|g" "$tmp_dir/kpm.desktop"
             mv "$tmp_dir/kpm.desktop" "$HOME/.local/share/applications/"
             mv "$tmp_dir/kore.ico" "$HOME/.local/share/icons/" 2>/dev/null || true
             update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
