@@ -1,8 +1,8 @@
-#compdef tm
+#compdef kpm
 
 autoload -U is-at-least
 
-_tm() {
+_kpm() {
     typeset -A opt_args
     typeset -a _arguments_options
     local ret=1
@@ -20,14 +20,14 @@ _tm() {
 '--update-bin[Update the program from the latest version in the repository]' \
 '-h[Print help]' \
 '--help[Print help]' \
-":: :_tm_commands" \
-"*::: :->tm" \
+":: :_kpm_commands" \
+"*::: :->kpm" \
 && ret=0
     case $state in
-    (tm)
+    (kpm)
         words=($line[1] "${words[@]}")
         (( CURRENT += 1 ))
-        curcontext="${curcontext%:*:*}:tm-command-$line[1]:"
+        curcontext="${curcontext%:*:*}:kpm-command-$line[1]:"
         case $line[1] in
             (list)
 _arguments "${_arguments_options[@]}" : \
@@ -72,7 +72,7 @@ _arguments "${_arguments_options[@]}" : \
 _arguments "${_arguments_options[@]}" : \
 '-h[Print help]' \
 '--help[Print help]' \
-":: :_tm__subcmd__repo_commands" \
+":: :_kpm__subcmd__repo_commands" \
 "*::: :->repo" \
 && ret=0
 
@@ -80,7 +80,7 @@ _arguments "${_arguments_options[@]}" : \
     (repo)
         words=($line[1] "${words[@]}")
         (( CURRENT += 1 ))
-        curcontext="${curcontext%:*:*}:tm-repo-command-$line[1]:"
+        curcontext="${curcontext%:*:*}:kpm-repo-command-$line[1]:"
         case $line[1] in
             (list)
 _arguments "${_arguments_options[@]}" : \
@@ -127,7 +127,7 @@ _arguments "${_arguments_options[@]}" : \
 ;;
 (help)
 _arguments "${_arguments_options[@]}" : \
-":: :_tm__subcmd__repo__subcmd__help_commands" \
+":: :_kpm__subcmd__repo__subcmd__help_commands" \
 "*::: :->help" \
 && ret=0
 
@@ -135,7 +135,7 @@ _arguments "${_arguments_options[@]}" : \
     (help)
         words=($line[1] "${words[@]}")
         (( CURRENT += 1 ))
-        curcontext="${curcontext%:*:*}:tm-repo-help-command-$line[1]:"
+        curcontext="${curcontext%:*:*}:kpm-repo-help-command-$line[1]:"
         case $line[1] in
             (list)
 _arguments "${_arguments_options[@]}" : \
@@ -175,7 +175,7 @@ esac
 ;;
 (help)
 _arguments "${_arguments_options[@]}" : \
-":: :_tm__subcmd__help_commands" \
+":: :_kpm__subcmd__help_commands" \
 "*::: :->help" \
 && ret=0
 
@@ -183,7 +183,7 @@ _arguments "${_arguments_options[@]}" : \
     (help)
         words=($line[1] "${words[@]}")
         (( CURRENT += 1 ))
-        curcontext="${curcontext%:*:*}:tm-help-command-$line[1]:"
+        curcontext="${curcontext%:*:*}:kpm-help-command-$line[1]:"
         case $line[1] in
             (list)
 _arguments "${_arguments_options[@]}" : \
@@ -203,7 +203,7 @@ _arguments "${_arguments_options[@]}" : \
 ;;
 (repo)
 _arguments "${_arguments_options[@]}" : \
-":: :_tm__subcmd__help__subcmd__repo_commands" \
+":: :_kpm__subcmd__help__subcmd__repo_commands" \
 "*::: :->repo" \
 && ret=0
 
@@ -211,7 +211,7 @@ _arguments "${_arguments_options[@]}" : \
     (repo)
         words=($line[1] "${words[@]}")
         (( CURRENT += 1 ))
-        curcontext="${curcontext%:*:*}:tm-help-repo-command-$line[1]:"
+        curcontext="${curcontext%:*:*}:kpm-help-repo-command-$line[1]:"
         case $line[1] in
             (list)
 _arguments "${_arguments_options[@]}" : \
@@ -254,53 +254,53 @@ esac
 esac
 }
 
-(( $+functions[_tm_commands] )) ||
-_tm_commands() {
+(( $+functions[_kpm_commands] )) ||
+_kpm_commands() {
     local commands; commands=(
 'list:List installed applications' \
 'list-installed:List installed applications' \
-'remove:Uninstall apps (Ex\: tm remove discord waterfox)' \
+'remove:Uninstall apps (Ex\: kpm remove discord waterfox)' \
 'install:Install applications from specific tarballs or repositories' \
 'update:Update installed applications from repositories' \
 'repo:Manage repositories' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
-    _describe -t commands 'tm commands' commands "$@"
+    _describe -t commands 'kpm commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help_commands] )) ||
-_tm__subcmd__help_commands() {
+(( $+functions[_kpm__subcmd__help_commands] )) ||
+_kpm__subcmd__help_commands() {
     local commands; commands=(
 'list:List installed applications' \
-'remove:Uninstall apps (Ex\: tm remove discord waterfox)' \
+'remove:Uninstall apps (Ex\: kpm remove discord waterfox)' \
 'install:Install applications from specific tarballs or repositories' \
 'update:Update installed applications from repositories' \
 'repo:Manage repositories' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
-    _describe -t commands 'tm help commands' commands "$@"
+    _describe -t commands 'kpm help commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__help_commands] )) ||
-_tm__subcmd__help__subcmd__help_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__help_commands] )) ||
+_kpm__subcmd__help__subcmd__help_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help help commands' commands "$@"
+    _describe -t commands 'kpm help help commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__install_commands] )) ||
-_tm__subcmd__help__subcmd__install_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__install_commands] )) ||
+_kpm__subcmd__help__subcmd__install_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help install commands' commands "$@"
+    _describe -t commands 'kpm help install commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__list_commands] )) ||
-_tm__subcmd__help__subcmd__list_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__list_commands] )) ||
+_kpm__subcmd__help__subcmd__list_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help list commands' commands "$@"
+    _describe -t commands 'kpm help list commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__remove_commands] )) ||
-_tm__subcmd__help__subcmd__remove_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__remove_commands] )) ||
+_kpm__subcmd__help__subcmd__remove_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help remove commands' commands "$@"
+    _describe -t commands 'kpm help remove commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__repo_commands] )) ||
-_tm__subcmd__help__subcmd__repo_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__repo_commands] )) ||
+_kpm__subcmd__help__subcmd__repo_commands() {
     local commands; commands=(
 'list:List all repositories and their package counts' \
 'pkg-list:List all packages available in the repositories' \
@@ -309,78 +309,60 @@ _tm__subcmd__help__subcmd__repo_commands() {
 'add:Add a third-party repository' \
 'remove:Remove a third-party repository' \
     )
-    _describe -t commands 'tm help repo commands' commands "$@"
+    _describe -t commands 'kpm help repo commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__repo__subcmd__add_commands] )) ||
-_tm__subcmd__help__subcmd__repo__subcmd__add_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__repo__subcmd__add_commands] )) ||
+_kpm__subcmd__help__subcmd__repo__subcmd__add_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help repo add commands' commands "$@"
+    _describe -t commands 'kpm help repo add commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__repo__subcmd__list_commands] )) ||
-_tm__subcmd__help__subcmd__repo__subcmd__list_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__repo__subcmd__list_commands] )) ||
+_kpm__subcmd__help__subcmd__repo__subcmd__list_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help repo list commands' commands "$@"
+    _describe -t commands 'kpm help repo list commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__repo__subcmd__pkg-list_commands] )) ||
-_tm__subcmd__help__subcmd__repo__subcmd__pkg-list_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__repo__subcmd__pkg-list_commands] )) ||
+_kpm__subcmd__help__subcmd__repo__subcmd__pkg-list_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help repo pkg-list commands' commands "$@"
+    _describe -t commands 'kpm help repo pkg-list commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__repo__subcmd__pkg-search_commands] )) ||
-_tm__subcmd__help__subcmd__repo__subcmd__pkg-search_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__repo__subcmd__pkg-search_commands] )) ||
+_kpm__subcmd__help__subcmd__repo__subcmd__pkg-search_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help repo pkg-search commands' commands "$@"
+    _describe -t commands 'kpm help repo pkg-search commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__repo__subcmd__remove_commands] )) ||
-_tm__subcmd__help__subcmd__repo__subcmd__remove_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__repo__subcmd__remove_commands] )) ||
+_kpm__subcmd__help__subcmd__repo__subcmd__remove_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help repo remove commands' commands "$@"
+    _describe -t commands 'kpm help repo remove commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__repo__subcmd__sync_commands] )) ||
-_tm__subcmd__help__subcmd__repo__subcmd__sync_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__repo__subcmd__sync_commands] )) ||
+_kpm__subcmd__help__subcmd__repo__subcmd__sync_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help repo sync commands' commands "$@"
+    _describe -t commands 'kpm help repo sync commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__help__subcmd__update_commands] )) ||
-_tm__subcmd__help__subcmd__update_commands() {
+(( $+functions[_kpm__subcmd__help__subcmd__update_commands] )) ||
+_kpm__subcmd__help__subcmd__update_commands() {
     local commands; commands=()
-    _describe -t commands 'tm help update commands' commands "$@"
+    _describe -t commands 'kpm help update commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__install_commands] )) ||
-_tm__subcmd__install_commands() {
+(( $+functions[_kpm__subcmd__install_commands] )) ||
+_kpm__subcmd__install_commands() {
     local commands; commands=()
-    _describe -t commands 'tm install commands' commands "$@"
+    _describe -t commands 'kpm install commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__list_commands] )) ||
-_tm__subcmd__list_commands() {
+(( $+functions[_kpm__subcmd__list_commands] )) ||
+_kpm__subcmd__list_commands() {
     local commands; commands=()
-    _describe -t commands 'tm list commands' commands "$@"
+    _describe -t commands 'kpm list commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__remove_commands] )) ||
-_tm__subcmd__remove_commands() {
+(( $+functions[_kpm__subcmd__remove_commands] )) ||
+_kpm__subcmd__remove_commands() {
     local commands; commands=()
-    _describe -t commands 'tm remove commands' commands "$@"
+    _describe -t commands 'kpm remove commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo_commands] )) ||
-_tm__subcmd__repo_commands() {
-    local commands; commands=(
-'list:List all repositories and their package counts' \
-'pkg-list:List all packages available in the repositories' \
-'pkg-search:Search for packages in the repositories' \
-'sync:Fetch latest default and community repositories from GitHub' \
-'add:Add a third-party repository' \
-'remove:Remove a third-party repository' \
-'help:Print this message or the help of the given subcommand(s)' \
-    )
-    _describe -t commands 'tm repo commands' commands "$@"
-}
-(( $+functions[_tm__subcmd__repo__subcmd__add_commands] )) ||
-_tm__subcmd__repo__subcmd__add_commands() {
-    local commands; commands=()
-    _describe -t commands 'tm repo add commands' commands "$@"
-}
-(( $+functions[_tm__subcmd__repo__subcmd__help_commands] )) ||
-_tm__subcmd__repo__subcmd__help_commands() {
+(( $+functions[_kpm__subcmd__repo_commands] )) ||
+_kpm__subcmd__repo_commands() {
     local commands; commands=(
 'list:List all repositories and their package counts' \
 'pkg-list:List all packages available in the repositories' \
@@ -390,76 +372,94 @@ _tm__subcmd__repo__subcmd__help_commands() {
 'remove:Remove a third-party repository' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
-    _describe -t commands 'tm repo help commands' commands "$@"
+    _describe -t commands 'kpm repo commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__help__subcmd__add_commands] )) ||
-_tm__subcmd__repo__subcmd__help__subcmd__add_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__add_commands] )) ||
+_kpm__subcmd__repo__subcmd__add_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo help add commands' commands "$@"
+    _describe -t commands 'kpm repo add commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__help__subcmd__help_commands] )) ||
-_tm__subcmd__repo__subcmd__help__subcmd__help_commands() {
-    local commands; commands=()
-    _describe -t commands 'tm repo help help commands' commands "$@"
+(( $+functions[_kpm__subcmd__repo__subcmd__help_commands] )) ||
+_kpm__subcmd__repo__subcmd__help_commands() {
+    local commands; commands=(
+'list:List all repositories and their package counts' \
+'pkg-list:List all packages available in the repositories' \
+'pkg-search:Search for packages in the repositories' \
+'sync:Fetch latest default and community repositories from GitHub' \
+'add:Add a third-party repository' \
+'remove:Remove a third-party repository' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'kpm repo help commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__help__subcmd__list_commands] )) ||
-_tm__subcmd__repo__subcmd__help__subcmd__list_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__help__subcmd__add_commands] )) ||
+_kpm__subcmd__repo__subcmd__help__subcmd__add_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo help list commands' commands "$@"
+    _describe -t commands 'kpm repo help add commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__help__subcmd__pkg-list_commands] )) ||
-_tm__subcmd__repo__subcmd__help__subcmd__pkg-list_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__help__subcmd__help_commands] )) ||
+_kpm__subcmd__repo__subcmd__help__subcmd__help_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo help pkg-list commands' commands "$@"
+    _describe -t commands 'kpm repo help help commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__help__subcmd__pkg-search_commands] )) ||
-_tm__subcmd__repo__subcmd__help__subcmd__pkg-search_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__help__subcmd__list_commands] )) ||
+_kpm__subcmd__repo__subcmd__help__subcmd__list_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo help pkg-search commands' commands "$@"
+    _describe -t commands 'kpm repo help list commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__help__subcmd__remove_commands] )) ||
-_tm__subcmd__repo__subcmd__help__subcmd__remove_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__help__subcmd__pkg-list_commands] )) ||
+_kpm__subcmd__repo__subcmd__help__subcmd__pkg-list_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo help remove commands' commands "$@"
+    _describe -t commands 'kpm repo help pkg-list commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__help__subcmd__sync_commands] )) ||
-_tm__subcmd__repo__subcmd__help__subcmd__sync_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__help__subcmd__pkg-search_commands] )) ||
+_kpm__subcmd__repo__subcmd__help__subcmd__pkg-search_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo help sync commands' commands "$@"
+    _describe -t commands 'kpm repo help pkg-search commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__list_commands] )) ||
-_tm__subcmd__repo__subcmd__list_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__help__subcmd__remove_commands] )) ||
+_kpm__subcmd__repo__subcmd__help__subcmd__remove_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo list commands' commands "$@"
+    _describe -t commands 'kpm repo help remove commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__pkg-list_commands] )) ||
-_tm__subcmd__repo__subcmd__pkg-list_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__help__subcmd__sync_commands] )) ||
+_kpm__subcmd__repo__subcmd__help__subcmd__sync_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo pkg-list commands' commands "$@"
+    _describe -t commands 'kpm repo help sync commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__pkg-search_commands] )) ||
-_tm__subcmd__repo__subcmd__pkg-search_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__list_commands] )) ||
+_kpm__subcmd__repo__subcmd__list_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo pkg-search commands' commands "$@"
+    _describe -t commands 'kpm repo list commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__remove_commands] )) ||
-_tm__subcmd__repo__subcmd__remove_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__pkg-list_commands] )) ||
+_kpm__subcmd__repo__subcmd__pkg-list_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo remove commands' commands "$@"
+    _describe -t commands 'kpm repo pkg-list commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__repo__subcmd__sync_commands] )) ||
-_tm__subcmd__repo__subcmd__sync_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__pkg-search_commands] )) ||
+_kpm__subcmd__repo__subcmd__pkg-search_commands() {
     local commands; commands=()
-    _describe -t commands 'tm repo sync commands' commands "$@"
+    _describe -t commands 'kpm repo pkg-search commands' commands "$@"
 }
-(( $+functions[_tm__subcmd__update_commands] )) ||
-_tm__subcmd__update_commands() {
+(( $+functions[_kpm__subcmd__repo__subcmd__remove_commands] )) ||
+_kpm__subcmd__repo__subcmd__remove_commands() {
     local commands; commands=()
-    _describe -t commands 'tm update commands' commands "$@"
+    _describe -t commands 'kpm repo remove commands' commands "$@"
+}
+(( $+functions[_kpm__subcmd__repo__subcmd__sync_commands] )) ||
+_kpm__subcmd__repo__subcmd__sync_commands() {
+    local commands; commands=()
+    _describe -t commands 'kpm repo sync commands' commands "$@"
+}
+(( $+functions[_kpm__subcmd__update_commands] )) ||
+_kpm__subcmd__update_commands() {
+    local commands; commands=()
+    _describe -t commands 'kpm update commands' commands "$@"
 }
 
-if [ "$funcstack[1]" = "_tm" ]; then
-    _tm "$@"
+if [ "$funcstack[1]" = "_kpm" ]; then
+    _kpm "$@"
 else
-    compdef _tm tm
+    compdef _kpm kpm
 fi
