@@ -1,3 +1,17 @@
+## [2.0.0] - 2026-04-26
+
+### Nueva Identidad: Kore Package Manager (kpm)
+- **Rebranding Total:** Tarball Manager (tm) ahora es **Kore Package Manager (kpm)**. Se renombraron todas las referencias en el binario, los comandos CLI y la interfaz gráfica.
+- **Rutas del Sistema:** Se migró el almacenamiento del sistema de `~/.local/share/tm/` a `~/.local/share/kpm/`.
+- **Manejo de Errores:** Se reemplazó el antiguo ecosistema de `TmError` por `KoreError` en todo el proyecto.
+
+### Empaquetado y Distribución
+- **Releases en tar.gz:** Los lanzamientos de GitHub ahora empaquetan la app en `kpm-linux-x86_64.tar.gz`, incluyendo el binario `kpm`, el ícono `kore.ico` y un `kpm.desktop` configurado.
+- **Instalador y Auto-Update:** Se actualizó `install.sh` y el comando `kpm --update-bin` para descargar y extraer automáticamente el nuevo formato comprimido, configurando los accesos directos de escritorio al vuelo.
+
+### Refactorización y Modularización
+- **Desacople de core/install.rs:** El monolito de +860 líneas se fragmentó limpiamente en el sub-módulo `src/core/install/`, creando archivos dedicados para la modificación de archivos `.desktop`, extracción, operaciones, resolución de repositorios y actualizaciones.
+
 ## [1.5.3] - 2026-04-26
 
 ### Arquitectura y Organización

@@ -1,5 +1,19 @@
 [![Historial de cambios](https://img.shields.io/badge/Changelog-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
 
+## [2.0.0] - 2026-04-26
+
+### New Identity: Kore Package Manager (kpm)
+- **Total Rebranding:** Tarball Manager (tm) is now **Kore Package Manager (kpm)**. All references across the binary, CLI commands, and graphical interface have been updated.
+- **System Paths:** Migrated system storage from `~/.local/share/tm/` to `~/.local/share/kpm/`.
+- **Error Handling:** Completely replaced the legacy `TmError` ecosystem with `KoreError` throughout the project.
+
+### Packaging & Distribution
+- **tar.gz Releases:** GitHub releases now package the application in `kpm-linux-x86_64.tar.gz`, including the `kpm` executable, `kore.ico` icon, and a pre-configured `kpm.desktop`.
+- **Installer & Auto-Update:** Upgraded `install.sh` and `kpm --update-bin` to download and automatically extract the new compressed format, immediately configuring desktop shortcuts system-wide.
+
+### Refactoring & Modularization
+- **core/install.rs Decoupling:** The +860-line monolith was cleanly shattered into the `src/core/install/` sub-module, establishing dedicated files for `.desktop` manipulation, extraction, operations, repository resolution, and updates.
+
 ## [1.5.3] - 2026-04-26
 
 ### Architecture & Refactoring
