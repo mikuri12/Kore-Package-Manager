@@ -1218,6 +1218,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "kpm"
+version = "1.5.2"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colored",
+ "crossterm",
+ "dialoguer",
+ "directories",
+ "ratatui",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "walkdir",
+]
+
+[[package]]
 name = "lab"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2551,29 +2574,6 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
-
-[[package]]
-name = "tm"
-version = "1.5.1"
-dependencies = [
- "anyhow",
- "clap",
- "colored",
- "crossterm",
- "dialoguer",
- "directories",
- "ratatui",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "walkdir",
-]
 
 [[package]]
 name = "tokio"

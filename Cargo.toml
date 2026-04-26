@@ -1,8 +1,8 @@
 [package]
-name = "tm"
+name = "kpm"
 version = "1.5.2"
 edition = "2021"
-description = "Tarball Manager (tm) - Edition 2026"
+description = "Kore Package Manager (kpm) - Edition 2026"
 
 [dependencies]
 anyhow = "1.0.102"

@@ -2,9 +2,9 @@ use clap::{Parser, Subcommand};
 
 
 #[derive(Parser, Debug)]
-#[command(name = "tm")]
+#[command(name = "kpm")]
 #[command(version)]
-#[command(about = "TARBALL MANAGER (tm)", long_about = None)]
+#[command(about = "KORE PACKAGE MANAGER (kpm)", long_about = None)]
 #[command(disable_version_flag = true)]
 pub struct Cli {
     #[command(subcommand)]
@@ -23,7 +23,7 @@ pub enum Commands {
     #[command(name = "list", visible_alias = "list-installed", short_flag = 'l')]
     List,
     
-    /// Uninstall apps (Ex: tm remove discord waterfox)
+    /// Uninstall apps (Ex: kpm remove discord waterfox)
     #[command(name = "remove", short_flag = 'r')]
     Remove {
         #[arg(required = true, num_args = 1..)]

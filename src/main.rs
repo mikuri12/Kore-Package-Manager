@@ -1,10 +1,10 @@
 mod cli;
 mod tui;
 
-use tm::config;
-use tm::core;
-use tm::repo;
-use tm::utils;
+use kpm::config;
+use kpm::core;
+use kpm::repo;
+use kpm::utils;
 
 use clap::Parser;
 use cli::{Cli, Commands};

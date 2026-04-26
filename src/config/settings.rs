@@ -20,15 +20,15 @@ impl Config {
             .map(|p| p.to_path_buf())
             .unwrap_or_else(|| base_dirs.home_dir().join(".local").join("state"));
 
-        let tm_data = local_data.join("tm");
+        let kpm_data = local_data.join("kpm");
         Config {
             install_dir: local_data.join("binaries"),
             bin_dir: base_dirs.home_dir().join(".local").join("bin"),
             apps_dir: local_data.join("applications"),
-            log_dir: state_dir.join("tm"),
-            community_repos_file: tm_data.join("community_repos.json"),
-            user_repos_file: tm_data.join("user_repos.json"),
-            official_repos_file: tm_data.join("official_repos.json"),
+            log_dir: state_dir.join("kpm"),
+            community_repos_file: kpm_data.join("community_repos.json"),
+            user_repos_file: kpm_data.join("user_repos.json"),
+            official_repos_file: kpm_data.join("official_repos.json"),
         }
     }
 
@@ -63,7 +63,7 @@ impl Config {
     }
 
     pub fn setup_logging(&self) -> anyhow::Result<tracing_appender::non_blocking::WorkerGuard> {
-        let file_appender = tracing_appender::rolling::daily(&self.log_dir, "tm.log");
+        let file_appender = tracing_appender::rolling::daily(&self.log_dir, "kpm.log");
         let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
         let subscriber = tracing_subscriber::fmt::Subscriber::builder()

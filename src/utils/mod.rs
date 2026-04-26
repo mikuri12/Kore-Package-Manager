@@ -3,6 +3,8 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
+pub mod fs;
+
 use std::sync::atomic::{AtomicBool, Ordering};
 
 pub static IS_CLI: AtomicBool = AtomicBool::new(true);

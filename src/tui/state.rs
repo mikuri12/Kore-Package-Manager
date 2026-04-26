@@ -1,9 +1,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use ratatui::widgets::ListState;
-use tm::config::Config;
+use crate::config::Config;
 
-use tm::core::install::InstallMessage;
+use crate::core::install::InstallMessage;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum Route {
@@ -14,6 +14,7 @@ pub enum Route {
     IconBrowser,
     ManageRepos,
     RepoCategorySelect,
+    Installer,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -77,20 +78,21 @@ pub struct App {
     pub pending_selected_exec: PathBuf,
     pub pending_icon_target: String,
 
-    pub repos: Vec<tm::repo::RepoSource>,
-    pub filtered_repos: Vec<tm::repo::RepoSource>,
+    pub repos: Vec<crate::repo::RepoSource>,
+    pub filtered_repos: Vec<crate::repo::RepoSource>,
     pub pending_repo_name: String,
     pub pending_repo_package_name: String,
     pub pending_repo_url: String,
     pub pending_repo_category: String,
     pub pending_repo_root: bool,
     pub repo_category_state: ListState,
-    pub viewing_repo_type: tm::repo::RepoType,
+    pub viewing_repo_type: crate::repo::RepoType,
 
     pub install_status: String,
     pub install_progress: f64,
     pub install_rx: Option<tokio::sync::mpsc::UnboundedReceiver<InstallMessage>>,
     pub pending_install_reply: Option<tokio::sync::oneshot::Sender<usize>>,
+    pub installer: Option<crate::tui::components::installer::Installer>,
     pub install_done: bool,
     pub help_scroll: u16,
     pub logs_scroll: u16,
@@ -136,7 +138,7 @@ impl App {
             pending_repo_category: String::new(),
             pending_repo_root: false,
             repo_category_state: ListState::default(),
-            viewing_repo_type: tm::repo::RepoType::Official,
+            viewing_repo_type: crate::repo::RepoType::Official,
             install_status: String::new(),
             install_progress: 0.0,
             install_rx: None,
@@ -145,6 +147,7 @@ impl App {
             help_scroll: 0,
             logs_scroll: 0,
             logs: Vec::new(),
+            installer: None,
         }
     }
 
@@ -194,7 +197,7 @@ impl App {
     }
 
     pub fn load_repos(&mut self, config: &Config) {
-        self.repos = tm::repo::get_all_repos(config);
+        self.repos = crate::repo::get_all_repos(config);
         self.input.clear();
         self.filter_repos();
     }

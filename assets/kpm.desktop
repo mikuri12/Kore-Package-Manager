@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Kore Package Manager
+Comment=Manage Linux tarballs, AppImages and binaries directly from the terminal.
+Exec=kpm
+Icon=kore
+Terminal=true
+Categories=Utility;System;

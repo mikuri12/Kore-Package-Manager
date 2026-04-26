@@ -12,7 +12,7 @@ use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 use std::path::PathBuf;
 
-use tm::config::Config;
+use crate::config::Config;
 use state::App;
 
 pub async fn main_menu(config: &Config) -> anyhow::Result<()> {
@@ -38,7 +38,7 @@ pub async fn main_menu(config: &Config) -> anyhow::Result<()> {
         if let Some(rx) = &mut app.install_rx {
             while let Ok(msg) = rx.try_recv() {
                 match msg {
-                    tm::core::install::InstallMessage::Progress(status, prog) => {
+                    crate::core::install::InstallMessage::Progress(status, prog) => {
                         app.install_status = status.clone();
                         app.logs.push(status);
                         app.install_progress = prog;
@@ -46,19 +46,19 @@ pub async fn main_menu(config: &Config) -> anyhow::Result<()> {
                             app.install_done = true;
                         }
                     }
-                    tm::core::install::InstallMessage::SelectAsset(names, reply_tx) => {
+                    crate::core::install::InstallMessage::SelectAsset(names, reply_tx) => {
                         app.popup_type = state::PopupType::InstallAssetSelect;
                         app.popup_items = names;
                         app.popup_state.select(Some(0));
                         app.pending_install_reply = Some(reply_tx);
                     }
-                    tm::core::install::InstallMessage::SelectBinary(names, reply_tx) => {
+                    crate::core::install::InstallMessage::SelectBinary(names, reply_tx) => {
                         app.popup_type = state::PopupType::InstallBinarySelect;
                         app.popup_items = names;
                         app.popup_state.select(Some(0));
                         app.pending_install_reply = Some(reply_tx);
                     }
-                    tm::core::install::InstallMessage::SelectDesktop(names, reply_tx) => {
+                    crate::core::install::InstallMessage::SelectDesktop(names, reply_tx) => {
                         app.popup_type = state::PopupType::InstallDesktopSelect;
                         app.popup_items = names;
                         app.popup_state.select(Some(0));

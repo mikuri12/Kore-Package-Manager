@@ -6,6 +6,7 @@
       "url": "https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/1.23.2-4781536860569600/linux-x64/Antigravity.tar.gz",
       "category": "Development",
       "requires_root": false,
+      "terminal": false,
       "description": "Powerful agentic AI coding assistant designed by Google Deepmind."
     },
     {
@@ -14,6 +15,7 @@
       "url": "https://download.jetbrains.com/toolbox/jetbrains-toolbox-$jb_ver.tar.gz",
       "category": "Development",
       "requires_root": false,
+      "terminal": false,
       "description": "A central dashboard to manage JetBrains IDEs, updates, and projects effortlessly."
     },
     {
@@ -22,6 +24,7 @@
       "url": "https://github.com/telegramdesktop/tdesktop",
       "category": "Internet",
       "requires_root": false,
+      "terminal": false,
       "description": "Fast and secure desktop messaging app, seamlessly synced between devices."
     },
     {
@@ -30,6 +33,7 @@
       "url": "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher",
       "category": "Games",
       "requires_root": false,
+      "terminal": false,
       "description": "An open-source game launcher for Epic Games, GOG, and Amazon Games on Linux."
     },
     {
@@ -38,6 +42,7 @@
       "url": "https://www.reaper.fm/files/7.x/reaper769_linux_x86_64.tar.xz",
       "category": "Music",
       "requires_root": false,
+      "terminal": false,
       "description": "A complete digital audio production application offering full multitrack audio and MIDI recording."
     },
     {
@@ -46,6 +51,7 @@
       "url": "https://download.sublimetext.com/sublime_text_build_$st_build_x64.tar.xz",
       "category": "Development",
       "requires_root": false,
+      "terminal": false,
       "description": "A sophisticated text editor for code, markup, and prose with ultra-fast performance."
     },
     {
@@ -54,6 +60,7 @@
       "url": "https://github.com/pear-devs/pear-desktop",
       "category": "Music",
       "requires_root": false,
+      "terminal": false,
       "description": "Desktop client for YouTube Music with integrated media keys and background playback."
     },
     {
@@ -62,6 +69,7 @@
       "url": "https://github.com/supertuxkart/stk-code",
       "category": "Games",
       "requires_root": false,
+      "terminal": false,
       "description": "A 3D open-source arcade racer with a variety of characters, tracks, and modes."
     },
     {
@@ -70,6 +78,7 @@
       "url": "https://github.com/ClementTsang/bottom",
       "category": "Utility",
       "requires_root": false,
+      "terminal": false,
       "description": "A customizable cross-platform graphical system monitor for the terminal."
     },
     {
@@ -78,6 +87,7 @@
       "url": "https://www.torproject.org/dist/torbrowser/$tor_ver/tor-browser-linux-x86_64-$tor_ver.tar.xz",
       "category": "Network",
       "requires_root": false,
+      "terminal": false,
       "description": "Privacy-focused browser that protects you against tracking, surveillance, and censorship."
     },
     {
@@ -86,6 +96,7 @@
       "url": "https://archive.torproject.org/tor-package-archive/torbrowser/$tor_ver/tor-expert-bundle-linux-x86_64-$tor_ver.tar.gz",
       "category": "Network",
       "requires_root": false,
+      "terminal": false,
       "description": "The Tor binary and supporting files, without the graphical browser interface."
     },
     {
@@ -94,6 +105,7 @@
       "url": "https://github.com/localsend/localsend",
       "category": "Network",
       "requires_root": false,
+      "terminal": false,
       "description": "An open-source cross-platform alternative to AirDrop for sharing files over the local network."
     },
     {
@@ -102,6 +114,7 @@
       "url": "https://github.com/PrismLauncher/PrismLauncher",
       "category": "Games",
       "requires_root": false,
+      "terminal": false,
       "description": "A custom Minecraft launcher that allows you to easily manage multiple installations and mods."
     },
     {
@@ -110,6 +123,7 @@
       "url": "https://github.com/ElyPrismLauncher/Launcher",
       "category": "Games",
       "requires_root": false,
+      "terminal": false,
       "description": "A specialized fork of Prism Launcher optimized for specific community features and modpacks."
     },
     {
@@ -118,6 +132,7 @@
       "url": "https://mirrors.dotsrc.org/blender/release/$blender_major/blender-$blender_ver-linux-x64.tar.xz",
       "category": "Graphics",
       "requires_root": false,
+      "terminal": false,
       "description": "The free and open source 3D creation suite, supporting the entirety of the 3D pipeline."
     }
   ]

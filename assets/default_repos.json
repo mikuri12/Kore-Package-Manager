@@ -6,6 +6,7 @@
       "url": "https://github.com/VSCodium/vscodium",
       "category": "Development",
       "requires_root": false,
+      "terminal": false,
       "description": "Free/Libre Open Source Software Binaries of VS Code. A code editor with a massive ecosystem of extensions."
     },
     {
@@ -14,6 +15,7 @@
       "url": "https://github.com/Vencord/Vesktop",
       "category": "Utility",
       "requires_root": true,
+      "terminal": false,
       "description": "An all-in-one Discord client with built-in Vencord and plugins for a better experience."
     },
     {
@@ -22,6 +24,7 @@
       "url": "https://github.com/neovim/neovim",
       "category": "Development",
       "requires_root": false,
+      "terminal": true,
       "description": "Hyperextensible Vim-based text editor focused on extensibility and usability."
     },
     {
@@ -30,6 +33,7 @@
       "url": "https://github.com/Genymobile/scrcpy",
       "category": "Development",
       "requires_root": false,
+      "terminal": false,
       "description": "Display and control Android devices connected via USB or TCP/IP from your desktop."
     },
     {
@@ -38,6 +42,7 @@
       "url": "https://ranger.fm/ranger-stable.tar.gz",
       "category": "Utility",
       "requires_root": false,
+      "terminal": true,
       "description": "A console file manager with VI key bindings and a multi-pane minimalistic interface."
     },
     {
@@ -46,6 +51,7 @@
       "url": "https://github.com/schollz/croc",
       "category": "Utility",
       "requires_root": false,
+      "terminal": true,
       "description": "Easily and securely send files and folders from one computer to another."
     },
     {
@@ -54,6 +60,7 @@
       "url": "https://github.com/strawberrymusicplayer/strawberry",
       "category": "Music",
       "requires_root": false,
+      "terminal": false,
       "description": "A music player and collection organizer focused on high-fidelity audio playback."
     },
     {
@@ -62,6 +69,7 @@
       "url": "https://cdn.waterfox.com/waterfox/releases/$wf_ver/Linux_x86_64/waterfox-$wf_ver.tar.bz2",
       "category": "Network",
       "requires_root": false,
+      "terminal": false,
       "description": "A privacy-focused web browser based on Firefox, optimized for performance and customization."
     },
     {
@@ -70,6 +78,7 @@
       "url": "https://github.com/micro-editor/micro",
       "category": "Development",
       "requires_root": false,
+      "terminal": true,
       "description": "A modern and intuitive terminal-based text editor with mouse support and intuitive shortcuts."
     },
     {
@@ -78,6 +87,7 @@
       "url": "https://github.com/helix-editor/helix",
       "category": "Development",
       "requires_root": false,
+      "terminal": true,
       "description": "A post-modern modal text editor written in Rust with built-in LSP support."
     },
     {
@@ -86,6 +96,7 @@
       "url": "https://github.com/sharkdp/bat",
       "category": "Utility",
       "requires_root": false,
+      "terminal": true,
       "description": "A cat(1) clone with syntax highlighting and Git integration for the terminal."
     },
     {
@@ -94,6 +105,7 @@
       "url": "https://github.com/zen-browser/desktop/",
       "category": "Network",
       "requires_root": false,
+      "terminal": false,
       "description": "A beautiful and fast web browser built on top of Firefox, focused on productivity and privacy."
     },
     {
@@ -102,6 +114,7 @@
       "url": "https://github.com/stoatchat/for-desktop",
       "category": "Network",
       "requires_root": false,
+      "terminal": false,
       "description": "A decentralized and secure chat application for privacy-conscious communication."
     },
     {
@@ -110,6 +123,7 @@
       "url": "https://discord.com/api/download?platform=linux&format=tar.gz",
       "category": "Network",
       "requires_root": false,
+      "terminal": false,
       "description": "The official communication platform for communities to talk, chat, and hang out."
     },
     {
@@ -118,6 +132,7 @@
       "url": "https://github.com/Floorp-Projects/Floorp",
       "category": "Network",
       "requires_root": false,
+      "terminal": false,
       "description": "A highly customizable and privacy-oriented Firefox fork with advanced workspace features."
     },
     {
@@ -126,6 +141,7 @@
       "url": "https://github.com/erikjuhani/basalt",
       "category": "Office",
       "requires_root": false,
+      "terminal": true,
       "description": "A lightweight and fast desktop application for project and task management."
     },
     {
@@ -134,6 +150,7 @@
       "url": "https://github.com/obsidianmd/obsidian-releases",
       "category": "Office",
       "requires_root": false,
+      "terminal": false,
       "description": "A powerful knowledge base that works on top of a local folder of plain text Markdown files."
     },
     {
@@ -142,6 +159,7 @@
       "url": "https://codeberg.org/dnkl/foot",
       "category": "Utility",
       "requires_root": false,
+      "terminal": false,
       "description": "A fast, lightweight, and minimalistic Wayland terminal emulator."
     },
     {
@@ -150,6 +168,7 @@
       "url": "https://github.com/yt-dlp/yt-dlp",
       "category": "Utility",
       "requires_root": false,
+      "terminal": true,
       "description": "A feature-rich command-line audio/video downloader with support for thousands of sites."
     },
     {
@@ -158,6 +177,7 @@
       "url": "https://github.com/jarun/nnn",
       "category": "Utility",
       "requires_root": false,
+      "terminal": true,
       "description": "nnn (n³) is a full-featured terminal file manager. It's tiny, nearly 0-config and incredibly fast."
     },
     {
@@ -166,6 +186,7 @@
       "url": "https://github.com/gokcehan/lf",
       "category": "Utility",
       "requires_root": false,
+      "terminal": true,
       "description": "lf (as in list files) is a terminal file manager written in Go with a heavy inspiration from ranger file manager. "
     }
   ]

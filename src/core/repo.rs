@@ -11,6 +11,8 @@ pub struct Repository {
     pub category: String,
     pub requires_root: bool,
     #[serde(default)]
+    pub terminal: Option<bool>,
+    #[serde(default)]
     pub description: Option<String>,
 }
 
@@ -71,7 +73,7 @@ pub fn get_user_repos(config: &Config) -> Vec<Repository> {
     Vec::new()
 }
 
-pub fn save_user_repos(config: &Config, repos: &[Repository]) -> Result<(), crate::error::TmError> {
+pub fn save_user_repos(config: &Config, repos: &[Repository]) -> Result<(), crate::error::KoreError> {
     let list = RepositoryList {
         repositories: repos.to_vec(),
     };
@@ -101,27 +103,27 @@ pub async fn add_user_repo(
     url: &str,
     category: &str,
     requires_root: bool,
-) -> Result<(), crate::error::TmError> {
+) -> Result<(), crate::error::KoreError> {
     let mut repos = get_user_repos(config);
     // Check if it already exists
     if repos.iter().any(|r| r.name.to_lowercase() == name.to_lowercase()) {
-        return Err(crate::error::TmError::Generic("A repository with that name already exists".to_string()));
+        return Err(crate::error::KoreError::Generic("A repository with that name already exists".to_string()));
     }
 
     // Validate URL reachability
     let client = reqwest::Client::builder()
-        .user_agent("Tarball-Manager/1.0")
+        .user_agent("Kore-Package-Manager/1.0")
         .timeout(std::time::Duration::from_secs(5))
         .build()?;
     
     match client.get(url).send().await {
         Ok(resp) => {
             if !resp.status().is_success() {
-                return Err(crate::error::TmError::Generic(format!("The URL '{}' returned status {}. Please verify it exists.", url, resp.status())));
+                return Err(crate::error::KoreError::Generic(format!("The URL '{}' returned status {}. Please verify it exists.", url, resp.status())));
             }
         }
         Err(e) => {
-            return Err(crate::error::TmError::Generic(format!("Could not reach the URL '{}': {}", url, e)));
+            return Err(crate::error::KoreError::Generic(format!("Could not reach the URL '{}': {}", url, e)));
         }
     }
 
@@ -131,13 +133,14 @@ pub async fn add_user_repo(
         url: url.to_string(),
         category: category.to_string(),
         requires_root,
+        terminal: None,
         description: None,
     });
     save_user_repos(config, &repos)?;
     Ok(())
 }
 
-pub fn remove_user_repo(config: &Config, name: &str) -> Result<bool, crate::error::TmError> {
+pub fn remove_user_repo(config: &Config, name: &str) -> Result<bool, crate::error::KoreError> {
     let mut repos = get_user_repos(config);
     let original_len = repos.len();
     repos.retain(|r| r.name.to_lowercase() != name.to_lowercase());
@@ -150,9 +153,9 @@ pub fn remove_user_repo(config: &Config, name: &str) -> Result<bool, crate::erro
     }
 }
 
-pub async fn sync_repos(config: &Config) -> Result<(), crate::error::TmError> {
+pub async fn sync_repos(config: &Config) -> Result<(), crate::error::KoreError> {
     let client = reqwest::Client::builder()
-        .user_agent("Tarball-Manager/1.0")
+        .user_agent("Kore-Package-Manager/1.0")
         .build()?;
 
     let official_url = "https://raw.githubusercontent.com/ezequielgk/Tarball-Manager/main/assets/default_repos.json";
@@ -165,7 +168,7 @@ pub async fn sync_repos(config: &Config) -> Result<(), crate::error::TmError> {
         let _: RepositoryList = serde_json::from_str(&text)?;
         std::fs::write(&config.official_repos_file, text)?;
     } else {
-        return Err(crate::error::TmError::Generic("Failed to download official repositories".to_string()));
+        return Err(crate::error::KoreError::Generic("Failed to download official repositories".to_string()));
     }
 
     let com_resp = client.get(community_url).send().await?;
@@ -175,7 +178,7 @@ pub async fn sync_repos(config: &Config) -> Result<(), crate::error::TmError> {
         let _: RepositoryList = serde_json::from_str(&text)?;
         std::fs::write(&config.community_repos_file, text)?;
     } else {
-        return Err(crate::error::TmError::Generic("Failed to download community repositories".to_string()));
+        return Err(crate::error::KoreError::Generic("Failed to download community repositories".to_string()));
     }
 
     Ok(())

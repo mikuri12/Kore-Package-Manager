@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::utils::{error_msg, find_executables, find_bundled_desktop_files, find_icon, info_msg, success_msg, is_gui_app};
+use crate::utils::{error_msg, find_executables, find_bundled_desktop_files, find_icon, info_msg, success_msg};
 use dialoguer::{Select, Confirm, Input};
 use std::collections::HashSet;
 use std::fs;
@@ -161,7 +161,7 @@ pub fn extract_and_scan(
     tarball: &Path,
     target_folder_name: Option<&str>,
     silent: bool,
-) -> Result<Option<(PathBuf, String, Vec<PathBuf>, Vec<PathBuf>)>, crate::error::TmError> {
+) -> Result<Option<(PathBuf, String, Vec<PathBuf>, Vec<PathBuf>)>, crate::error::KoreError> {
     if !tarball.exists() || !tarball.is_file() {
         if !silent { error_msg(&format!("The file '{}' does not exist.", tarball.display())); }
         return Ok(None);
@@ -240,15 +240,15 @@ pub fn finalize_installation(
     exec_path: &Path,
     app_name: &str,
     use_root: bool,
+    use_terminal: bool,
     category: &str,
     bundled_desktop: Option<PathBuf>,
     silent: bool,
-) -> Result<(), crate::error::TmError> {
+) -> Result<(), crate::error::KoreError> {
     let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
     let icon_path = find_icon(target, app_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
-    let sanitized_name = target.file_name().unwrap_or_default().to_string_lossy().to_string();
-    let bin_dest = config.bin_dir.join(&sanitized_name);
+    let bin_dest = config.bin_dir.join(app_name);
     if bin_dest.exists() {
         let _ = fs::remove_file(&bin_dest);
     }
@@ -266,6 +266,7 @@ pub fn finalize_installation(
     let desktop_content = if let Some(bd_path) = bundled_desktop {
         let content = fs::read_to_string(bd_path).unwrap_or_default();
         let mut new_lines = Vec::new();
+        let mut has_terminal = false;
         for line in content.lines() {
             if line.trim_start().starts_with("Exec=") {
                 new_lines.push(format!("Exec={}", final_exec));
@@ -273,13 +274,18 @@ pub fn finalize_installation(
                 new_lines.push(format!("TryExec={}", final_exec));
             } else if line.trim_start().starts_with("Icon=") {
                 new_lines.push(format!("Icon={}", icon_path));
+            } else if line.trim_start().starts_with("Terminal=") {
+                new_lines.push(format!("Terminal={}", if use_terminal { "true" } else { "false" }));
+                has_terminal = true;
             } else {
                 new_lines.push(line.to_string());
             }
         }
+        if !has_terminal {
+            new_lines.push(format!("Terminal={}", if use_terminal { "true" } else { "false" }));
+        }
         new_lines.join("\n")
     } else {
-        let is_terminal = !is_gui_app(exec_path);
         format!(
 r#"[Desktop Entry]
 Name={}
@@ -292,13 +298,13 @@ Categories={};"#,
             app_name,
             final_exec,
             icon_path,
-            if is_terminal { "true" } else { "false" },
+            if use_terminal { "true" } else { "false" },
             target.display(),
             category
         )
     };
 
-    let desktop_path = config.apps_dir.join(format!("{}.desktop", sanitized_name));
+    let desktop_path = config.apps_dir.join(format!("{}.desktop", app_name.to_lowercase().replace(' ', "-")));
     fs::write(desktop_path, desktop_content)?;
 
     // Refresh desktop database to show the icon and entry immediately
@@ -306,6 +312,45 @@ Categories={};"#,
     let _ = Command::new("touch").arg(&config.apps_dir).status();
 
     Ok(())
+}
+
+pub struct ResolvedSource {
+    pub url: String,
+    pub is_git: bool,
+    pub repo_name: Option<String>,
+    pub repo_package_name: Option<String>,
+    pub repo_category: Option<String>,
+    pub repo_requires_root: Option<bool>,
+    pub repo_terminal: Option<bool>,
+}
+
+pub async fn resolve_source(config: &Config, source: &str) -> Result<Option<ResolvedSource>, crate::error::KoreError> {
+    let all_repos = crate::core::repo::get_all_repos(config);
+    if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == source.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == source.to_lowercase())) {
+        let repo_name = Some(repo_source.repo.name.clone());
+        let repo_package_name = if !repo_source.repo.package_name.is_empty() {
+            Some(repo_source.repo.package_name.clone())
+        } else {
+            Some(repo_source.repo.name.clone())
+        };
+        let repo_category = Some(repo_source.repo.category.clone());
+        let repo_requires_root = Some(repo_source.repo.requires_root);
+        let repo_terminal = repo_source.repo.terminal;
+        let url = repo_source.repo.url.clone();
+        let is_git = crate::core::download::is_supported_git_url(&url);
+        
+        Ok(Some(ResolvedSource {
+            url,
+            is_git,
+            repo_name,
+            repo_package_name,
+            repo_category,
+            repo_requires_root,
+            repo_terminal,
+        }))
+    } else {
+        Ok(None)
+    }
 }
 
 pub async fn install_app(
@@ -316,30 +361,26 @@ pub async fn install_app(
     category_opt: Option<&str>,
     is_cli: bool,
     tx: Option<tokio::sync::mpsc::UnboundedSender<InstallMessage>>,
-) -> Result<(), crate::error::TmError> {
+) -> Result<(), crate::error::KoreError> {
     let mut actual_tarball = PathBuf::from(source);
     let mut downloaded = false;
     let mut repo_name_opt: Option<String> = None;
     let mut repo_package_name_opt: Option<String> = None;
     let mut repo_category_opt: Option<String> = None;
     let mut repo_requires_root_opt: Option<bool> = None;
+    let mut repo_terminal_opt: Option<bool> = None;
 
     if !actual_tarball.exists() {
-        // Try to match it to a repository
-        let all_repos = crate::core::repo::get_all_repos(config);
-        if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == source.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == source.to_lowercase())) {
-            repo_name_opt = Some(repo_source.repo.name.clone());
-            if !repo_source.repo.package_name.is_empty() {
-                repo_package_name_opt = Some(repo_source.repo.package_name.clone());
-            } else {
-                repo_package_name_opt = Some(repo_source.repo.name.clone());
-            }
-            repo_category_opt = Some(repo_source.repo.category.clone());
-            repo_requires_root_opt = Some(repo_source.repo.requires_root);
-
-            let url = &repo_source.repo.url;
-            if crate::core::download::is_supported_git_url(url) {
-                if is_cli { info_msg(&format!("Fetching releases for {}...", repo_source.repo.name)); }
+        if let Some(resolved) = resolve_source(config, source).await? {
+            repo_name_opt = resolved.repo_name;
+            repo_package_name_opt = resolved.repo_package_name;
+            repo_category_opt = resolved.repo_category;
+            repo_requires_root_opt = resolved.repo_requires_root;
+            repo_terminal_opt = resolved.repo_terminal;
+            
+            let url = &resolved.url;
+            if resolved.is_git {
+                if is_cli { info_msg(&format!("Fetching releases for {}...", repo_name_opt.as_deref().unwrap_or("repository"))); }
                         match crate::core::download::get_latest_release_assets(url).await {
                             Ok(assets) => {
                                 if assets.is_empty() {
@@ -381,7 +422,7 @@ pub async fn install_app(
                                         Err(e) => {
                                             if is_cli { error_msg(&format!("Failed to download: {}", e)); }
                                             if let Some(t) = &tx { let _ = t.send(InstallMessage::Progress(format!("Error: {}", e), -1.0)); }
-                                            return Err(crate::error::TmError::Generic(e.to_string()));
+                                            return Err(crate::error::KoreError::Generic(e.to_string()));
                                         }
                                     }
                                 }
@@ -389,17 +430,17 @@ pub async fn install_app(
                             Err(e) => {
                                 if is_cli { error_msg(&format!("Failed to query release API: {}", e)); }
                                 if let Some(t) = &tx { let _ = t.send(InstallMessage::Progress(format!("Error: {}", e), -1.0)); }
-                                return Err(crate::error::TmError::Generic(e.to_string()));
+                                return Err(crate::error::KoreError::Generic(e.to_string()));
                             }
                         }
             } else {
                 if is_cli { info_msg(&format!("{} is not a known Git provider. Treating as direct download link...", url)); }
                 
-                let resolved_url = match crate::core::download::resolve_dynamic_url(url).await {
+                let resolved_url = match crate::core::dynamic_links::resolve_dynamic_url(url).await {
                     Ok(u) => u,
                     Err(e) => {
                         if is_cli { error_msg(&format!("Failed to resolve dynamic URL: {}", e)); }
-                        return Err(crate::error::TmError::Generic(e.to_string()));
+                        return Err(crate::error::KoreError::Generic(e.to_string()));
                     }
                 };
 
@@ -416,14 +457,14 @@ pub async fn install_app(
                     Err(e) => {
                         if is_cli { error_msg(&format!("Failed to download: {}", e)); }
                         if let Some(t) = &tx { let _ = t.send(InstallMessage::Progress(format!("Error: {}", e), -1.0)); }
-                        return Err(crate::error::TmError::Generic(e.to_string()));
+                        return Err(crate::error::KoreError::Generic(e.to_string()));
                     }
                 }
             }
         } else {
             if is_cli { error_msg(&format!("The file '{}' does not exist, and no repository matches this name.", source)); }
             if let Some(t) = &tx { let _ = t.send(InstallMessage::Progress("File or repository not found".to_string(), -1.0)); }
-            return Err(crate::error::TmError::Generic("Not found".into()));
+            return Err(crate::error::KoreError::Generic("Not found".into()));
         }
     }
 
@@ -437,7 +478,7 @@ pub async fn install_app(
         let is_cli_clone = is_cli;
         let extract_result = tokio::task::spawn_blocking(move || {
             extract_and_scan(&config_clone, &tarball_clone, repo_package_clone.as_deref(), !is_cli_clone)
-        }).await.map_err(|e| crate::error::TmError::Generic(e.to_string()))??;
+        }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??;
 
         if let Some((target, raw_name_folder, executables, desktop_files)) = extract_result {
             let exec_path = if !is_cli {
@@ -539,6 +580,11 @@ pub async fn install_app(
                     .map(|s| s.to_lowercase() == "si" || s.to_lowercase() == "yes" || s.to_lowercase() == "s")
                     .unwrap_or_else(|| repo_requires_root_opt.unwrap_or(false));
 
+                let mut use_terminal = repo_terminal_opt.unwrap_or(false);
+                if use_root {
+                    use_terminal = false;
+                }
+
                 let category = category_opt
                     .map(|s| s.to_string())
                     .or(repo_category_opt)
@@ -552,13 +598,14 @@ pub async fn install_app(
                 let exec_path_clone = exec_path.clone();
                 let app_name_clone = app_name.clone();
                 let use_root_clone = use_root;
+                let use_terminal_clone = use_terminal;
                 let category_clone = category.clone();
                 let bundled_desktop_clone = bundled_desktop.clone();
                 let is_cli_clone = is_cli;
 
                 tokio::task::spawn_blocking(move || {
-                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &app_name_clone, use_root_clone, &category_clone, bundled_desktop_clone, !is_cli_clone)
-                }).await.map_err(|e| crate::error::TmError::Generic(e.to_string()))??;
+                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &app_name_clone, use_root_clone, use_terminal_clone, &category_clone, bundled_desktop_clone, !is_cli_clone)
+                }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??;
                 if let Some(t) = &tx {
                     let _ = t.send(InstallMessage::Progress(format!("Successfully installed {}", app_name), 100.0));
                 }
@@ -589,7 +636,7 @@ pub async fn install_app(
     Ok(())
 }
 
-pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -> Result<(), crate::error::TmError> {
+pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -> Result<(), crate::error::KoreError> {
     let mut target_path = config.install_dir.join(app_name);
 
     if !target_path.exists() {
@@ -662,11 +709,11 @@ pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -
     Ok(())
 }
 
-pub async fn update_tm(config: &Config) -> Result<(), crate::error::TmError> {
+pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
     info_msg("Looking for the latest stable version on GitHub Releases...");
 
     let client = reqwest::Client::builder()
-        .user_agent("Tarball-Manager/1.0")
+        .user_agent("Kore-Package-Manager/1.0")
         .build()?;
 
     let response = client.get("https://api.github.com/repos/ezequielgk/Tarball-Manager/releases/latest").send().await;
@@ -711,8 +758,8 @@ pub async fn update_tm(config: &Config) -> Result<(), crate::error::TmError> {
         return Ok(());
     }
 
-    let bin_path = config.bin_dir.join("tm");
-    let temp_dir = config.bin_dir.join(".tm_update"); // Use a dir in the same filesystem
+    let bin_path = config.bin_dir.join("kpm");
+    let temp_dir = config.install_dir.join(".kpm_update"); // Use a dir in the same filesystem
     std::fs::create_dir_all(&temp_dir)?;
 
     info_msg(&format!("Downloading update..."));
@@ -728,11 +775,11 @@ pub async fn update_tm(config: &Config) -> Result<(), crate::error::TmError> {
 
             // Perform the swap
             if fs::rename(&downloaded_file, &bin_path).is_ok() {
-                success_msg("tm successfully updated!");
+                success_msg("Kore Package Manager updated successfully! You can now use 'kpm' normally.");
             } else {
                 // If rename fails, try copy as fallback (though rename in same fs should work)
                 if fs::copy(&downloaded_file, &bin_path).is_ok() {
-                    success_msg("tm successfully updated (via copy)!");
+                    success_msg("Kore Package Manager updated successfully! You can now use 'kpm' normally.");
                 } else {
                     error_msg("Error replacing the current binary. Make sure you have permissions.");
                 }

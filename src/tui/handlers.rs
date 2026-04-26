@@ -1,8 +1,9 @@
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{backend::Backend, Terminal};
-use tm::config::Config;
-use tm::core::{remove_app, update_desktop_file};
+use crate::config::Config;
+use crate::core::{remove_app, update_desktop_file};
 use super::state::{App, Route, PopupType};
+use crate::tui::components::Component;
 
 pub async fn handle_key_events<B: Backend>(
     _terminal: &mut Terminal<B>,
@@ -59,12 +60,12 @@ pub async fn handle_key_events<B: Backend>(
                                 if selected_action == 0 {
                                     app.open_popup_input(PopupType::NameInput, "");
                                 } else if selected_action == 1 {
-                                    app.open_popup_list(PopupType::CategorySelect, tm::core::get_all_categories(config));
+                                    app.open_popup_list(PopupType::CategorySelect, crate::core::get_all_categories(config));
                                 } else if selected_action == 2 {
                                     if let Some(idx) = app.list_state.selected() {
                                         let selected_app = app.filtered[idx].clone();
                                         let target = config.install_dir.join(&selected_app);
-                                        let executables = tm::utils::find_executables(&target, 3);
+                                        let executables = crate::utils::find_executables(&target, 3);
                                         app.pending_target = target;
                                         app.pending_executables = executables.clone();
                                         if executables.is_empty() {
@@ -143,7 +144,7 @@ pub async fn handle_key_events<B: Backend>(
                                             app.open_popup_info(&format!("Error creating symlink: {}", e));
                                         } else {
                                             let final_exec = bin_dest.to_string_lossy().to_string();
-                                            tm::core::update_desktop_file(config, &selected_app, &final_exec, "Exec", true);
+                                            crate::core::update_desktop_file(config, &selected_app, &final_exec, "Exec", true);
                                             app.cached_preview = None; // Reset preview
                                             app.open_popup_info("Binary successfully updated.");
                                         }
@@ -159,7 +160,7 @@ pub async fn handle_key_events<B: Backend>(
                                 if let Some(ridx) = app.popup_state.selected() {
                                     if let Some(idx) = app.list_state.selected() {
                                         let selected_app = app.filtered[idx].clone();
-                                        tm::core::update_exec_modifiers(config, &selected_app, Some(ridx == 1), None, true);
+                                        crate::core::update_exec_modifiers(config, &selected_app, Some(ridx == 1), None, true);
                                         app.open_popup_info("Root requirement updated.");
                                     }
                                 } else {
@@ -174,7 +175,7 @@ pub async fn handle_key_events<B: Backend>(
                             KeyCode::Enter => {
                                 if let Some(idx) = app.list_state.selected() {
                                     let selected_app = app.filtered[idx].clone();
-                                    tm::core::update_exec_modifiers(config, &selected_app, None, Some(app.popup_input.trim().to_string()), true);
+                                    crate::core::update_exec_modifiers(config, &selected_app, None, Some(app.popup_input.trim().to_string()), true);
                                     app.open_popup_info("Environment variables updated.");
                                 } else {
                                     app.popup_type = PopupType::None;
@@ -218,7 +219,7 @@ pub async fn handle_key_events<B: Backend>(
                         PopupType::InstallRootSelect => match key.code {
                             KeyCode::Enter => {
                                 app.pending_use_root = app.popup_state.selected().unwrap_or(0) == 1;
-                                app.open_popup_list(PopupType::InstallCategorySelect, tm::core::get_all_categories(config));
+                                app.open_popup_list(PopupType::InstallCategorySelect, crate::core::get_all_categories(config));
                             }
                             _ => {}
                         },
@@ -227,30 +228,14 @@ pub async fn handle_key_events<B: Backend>(
                                 if let Some(cidx) = app.popup_state.selected() {
                                     app.pending_category = app.popup_items[cidx].clone();
                                     
-                                    let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
-                                    app.install_rx = Some(rx);
-                                    app.install_status = "Starting local installation...".to_string();
-                                    app.install_progress = 0.0;
-                                    app.install_done = false;
-                                    app.popup_type = PopupType::InstallProgress;
-                                    
-                                    let config_clone = (*config).clone();
-                                    let source = app.pending_tarball.to_string_lossy().to_string();
-                                    let app_name = app.pending_app_name.clone();
-                                    let use_root = if app.pending_use_root { "yes".to_string() } else { "no".to_string() };
-                                    let category = app.pending_category.clone();
-                                    
-                                    tokio::spawn(async move {
-                                        let _ = tm::core::install_app(
-                                            &config_clone,
-                                            &source,
-                                            Some(&app_name),
-                                            Some(&use_root),
-                                            Some(&category),
-                                            false,
-                                            Some(tx)
-                                        ).await;
-                                    });
+                                    app.route = Route::Installer;
+                                    app.installer = Some(crate::tui::components::installer::Installer::new(
+                                        app.pending_tarball.to_string_lossy().to_string(),
+                                        app.pending_app_name.clone(),
+                                        app.pending_use_root,
+                                        app.pending_category.clone(),
+                                    ));
+                                    app.popup_type = PopupType::None;
                                 } else {
                                     app.popup_type = PopupType::None;
                                 }
@@ -320,33 +305,25 @@ pub async fn handle_key_events<B: Backend>(
                                 if action.contains("Install Application") {
                                     if let Some(idx) = app.list_state.selected() {
                                         if let Some(repo) = app.filtered_repos.get(idx) {
-                                            let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
-                                            app.install_rx = Some(rx);
-                                            app.install_status = "Starting download...".to_string();
-                                            app.install_progress = 0.0;
-                                            app.install_done = false;
-                                            app.popup_type = PopupType::InstallProgress;
-                                            
-                                            let config_clone = (*config).clone();
-                                            let repo_name = repo.repo.name.clone();
-                                            
-                                            tokio::spawn(async move {
-                                                let _ = tm::core::install_app(
-                                                    &config_clone,
-                                                    &repo_name,
-                                                    Some(&repo_name),
-                                                    None,
-                                                    None,
-                                                    false,
-                                                    Some(tx)
-                                                ).await;
-                                            });
+                                            let app_name = if !repo.repo.package_name.is_empty() {
+                                                repo.repo.package_name.clone()
+                                            } else {
+                                                repo.repo.name.clone()
+                                            };
+                                            app.route = Route::Installer;
+                                            app.installer = Some(crate::tui::components::installer::Installer::new(
+                                                repo.repo.name.clone(),
+                                                app_name,
+                                                repo.repo.requires_root,
+                                                repo.repo.category.clone(),
+                                            ));
+                                            app.popup_type = PopupType::None;
                                         }
                                     }
                                 } else if action.contains("Remove Custom Repo") {
                                     if let Some(idx) = app.list_state.selected() {
                                         if let Some(repo) = app.filtered_repos.get(idx) {
-                                            let _ = tm::repo::remove_user_repo(config, &repo.repo.name);
+                                            let _ = crate::repo::remove_user_repo(config, &repo.repo.name);
                                             app.open_popup_info("Repository successfully removed.");
                                             app.load_repos(config);
                                         }
@@ -412,7 +389,7 @@ pub async fn handle_key_events<B: Backend>(
                         PopupType::RepoRootInput => match key.code {
                             KeyCode::Enter => {
                                 app.pending_repo_root = app.popup_state.selected().unwrap_or(0) == 1;
-                                match tm::repo::add_user_repo(
+                                match crate::repo::add_user_repo(
                                     config, 
                                     &app.pending_repo_name, 
                                     &app.pending_repo_package_name,
@@ -448,235 +425,43 @@ pub async fn handle_key_events<B: Backend>(
                     return Ok(false);
                 }
 
-                match app.route {
-                    Route::MainMenu => match key.code {
-                        KeyCode::Esc | KeyCode::Char('q') => { return Ok(true); }
-                        KeyCode::Down | KeyCode::Char('j') => { app.next(); }
-                        KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                        KeyCode::Char('?') => {
-                            app.popup_type = PopupType::Help;
-                            app.help_scroll = 0;
+                let action = match app.route {
+                    Route::MainMenu => {
+                        let mut c = crate::tui::components::main_menu::MainMenu::new();
+                        c.handle_key_event(key, app, config)?
+                    }
+                    Route::ManageApps | Route::RemoveApps => {
+                        let mut c = crate::tui::components::app_manager::AppManager::new();
+                        c.handle_key_event(key, app, config)?
+                    }
+                    Route::FileBrowser | Route::IconBrowser => {
+                        let mut c = crate::tui::components::file_browser::FileBrowser::new();
+                        c.handle_key_event(key, app, config)?
+                    }
+                    Route::RepoCategorySelect | Route::ManageRepos => {
+                        let mut c = crate::tui::components::repo_manager::RepoManager::new();
+                        c.handle_key_event(key, app, config)?
+                    }
+                    Route::Installer => {
+                        let mut action = None;
+                        if let Some(mut c) = app.installer.take() {
+                            action = c.handle_key_event(key, app, config)?;
+                            app.installer = Some(c);
                         }
-                        KeyCode::Enter => {
-                            let s = app.list_state.selected().unwrap_or(0);
-                            match s {
-                                0 => {
-                                    app.route = Route::FileBrowser;
-                                    app.load_dir();
-                                }
-                                1 => {
-                                    app.route = Route::ManageApps;
-                                    app.load_apps(config);
-                                }
-                                2 => {
-                                    app.route = Route::RemoveApps;
-                                    app.load_apps(config);
-                                }
-                                3 => {
-                                    app.route = Route::RepoCategorySelect;
-                                    app.repo_category_state.select(Some(0));
-                                }
-                                _ => { return Ok(true); }
-                            }
-                        }
-                        _ => {}
-                    },
-                    Route::ManageApps => match key.code {
-                        KeyCode::Esc => {
-                            app.route = Route::MainMenu;
-                            app.list_state.select(Some(1));
-                            app.input.clear();
-                        }
-                        KeyCode::Down => { app.next(); }
-                        KeyCode::Up => { app.previous(); }
-                        KeyCode::Backspace => {
-                            app.input.pop();
-                            app.filter_apps();
-                        }
-                        KeyCode::Char(c) => {
-                            app.input.push(c);
-                            app.filter_apps();
-                        }
-                        KeyCode::Enter => {
-                            if !app.filtered.is_empty() {
-                                app.open_popup_list(PopupType::ActionSelect, vec![
-                                    "󰏫 Modify Name".to_string(), 
-                                    "󰟝 Change Category".to_string(), 
-                                    "󰒍 Change Binary".to_string(), 
-                                    "󰌋 Toggle Root".to_string(), 
-                                    "󰀩 Change Icon".to_string(), 
-                                    "󰏫 Set Env Variables".to_string(),
-                                    "󰈆 Return".to_string()
-                                ]);
-                            }
-                        }
-                        _ => {}
-                    },
-                    Route::RemoveApps => match key.code {
-                        KeyCode::Esc => {
-                            app.route = Route::MainMenu;
-                            app.list_state.select(Some(2));
-                            app.input.clear();
-                        }
-                        KeyCode::Down => { app.next(); }
-                        KeyCode::Up => { app.previous(); }
-                        KeyCode::Backspace => {
-                            app.input.pop();
-                            app.filter_apps();
-                        }
-                        KeyCode::Char(c) => {
-                            app.input.push(c);
-                            app.filter_apps();
-                        }
-                        KeyCode::Enter => {
-                            if !app.filtered.is_empty() {
-                                app.open_popup_list(PopupType::ConfirmUninstall, vec!["Yes, uninstall".to_string(), "No, cancel".to_string()]);
-                            }
-                        }
-                        _ => {}
-                    },
-                    Route::FileBrowser => match key.code {
-                        KeyCode::Esc => {
-                            app.route = Route::MainMenu;
-                            app.list_state.select(Some(0));
-                        }
-                        KeyCode::Down => { app.next(); }
-                        KeyCode::Up => { app.previous(); }
-                        KeyCode::Backspace => {
-                            app.fb_input.pop();
-                            app.filter_fb();
-                        }
-                        KeyCode::Char(c) => {
-                            app.fb_input.push(c);
-                            app.filter_fb();
-                        }
-                        KeyCode::Enter => {
-                            if let Some(idx) = app.fb_state.selected() {
-                                let choice = &app.fb_filtered[idx];
-                                if choice == "../" {
-                                    if let Some(parent) = app.current_dir.parent() {
-                                        app.current_dir = parent.to_path_buf();
-                                        app.load_dir();
-                                    }
-                                } else if choice == "./" {
-                                    // continue equivalent
-                                } else if choice.ends_with('/') {
-                                    app.current_dir = app.current_dir.join(&choice[..choice.len() - 1]);
-                                    app.load_dir();
-                                } else if choice.contains(".tar.") || choice.ends_with(".zip") {
-                                    let tarball_path = app.current_dir.join(choice);
-                                    app.pending_tarball = tarball_path;
-                                    app.pending_raw_name = choice.replace(".tar.gz", "")
-                                        .replace(".tar.xz", "")
-                                        .replace(".tar.bz2", "")
-                                        .replace(".zip", "");
-                                        
-                                    app.open_popup_input(PopupType::InstallNameInput, "");
-                                }
-                            }
-                        }
-                        _ => {}
-                    },
-                    Route::IconBrowser => match key.code {
-                        KeyCode::Esc => {
-                            app.route = Route::ManageApps;
-                        }
-                        KeyCode::Down => { app.next(); }
-                        KeyCode::Up => { app.previous(); }
-                        KeyCode::Backspace => {
-                            app.fb_input.pop();
-                            app.filter_fb();
-                        }
-                        KeyCode::Char(c) => {
-                            app.fb_input.push(c);
-                            app.filter_fb();
-                        }
-                        KeyCode::Enter => {
-                            if let Some(idx) = app.fb_state.selected() {
-                                let choice = &app.fb_filtered[idx];
-                                if choice == "../" {
-                                    if let Some(parent) = app.current_dir.parent() {
-                                        app.current_dir = parent.to_path_buf();
-                                        app.load_dir();
-                                    }
-                                } else if choice == "./" {
-                                    // continue equivalent
-                                } else if choice.ends_with('/') {
-                                    app.current_dir = app.current_dir.join(&choice[..choice.len() - 1]);
-                                    app.load_dir();
-                                } else if choice.ends_with(".png") || choice.ends_with(".svg") || choice.ends_with(".ico") {
-                                    let icon_path = app.current_dir.join(choice).to_string_lossy().to_string();
-                                    update_desktop_file(config, &app.pending_icon_target, &icon_path, "Icon", true);
-                                    app.open_popup_info("Icon successfully updated.");
-                                    app.route = Route::ManageApps;
-                                    app.load_apps(config);
-                                }
-                            }
-                        }
-                        _ => {}
-                    },
-                    Route::RepoCategorySelect => match key.code {
-                        KeyCode::Esc | KeyCode::Char('q') => {
-                            app.route = Route::MainMenu;
-                            app.list_state.select(Some(3));
-                        }
-                        KeyCode::Down | KeyCode::Char('j') => { app.next(); }
-                        KeyCode::Up | KeyCode::Char('k') => { app.previous(); }
-                        KeyCode::Enter => {
-                            let s = app.repo_category_state.selected().unwrap_or(0);
-                            app.viewing_repo_type = match s {
-                                0 => tm::repo::RepoType::Official,
-                                1 => tm::repo::RepoType::Community,
-                                _ => tm::repo::RepoType::User,
-                            };
-                            app.route = Route::ManageRepos;
-                            app.load_repos(config);
-                        }
-                        _ => {}
-                    },
-                    Route::ManageRepos => match key.code {
-                        KeyCode::Esc => {
-                            app.route = Route::RepoCategorySelect;
-                            app.input.clear();
-                        }
-                        KeyCode::Down => { app.next(); }
-                        KeyCode::Up => { app.previous(); }
-                        KeyCode::Backspace => {
-                            app.input.pop();
-                            app.filter_repos();
-                        }
-                        KeyCode::Char('A') | KeyCode::Char('a') if app.input.is_empty() => {
-                            if app.viewing_repo_type != tm::repo::RepoType::User {
-                                app.open_popup_info("Only Custom Repositories can be modified. Go to My Custom Repositories to add your own.");
-                            } else {
-                                app.open_popup_input(PopupType::RepoNameInput, "");
-                            }
-                        }
-                        KeyCode::Char(c) => {
-                            app.input.push(c);
-                            app.filter_repos();
-                        }
-                        KeyCode::Enter => {
-                            if let Some(idx) = app.list_state.selected() {
-                                if let Some(repo) = app.filtered_repos.get(idx) {
-                                    if repo.repo_type == tm::repo::RepoType::User {
-                                        app.open_popup_list(PopupType::RepoActionSelect, vec![
-                                            "󰏫 Install Application".to_string(),
-                                            "󰆴 Remove Custom Repo".to_string(),
-                                            "󰈆 Cancel".to_string()
-                                        ]);
-                                    } else {
-                                        app.open_popup_list(PopupType::RepoActionSelect, vec![
-                                            "󰏫 Install Application".to_string(),
-                                            "󰈆 Cancel".to_string()
-                                        ]);
-                                    }
-                                }
-                            }
-                        }
+                        action
+                    }
+                };
+
+                if let Some(act) = action {
+                    match act {
+                        crate::tui::components::AppAction::Quit => return Ok(true),
+                        crate::tui::components::AppAction::ChangeRoute(route) => app.route = route,
+                        crate::tui::components::AppAction::ShowPopup(popup) => app.popup_type = popup,
+                        crate::tui::components::AppAction::ClosePopup => app.popup_type = PopupType::None,
                         _ => {}
                     }
                 }
+
             }
         }
     }

@@ -1,4 +1,4 @@
-name: Release Tarball Manager
+name: Release Kore Package Manager
 
 on:
   push:
@@ -24,20 +24,35 @@ jobs:
       - name: Build Release Binary
         run: cargo build --release
       
+      - name: Package Release Archive
+        run: |
+          mkdir -p kpm-release
+          cp target/release/kpm kpm-release/
+          cp assets/Ico/kore.ico kpm-release/
+          cp assets/kpm.desktop kpm-release/
+          tar -czvf kpm-linux-x86_64.tar.gz -C kpm-release .
+      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: target/release/tm
-          name: Tarball Manager ${{ github.ref_name }}
+          files: kpm-linux-x86_64.tar.gz
+          name: Kore Package Manager ${{ github.ref_name }}
           prerelease: ${{ contains(github.ref_name, '-') }}
           body: |
-            ### Nueva actualización de Tarball Manager
-            Binary ejecutable listo para descargar en Linux.
+            ### Nueva actualización de Kore Package Manager
+            Archivo comprimido con binario, ícono y acceso directo listos para usar en Linux.
             
             **Instalación Rápida:**
             ```bash
-            chmod +x tm
-            sudo mv tm /usr/local/bin/
+            tar -xzf kpm-linux-x86_64.tar.gz
+            chmod +x kpm
+            sudo mv kpm /usr/local/bin/
+            
+            # Opcional: Instalar el acceso directo (.desktop)
+            mkdir -p ~/.local/share/icons ~/.local/share/applications
+            cp kore.ico ~/.local/share/icons/
+            cp kpm.desktop ~/.local/share/applications/
+            update-desktop-database ~/.local/share/applications
             ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

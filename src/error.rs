@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum TmError {
+pub enum KoreError {
     #[error("Network error: {0}")]
     Network(#[from] reqwest::Error),
     
