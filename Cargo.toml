@@ -1,6 +1,6 @@
 [package]
 name = "kpm"
-version = "1.5.2"
+version = "2.0.0"
 edition = "2021"
 description = "Kore Package Manager (kpm) - Edition 2026"
 
