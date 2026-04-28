@@ -150,7 +150,6 @@ impl Component for FileBrowser {
                             app.load_dir();
                         }
                     } else if choice == "./" {
-                        // continue equivalent
                     } else if choice.ends_with('/') {
                         app.current_dir = app.current_dir.join(&choice[..choice.len() - 1]);
                         app.load_dir();

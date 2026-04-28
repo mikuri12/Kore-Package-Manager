@@ -105,12 +105,10 @@ pub async fn add_user_repo(
     requires_root: bool,
 ) -> Result<(), crate::error::KoreError> {
     let mut repos = get_user_repos(config);
-    // Check if it already exists
     if repos.iter().any(|r| r.name.to_lowercase() == name.to_lowercase()) {
         return Err(crate::error::KoreError::Generic("A repository with that name already exists".to_string()));
     }
 
-    // Validate URL reachability
     let client = reqwest::Client::builder()
         .user_agent("Kore-Package-Manager/1.0")
         .timeout(std::time::Duration::from_secs(5))
@@ -164,7 +162,6 @@ pub async fn sync_repos(config: &Config) -> Result<(), crate::error::KoreError> 
     let off_resp = client.get(official_url).send().await?;
     if off_resp.status().is_success() {
         let text = off_resp.text().await?;
-        // validate json
         let _: RepositoryList = serde_json::from_str(&text)?;
         std::fs::write(&config.official_repos_file, text)?;
     } else {
@@ -174,7 +171,6 @@ pub async fn sync_repos(config: &Config) -> Result<(), crate::error::KoreError> 
     let com_resp = client.get(community_url).send().await?;
     if com_resp.status().is_success() {
         let text = com_resp.text().await?;
-        // validate json
         let _: RepositoryList = serde_json::from_str(&text)?;
         std::fs::write(&config.community_repos_file, text)?;
     } else {

@@ -145,7 +145,7 @@ pub async fn handle_key_events<B: Backend>(
                                         } else {
                                             let final_exec = bin_dest.to_string_lossy().to_string();
                                             crate::core::update_desktop_file(config, &selected_app, &final_exec, "Exec", true);
-                                            app.cached_preview = None; // Reset preview
+                                            app.cached_preview = None;
                                             app.open_popup_info("Binary successfully updated.");
                                         }
                                     }
@@ -246,9 +246,9 @@ pub async fn handle_key_events<B: Backend>(
                             KeyCode::Esc => {
                                 if let Some(tx) = app.pending_install_reply.take() {
                                     if app.popup_type == PopupType::InstallDesktopSelect {
-                                        let _ = tx.send(app.popup_items.len().saturating_sub(1)); // Send 'Skip' on escape
+                                        let _ = tx.send(app.popup_items.len().saturating_sub(1));
                                     } else {
-                                        let _ = tx.send(0); // Default to 0 on escape
+                                        let _ = tx.send(0);
                                     }
                                 }
                                 app.popup_type = PopupType::InstallProgress;

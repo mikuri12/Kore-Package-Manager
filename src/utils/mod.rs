@@ -31,7 +31,6 @@ pub fn error_msg(msg: &str) {
 }
 
 
-/// Busca archivos ejecutables hasta una profundidad máxima
 pub fn find_executables(target: &Path, max_depth: usize) -> Vec<PathBuf> {
     WalkDir::new(target)
         .max_depth(max_depth)
@@ -49,7 +48,6 @@ pub fn find_executables(target: &Path, max_depth: usize) -> Vec<PathBuf> {
         .collect()
 }
 
-/// Busca archivos .desktop empaquetados en el directorio extraído
 pub fn find_bundled_desktop_files(target: &Path, max_depth: usize) -> Vec<PathBuf> {
     WalkDir::new(target)
         .max_depth(max_depth)
@@ -61,7 +59,6 @@ pub fn find_bundled_desktop_files(target: &Path, max_depth: usize) -> Vec<PathBu
         .collect()
 }
 
-/// Busca el mejor ícono coincidente explorando profundamente el directorio
 pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<String> {
     let mut best_icon: Option<String> = None;
     let mut max_score = -1;
@@ -116,7 +113,6 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
                         score += 20;
                     }
 
-                    // Boost based on size if numbers are present (e.g. default128.png)
                     let size_score = file_stem.chars()
                         .filter(|c| c.is_ascii_digit())
                         .collect::<String>()
@@ -127,7 +123,6 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
                         score += size_score / 32;
                     }
 
-                    // Penalize deep paths lightly to prefer root icons
                     let depth = entry.path().components().count();
                     score -= (depth as i32) * 2;
 
@@ -142,8 +137,7 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
     best_icon
 }
 
-/// Determina si un binario es una aplicación gráfica (GUI) o de terminal (CLI)
-/// Analiza las bibliotecas dinámicas compartidas (ldd) buscando dependencias gráficas.
+
 pub fn is_gui_app(executable: &Path) -> bool {
     if let Ok(output) = std::process::Command::new("ldd").arg(executable).output() {
         let stdout = String::from_utf8_lossy(&output.stdout);
@@ -154,6 +148,5 @@ pub fn is_gui_app(executable: &Path) -> bool {
             }
         }
     }
-    // Si no enlaza dinámicamente con bibliotecas gráficas, asumimos que es de terminal.
     false
 }

@@ -183,7 +183,6 @@ Categories={};"#,
     let desktop_path = config.apps_dir.join(format!("{}.desktop", app_name.to_lowercase().replace(' ', "-")));
     fs::write(desktop_path, desktop_content)?;
 
-    // Refresh desktop database to show the icon and entry immediately
     let _ = Command::new("update-desktop-database").arg(&config.apps_dir).status();
     let _ = Command::new("touch").arg(&config.apps_dir).status();
 

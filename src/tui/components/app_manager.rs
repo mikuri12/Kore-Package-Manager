@@ -13,8 +13,7 @@ use super::{AppAction, Component};
 use crate::utils::fs::generate_preview;
 
 pub struct AppManager {
-    // The state is kept in App for now to preserve search filtering logic
-    // which modifies app.filtered and app.list_state based on app.input.
+
 }
 
 impl AppManager {
@@ -119,7 +118,6 @@ impl Component for AppManager {
             KeyCode::Esc => {
                 app.input.clear();
                 let _target_idx = if app.route == Route::ManageApps { 1 } else { 2 };
-                // We shouldn't directly set MainMenu's local state, but for now we just return action
                 return Ok(Some(AppAction::ChangeRoute(Route::MainMenu)));
             }
             KeyCode::Down => { app.next(); }

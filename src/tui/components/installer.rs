@@ -316,13 +316,12 @@ impl Component for Installer {
         let chunks = ratatui::layout::Layout::default()
             .direction(ratatui::layout::Direction::Vertical)
             .constraints([
-                ratatui::layout::Constraint::Length(3), // Progress
-                ratatui::layout::Constraint::Percentage(50), // Main interact area
-                ratatui::layout::Constraint::Percentage(50), // Logs
+                ratatui::layout::Constraint::Length(3),
+                ratatui::layout::Constraint::Percentage(50),
+                ratatui::layout::Constraint::Percentage(50),
             ])
             .split(inner);
 
-        // Progress
         let valid_progress = self.state.progress.max(0.0).min(100.0);
         let gauge = Gauge::default()
             .block(Block::default().borders(Borders::ALL))
@@ -332,7 +331,6 @@ impl Component for Installer {
             .label(format!("{:.1}%", valid_progress));
         f.render_widget(gauge, chunks[0]);
 
-        // Main Interact Area
         match self.state.step {
             InstallStep::SelectingTarball => {
                 let mut items = vec![];
@@ -381,7 +379,6 @@ impl Component for Installer {
             }
         }
 
-        // Action Log
         let logs_text = self.state.logs.join("\n");
         let logs_p = Paragraph::new(logs_text)
             .block(Block::default().borders(Borders::ALL).title(" Action Log ").border_style(Style::default().fg(Color::DarkGray)));
@@ -417,7 +414,6 @@ impl Component for Installer {
                                 self.state.progress = 0.0;
                                 self.spawn_downloader(url);
                             } else {
-                                // Abort
                                 return Ok(Some(AppAction::ChangeRoute(Route::MainMenu)));
                             }
                         }
@@ -486,14 +482,12 @@ impl Component for Installer {
                                     }
                                     
                                     if self.state.selected_exec.is_none() {
-                                        // Just fallback to the desktop path itself to avoid panic, though it's not a bin
                                         self.state.selected_exec = Some(path.clone());
                                     }
                                 }
                                 self.state.step = InstallStep::Finalizing;
                                 self.spawn_finalizer(config.clone());
                             } else {
-                                // Abort
                                 return Ok(Some(AppAction::ChangeRoute(Route::MainMenu)));
                             }
                         }
@@ -508,7 +502,6 @@ impl Component for Installer {
                 }
             }
             _ => {
-                // In progress, allow Esc to abort
                 if key.code == KeyCode::Esc {
                     return Ok(Some(AppAction::ChangeRoute(Route::MainMenu)));
                 }

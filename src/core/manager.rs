@@ -8,7 +8,6 @@ pub trait PackageManager {
     fn list_installed(&self) -> Result<Vec<String>, KoreError>;
 }
 
-// In the future, this can be implemented for TarballManager, AppImageManager, etc.
 pub struct TarballManager {
     pub install_dir: PathBuf,
 }

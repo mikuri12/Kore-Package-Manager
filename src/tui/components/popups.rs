@@ -218,13 +218,7 @@ impl Component for Popups {
     }
 
     fn handle_key_event(&mut self, _key: KeyEvent, _app: &mut App, _config: &Config) -> Result<Option<AppAction>> {
-        // Popups key events are so tightly coupled to the actions they trigger
-        // that it might be easier to keep them in handlers.rs but for complete encapsulation
-        // they should eventually move here. For now, we will return None to signify the popup
-        // itself doesn't intercept it if we want `handlers.rs` to keep managing the popup logic.
-        // Wait, the plan was to move handlers into components.
-        // To save time and keep it safe, I'll let `handlers.rs` dispatch to popups component if active,
-        // but `handlers.rs` is already huge. I'll move it later.
+
         Ok(None)
     }
 }

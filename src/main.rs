@@ -181,7 +181,6 @@ async fn main() -> anyhow::Result<()> {
             }
         }
         None => {
-            // If there are no arguments, open the TUI (Terminal User Interface)
             tui::main_menu(&config).await?;
         }
     }

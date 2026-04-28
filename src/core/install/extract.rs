@@ -73,7 +73,7 @@ pub fn extract_and_scan(
     };
 
     if !success {
-        let _ = fs::remove_dir_all(&target); // Clean up residue on failure
+        let _ = fs::remove_dir_all(&target);
         return Ok(None);
     }
 

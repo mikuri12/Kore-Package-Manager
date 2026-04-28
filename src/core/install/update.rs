@@ -61,7 +61,6 @@ pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
 
     match crate::core::download::download_file(&latest_url, &temp_dir, None).await {
         Ok(downloaded_file) => {
-            // Extract the tarball
             let output = std::process::Command::new("tar")
                 .arg("-xzf")
                 .arg(&downloaded_file)
@@ -79,11 +78,9 @@ pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
                         let _ = fs::set_permissions(&extracted_bin, perms);
                     }
 
-                    // Perform the swap
                     if fs::rename(&extracted_bin, &bin_path).is_ok() || fs::copy(&extracted_bin, &bin_path).is_ok() {
                         success_msg("Kore Package Manager updated successfully! You can now use 'kpm' normally.");
                         
-                        // Update desktop and icon if available
                         let desktop_file = temp_dir.join("kpm.desktop");
                         let icon_file = temp_dir.join("kore.ico");
                         if desktop_file.exists() {

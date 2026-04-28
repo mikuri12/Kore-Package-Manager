@@ -287,7 +287,7 @@ impl App {
             };
             self.popup_state.select(Some(i));
         } else if self.route == Route::MainMenu {
-            let len = 5; // Updated for Repositories menu
+            let len = 5;
             let i = match self.list_state.selected() {
                 Some(i) => (i + 1) % len,
                 None => 0,

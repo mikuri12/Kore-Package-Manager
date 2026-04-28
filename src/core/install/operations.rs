@@ -172,7 +172,6 @@ pub async fn install_app(
                 if sel < executables.len() {
                     Some(executables[sel].clone())
                 } else if sel == executables.len() {
-                    // Manual input
                     let path_str: String = Input::new()
                         .with_prompt("Enter the relative path to the binary (e.g. bin/myapp)")
                         .interact_text()
@@ -288,7 +287,6 @@ pub async fn install_app(
         }
     }
     
-    // Clean up downloaded file (ensure it happens)
     if downloaded && actual_tarball.exists() {
         let _ = std::fs::remove_file(&actual_tarball);
     }

@@ -19,18 +19,15 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// List installed applications
     #[command(name = "list", visible_alias = "list-installed", short_flag = 'l')]
     List,
     
-    /// Uninstall apps (Ex: kpm remove discord waterfox)
     #[command(name = "remove", short_flag = 'r')]
     Remove {
         #[arg(required = true, num_args = 1..)]
         app_names: Vec<String>,
     },
     
-    /// Install applications from specific tarballs or repositories
     #[command(name = "install", short_flag = 'i')]
     Install {
         #[arg(required = true, num_args = 1..)]
@@ -43,14 +40,12 @@ pub enum Commands {
         category: Option<String>,
     },
     
-    /// Update installed applications from repositories
     #[command(name = "update", short_flag = 'u')]
     Update {
         #[arg(help = "Specific application to update (updates all repo apps if omitted)")]
         app_name: Option<String>,
     },
     
-    /// Manage repositories
     #[command(name = "repo")]
     Repo {
         #[command(subcommand)]
@@ -60,19 +55,14 @@ pub enum Commands {
 
 #[derive(Subcommand, Debug)]
 pub enum RepoCommands {
-    /// List all repositories and their package counts
     List,
-    /// List all packages available in the repositories
     #[command(name = "pkg-list")]
     PkgList,
-    /// Search for packages in the repositories
     #[command(name = "pkg-search")]
     PkgSearch {
         query: String,
     },
-    /// Fetch latest default and community repositories from GitHub
     Sync,
-    /// Add a third-party repository
     Add {
         name: String,
         package_name: String,
@@ -81,7 +71,6 @@ pub enum RepoCommands {
         #[arg(long, default_value_t = false)]
         requires_root: bool,
     },
-    /// Remove a third-party repository
     Remove {
         name: String,
     },

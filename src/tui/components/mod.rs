@@ -24,10 +24,8 @@ pub enum AppAction {
 
 #[allow(dead_code)]
 pub trait Component {
-    /// Draw the component in a specific area of the screen
     fn draw(&mut self, f: &mut Frame, area: Rect, app: &mut App, config: &Config);
     
-    /// Handle a local keyboard event. Returns an optional action to notify the parent `App`
     fn handle_key_event(&mut self, _key: KeyEvent, _app: &mut App, _config: &Config) -> Result<Option<AppAction>> {
         Ok(None)
     }
