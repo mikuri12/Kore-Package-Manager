@@ -134,6 +134,24 @@
       "requires_root": false,
       "terminal": false,
       "description": "The free and open source 3D creation suite, supporting the entirety of the 3D pipeline."
+    },
+    {
+      "name": "Xonotic",
+      "package_name": "xonotic",
+      "url": "https://dl.xonotic.org/xonotic-0.8.6.zip"
+      "category": "Games",
+      "requires_root": false,
+      "terminal": false,
+      "description": "A free and open-source first-person shooter forked from the Darkplaces Quake source-port."
+    },
+    {
+      "name": "Red Eclipse",
+      "package_name": "redeclipse",
+      "url": "https://github.com/redeclipse/base"
+      "category": "Games",
+      "requires_root": false,
+      "terminal": false,
+      "description": "An open-source sci-fi first-person shooter, forked from Cube 2: Sauerbraten."
     }
   ]
 }
