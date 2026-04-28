@@ -100,7 +100,7 @@
       "description": "The Tor binary and supporting files, without the graphical browser interface."
     },
     {
-      "name": "Local Send",
+      "name": "LocalSend",
       "package_name": "localsend",
       "url": "https://github.com/localsend/localsend",
       "category": "Network",
