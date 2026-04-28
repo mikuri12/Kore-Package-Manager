@@ -3,6 +3,7 @@ name = "kpm"
 version = "2.0.0"
 edition = "2021"
 description = "Kore Package Manager (kpm) - Edition 2026"
+default-run = "kpm"
 
 [dependencies]
 anyhow = "1.0.102"
@@ -23,6 +24,9 @@ tracing-subscriber = "0.3.23"
 walkdir = "2.3"
 regex = "1.10"
 clap_complete = "4.6.2"
+base64 = "0.22.1"
+goblin = "0.10.1"
+sha2 = "0.10.9"
 
 [profile.release]
 opt-level = 3

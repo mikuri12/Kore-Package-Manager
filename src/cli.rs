@@ -56,6 +56,30 @@ pub enum Commands {
         #[command(subcommand)]
         repo_command: RepoCommands,
     },
+
+    /// Generate a Nix flake + derivation for a tarball/repository package (NixOS-friendly)
+    #[command(name = "nixify")]
+    Nixify {
+        /// Package name in repositories, direct URL, or local archive path
+        #[arg(required = true)]
+        source: String,
+
+        /// Output directory (default: ./nixify-<name>)
+        #[arg(long)]
+        out_dir: Option<String>,
+
+        /// Override pname (default: repo/package name or inferred from file name)
+        #[arg(long)]
+        pname: Option<String>,
+
+        /// Override version (default: "0.0.0")
+        #[arg(long)]
+        version: Option<String>,
+
+        /// Use local archive path directly in Nix (requires `nix --impure`)
+        #[arg(long, default_value_t = false)]
+        impure_local: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]

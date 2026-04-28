@@ -151,6 +151,9 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
         }
+        Some(Commands::Nixify { source, out_dir, pname, version, impure_local }) => {
+            core::nixify::nixify(source, out_dir.as_deref(), pname.as_deref(), version.as_deref(), *impure_local).await?;
+        }
         Some(Commands::Update { app_name }) => {
             let all_repos = repo::get_all_repos(&config);
             if let Some(target) = app_name {
