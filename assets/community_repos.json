@@ -138,7 +138,7 @@
     {
       "name": "Xonotic",
       "package_name": "xonotic",
-      "url": "https://dl.xonotic.org/xonotic-0.8.6.zip"
+      "url": "https://dl.xonotic.org/xonotic-0.8.6.zip",
       "category": "Games",
       "requires_root": false,
       "terminal": false,
@@ -147,7 +147,7 @@
     {
       "name": "Red Eclipse",
       "package_name": "redeclipse",
-      "url": "https://github.com/redeclipse/base"
+      "url": "https://github.com/redeclipse/base",
       "category": "Games",
       "requires_root": false,
       "terminal": false,
