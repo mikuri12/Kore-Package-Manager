@@ -188,6 +188,14 @@
       "requires_root": false,
       "terminal": true,
       "description": "lf (as in list files) is a terminal file manager written in Go with a heavy inspiration from ranger file manager. "
+    },
+    {
+      "name": "Lazygit",
+      "package_name": "lazygit",
+      "url": "https://github.com/jesseduffield/lazygit",
+      "category": "Utility",
+      "requires_root": false,
+      "description": "Lazygit is a fast and intuitive terminal-based interface for Git commands, designed to simplify complex workflows like staging, committing, and rebasing through a navigable keyboard-driven TUI.",
     }
   ]
 }
