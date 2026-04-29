@@ -14,6 +14,12 @@ pub struct Repository {
     pub terminal: Option<bool>,
     #[serde(default)]
     pub description: Option<String>,
+    #[serde(default = "default_formats")]
+    pub formats: Vec<String>,
+}
+
+fn default_formats() -> Vec<String> {
+    vec!["tarball".to_string()]
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -133,6 +139,7 @@ pub async fn add_user_repo(
         requires_root,
         terminal: None,
         description: None,
+        formats: vec!["tarball".to_string()],
     });
     save_user_repos(config, &repos)?;
     Ok(())

@@ -1,5 +1,13 @@
 [![Historial de cambios](https://img.shields.io/badge/Changelog-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
 
+## [2.1.0] - 2026-04-29
+
+### First-Class AppImage Support
+- **Native AppImage Integration:** The core installation engine has been upgraded to natively support `.AppImage` files alongside traditional `.tar.gz`/`.zip` archives. 
+- **Transparent Local Installation:** Running `kpm install /path/to/app.AppImage` automatically detects the extension, bypasses extraction, extracts the best internal icon, and configures it locally in `~/.local/share/kpm/binaries/` with full desktop integration.
+- **Dual-Format Repositories:** Introduced the `"formats"` flag in the JSON schema (`default_repos.json` and `community_repos.json`), allowing packages to declare availability for both `tarball` and `appimage` concurrently. The TUI Details panel now displays these available formats.
+- **Dynamic Routing:** When a repository provides multiple release formats, `kpm` lets the user choose, seamlessly routing the downloaded asset to the correct internal processor based on its extension.
+
 ## [2.0.1] - 2026-04-28
 
 ### Stability & Reliability

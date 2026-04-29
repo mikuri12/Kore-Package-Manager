@@ -6,7 +6,7 @@
 [![Contributing](https://img.shields.io/badge/Contribuye-aquí-green)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/CONTRIBUTING_es.md)
 
 
-Un gestor de programas minimalista y universal para Linux, rediseñado completamente en **Rust**. Está diseñado específicamente para manejar aplicaciones distribuidas en **tarballs** (.tar.gz, .tar.xz, .tar.bz2).
+Un gestor de programas minimalista y universal para Linux, rediseñado completamente en **Rust**. Está diseñado específicamente para manejar aplicaciones distribuidas en **tarballs** (.tar.gz, .tar.xz, .tar.bz2) y **AppImages** (.AppImage).
 
 Ideal para usuarios de **Void Linux**, **Arch** o cualquier sistema donde necesites instalar software pre-compilado de forma aislada y limpia, contando con una elegante interfaz de terminal interactiva (TUI) basada en `ratatui`.
 
@@ -61,7 +61,7 @@ Para operaciones rápidas no interactivas, `tm` soporta los siguientes comandos 
 
 #### Instalación Directa (Múltiple y Repositorios)
 
-Puedes instalar varias aplicaciones directamente escribiendo su nombre (si existen en los repositorios) o la ruta de un archivo `.tar.gz`:
+Puedes instalar varias aplicaciones directamente escribiendo su nombre (si existen en los repositorios) o la ruta de un archivo `.tar.gz` o `.AppImage` local:
 
 ```bash
 kpm install obsidian waterfox discord
@@ -69,10 +69,12 @@ kpm install obsidian waterfox discord
 kpm -i discord
 ```
 
-Si deseas instalar un tarball local específico y personalizar sus metadatos (esto aplica solo a instalaciones individuales), puedes usar las siguientes banderas:
+Si deseas instalar un archivo local específico y personalizar sus metadatos (esto aplica solo a instalaciones individuales), puedes usar las siguientes banderas:
 
 ```bash
-kpm install "app.tar.gz" --app-name "NombreApp" --use-root "No" --category "Network"
+kpm install "/path/to/app.AppImage" --app-name "NombreApp" --use-root "No" --category "Network"
+
+kpm install "/path/to/app.tar.gz" --app-name "NombreApp" --use-root "No" --category "Network"
 ```
 
   * **--app-name (-a)**: Nombre que tendrá la aplicación en el sistema.

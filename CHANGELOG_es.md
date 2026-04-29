@@ -1,5 +1,12 @@
-## [2.0.1] - 2026-04-28
+## [2.1.0] - 2026-04-29
 
+### Soporte Nativo para AppImage
+- **Integración de Primera Clase:** El motor de instalación ha sido actualizado para soportar nativamente archivos `.AppImage` a la par de los tradicionales archivos `.tar.gz`/`.zip`.
+- **Instalación Local Transparente:** Ejecutar `kpm install /ruta/a/la/app.AppImage` detecta automáticamente la extensión, omite la descompresión, extrae el mejor ícono interno y lo configura en `~/.local/share/kpm/binaries/` con integración completa en el sistema.
+- **Repositorios de Formato Dual:** Se introdujo la bandera `"formats"` en el esquema JSON (`default_repos.json` y `community_repos.json`), permitiendo que los paquetes declaren disponibilidad tanto para `tarball` como para `appimage`. El panel de Detalles de la TUI ahora muestra los formatos disponibles.
+- **Enrutamiento Dinámico:** Cuando un repositorio proporciona múltiples formatos en sus *Releases*, `kpm` permite al usuario elegir y enruta de forma fluida la descarga al procesador correcto basándose en la extensión del archivo.
+
+## [2.0.1] - 2026-04-28
 ### Estabilidad y Confiabilidad
 - **Flujo de Update CLI Corregido:** Se arregló la ejecución asíncrona de actualización en `main.rs` (`await` + propagación de errores), y se cambió el escaneo de update-all a directorios realmente instalados.
 - **Fortalecimiento de Install/Remove:** Los fallos críticos ahora se propagan correctamente (creación de symlink/launcher y operaciones de desinstalación), evitando mensajes de éxito falsos en fallos parciales.

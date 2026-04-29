@@ -150,9 +150,16 @@ pub async fn install_app(
         let tarball_clone = actual_tarball.clone();
         let repo_package_clone = repo_package_name_opt.clone();
         let is_cli_clone = is_cli;
-        let extract_result = tokio::task::spawn_blocking(move || {
-            extract_and_scan(&config_clone, &tarball_clone, repo_package_clone.as_deref(), !is_cli_clone)
-        }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??;
+        let is_appimage = actual_tarball.to_string_lossy().to_lowercase().ends_with(".appimage");
+        let extract_result = if is_appimage {
+            tokio::task::spawn_blocking(move || {
+                crate::core::install::appimage::process_appimage(&config_clone, &tarball_clone, repo_package_clone.as_deref())
+            }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??
+        } else {
+            tokio::task::spawn_blocking(move || {
+                extract_and_scan(&config_clone, &tarball_clone, repo_package_clone.as_deref(), !is_cli_clone)
+            }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??
+        };
 
         if let Some((target, raw_name_folder, executables, desktop_files)) = extract_result {
             let exec_path = if !is_cli {

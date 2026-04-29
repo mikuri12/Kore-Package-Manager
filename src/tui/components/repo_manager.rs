@@ -83,8 +83,17 @@ impl Component for RepoManager {
         };
 
         let preview_text = if let Some(r) = selected_repo {
+            let formats_str = r.repo.formats.iter()
+                .map(|f| match f.as_str() {
+                    "appimage" => "AppImage",
+                    "tarball" => "Tarball",
+                    _ => f.as_str(),
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
+
             let mut info = format!(
-                "--- REPOSITORY INFO ---\n\nName: {}\nType: {}\nURL: {}\nCategory: {}\nRequires Root: {}\n\n",
+                "--- REPOSITORY INFO ---\n\nName: {}\nType: {}\nURL: {}\nCategory: {}\nRequires Root: {}\nFormats: {}\n\n",
                 r.repo.name,
                 match r.repo_type {
                     crate::repo::RepoType::Official => "Official",
@@ -94,6 +103,7 @@ impl Component for RepoManager {
                 r.repo.url,
                 r.repo.category,
                 if r.repo.requires_root { "Yes" } else { "No" },
+                formats_str,
             );
 
             if let Some(desc) = &r.repo.description {

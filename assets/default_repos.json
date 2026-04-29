@@ -7,7 +7,10 @@
       "category": "Development",
       "requires_root": false,
       "terminal": false,
-      "description": "Free/Libre Open Source Software Binaries of VS Code. A code editor with a massive ecosystem of extensions."
+      "description": "Free/Libre Open Source Software Binaries of VS Code. A code editor with a massive ecosystem of extensions.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "vesktop",
@@ -16,7 +19,10 @@
       "category": "Utility",
       "requires_root": false,
       "terminal": false,
-      "description": "An all-in-one Discord client with built-in Vencord and plugins for a better experience."
+      "description": "An all-in-one Discord client with built-in Vencord and plugins for a better experience.",
+      "formats": [
+        "tarball"
+      ]
     },
         {
       "name": "Helium Browswr",
@@ -34,7 +40,10 @@
       "category": "Development",
       "requires_root": false,
       "terminal": true,
-      "description": "Hyperextensible Vim-based text editor focused on extensibility and usability."
+      "description": "Hyperextensible Vim-based text editor focused on extensibility and usability.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "scrcpy",
@@ -42,8 +51,11 @@
       "url": "https://github.com/Genymobile/scrcpy",
       "category": "Development",
       "requires_root": false,
-      "terminal": false,
-      "description": "Display and control Android devices connected via USB or TCP/IP from your desktop."
+      "terminal": true,
+      "description": "Display and control Android devices connected via USB or TCP/IP from your desktop.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Ranger",
@@ -52,7 +64,10 @@
       "category": "Utility",
       "requires_root": false,
       "terminal": true,
-      "description": "A console file manager with VI key bindings and a multi-pane minimalistic interface."
+      "description": "A console file manager with VI key bindings and a multi-pane minimalistic interface.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Croc",
@@ -61,7 +76,10 @@
       "category": "Utility",
       "requires_root": false,
       "terminal": true,
-      "description": "Easily and securely send files and folders from one computer to another."
+      "description": "Easily and securely send files and folders from one computer to another.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Strawberry",
@@ -70,7 +88,10 @@
       "category": "Music",
       "requires_root": false,
       "terminal": false,
-      "description": "A music player and collection organizer focused on high-fidelity audio playback."
+      "description": "A music player and collection organizer focused on high-fidelity audio playback.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Waterfox",
@@ -79,7 +100,10 @@
       "category": "Network",
       "requires_root": false,
       "terminal": false,
-      "description": "A privacy-focused web browser based on Firefox, optimized for performance and customization."
+      "description": "A privacy-focused web browser based on Firefox, optimized for performance and customization.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Micro",
@@ -88,7 +112,10 @@
       "category": "Development",
       "requires_root": false,
       "terminal": true,
-      "description": "A modern and intuitive terminal-based text editor with mouse support and intuitive shortcuts."
+      "description": "A modern and intuitive terminal-based text editor with mouse support and intuitive shortcuts.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Helix",
@@ -97,7 +124,10 @@
       "category": "Development",
       "requires_root": false,
       "terminal": true,
-      "description": "A post-modern modal text editor written in Rust with built-in LSP support."
+      "description": "A post-modern modal text editor written in Rust with built-in LSP support.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Bat",
@@ -106,7 +136,10 @@
       "category": "Utility",
       "requires_root": false,
       "terminal": true,
-      "description": "A cat(1) clone with syntax highlighting and Git integration for the terminal."
+      "description": "A cat(1) clone with syntax highlighting and Git integration for the terminal.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Zen Browser",
@@ -115,7 +148,11 @@
       "category": "Network",
       "requires_root": false,
       "terminal": false,
-      "description": "A beautiful and fast web browser built on top of Firefox, focused on productivity and privacy."
+      "description": "A beautiful and fast web browser built on top of Firefox, focused on productivity and privacy.",
+      "formats": [
+        "appimage",
+        "tarball"
+      ]
     },
     {
       "name": "Stoat",
@@ -124,7 +161,10 @@
       "category": "Network",
       "requires_root": false,
       "terminal": false,
-      "description": "A decentralized and secure chat application for privacy-conscious communication."
+      "description": "A decentralized and secure chat application for privacy-conscious communication.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Discord",
@@ -133,7 +173,10 @@
       "category": "Network",
       "requires_root": false,
       "terminal": false,
-      "description": "The official communication platform for communities to talk, chat, and hang out."
+      "description": "The official communication platform for communities to talk, chat, and hang out.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Floorp",
@@ -142,7 +185,10 @@
       "category": "Network",
       "requires_root": false,
       "terminal": false,
-      "description": "A highly customizable and privacy-oriented Firefox fork with advanced workspace features."
+      "description": "A highly customizable and privacy-oriented Firefox fork with advanced workspace features.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Basalt",
@@ -151,7 +197,10 @@
       "category": "Office",
       "requires_root": false,
       "terminal": true,
-      "description": "A lightweight and fast desktop application for project and task management."
+      "description": "A lightweight and fast desktop application for project and task management.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Obsidian",
@@ -160,7 +209,11 @@
       "category": "Office",
       "requires_root": false,
       "terminal": false,
-      "description": "A powerful knowledge base that works on top of a local folder of plain text Markdown files."
+      "description": "A powerful knowledge base that works on top of a local folder of plain text Markdown files.",
+      "formats": [
+        "appimage",
+        "tarball"
+      ]
     },
     {
       "name": "Foot",
@@ -169,7 +222,10 @@
       "category": "Utility",
       "requires_root": false,
       "terminal": false,
-      "description": "A fast, lightweight, and minimalistic Wayland terminal emulator."
+      "description": "A fast, lightweight, and minimalistic Wayland terminal emulator.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "yt-dlp",
@@ -178,7 +234,10 @@
       "category": "Utility",
       "requires_root": false,
       "terminal": true,
-      "description": "A feature-rich command-line audio/video downloader with support for thousands of sites."
+      "description": "A feature-rich command-line audio/video downloader with support for thousands of sites.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "nnn",
@@ -187,7 +246,10 @@
       "category": "Utility",
       "requires_root": false,
       "terminal": true,
-      "description": "nnn (n³) is a full-featured terminal file manager. It's tiny, nearly 0-config and incredibly fast."
+      "description": "nnn (n³) is a full-featured terminal file manager. It's tiny, nearly 0-config and incredibly fast.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "lf",
@@ -196,7 +258,10 @@
       "category": "Utility",
       "requires_root": false,
       "terminal": true,
-      "description": "lf (as in list files) is a terminal file manager written in Go with a heavy inspiration from ranger file manager. "
+      "description": "lf (as in list files) is a terminal file manager written in Go with a heavy inspiration from ranger file manager. ",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Lazygit",
@@ -204,7 +269,10 @@
       "url": "https://github.com/jesseduffield/lazygit",
       "category": "Utility",
       "requires_root": false,
-      "description": "Lazygit is a fast and intuitive terminal-based interface for Git commands, designed to simplify complex workflows like staging, committing, and rebasing through a navigable keyboard-driven TUI."
+      "description": "Lazygit is a fast and intuitive terminal-based interface for Git commands, designed to simplify complex workflows like staging, committing, and rebasing through a navigable keyboard-driven TUI.",
+      "formats": [
+        "tarball"
+      ]
     }
   ]
 }

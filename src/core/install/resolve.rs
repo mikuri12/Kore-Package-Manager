@@ -8,6 +8,7 @@ pub struct ResolvedSource {
     pub repo_category: Option<String>,
     pub repo_requires_root: Option<bool>,
     pub repo_terminal: Option<bool>,
+    pub repo_formats: Option<Vec<String>>,
 }
 
 pub async fn resolve_source(config: &Config, source: &str) -> Result<Option<ResolvedSource>, crate::error::KoreError> {
@@ -22,6 +23,7 @@ pub async fn resolve_source(config: &Config, source: &str) -> Result<Option<Reso
         let repo_category = Some(repo_source.repo.category.clone());
         let repo_requires_root = Some(repo_source.repo.requires_root);
         let repo_terminal = repo_source.repo.terminal;
+        let repo_formats = Some(repo_source.repo.formats.clone());
         let url = repo_source.repo.url.clone();
         let is_git = crate::core::download::is_supported_git_url(&url);
         
@@ -33,6 +35,7 @@ pub async fn resolve_source(config: &Config, source: &str) -> Result<Option<Reso
             repo_category,
             repo_requires_root,
             repo_terminal,
+            repo_formats,
         }))
     } else {
         Ok(None)

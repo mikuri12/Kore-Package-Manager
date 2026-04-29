@@ -6,7 +6,7 @@
 [![Readme](https://img.shields.io/badge/Readme-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/README_es.md)
 
 
-A minimalist and universal program manager for Linux, completely redesigned in **Rust**. It is specifically designed to handle applications distributed in **tarballs** (.tar.gz, .tar.xz, .tar.bz2).
+A minimalist and universal program manager for Linux, completely redesigned in **Rust**. It is specifically designed to handle applications distributed in **tarballs** (.tar.gz, .tar.xz, .tar.bz2) and **AppImages** (.AppImage).
 
 Ideal for users of **Void Linux**, **Arch**, or any system where you need to install pre-compiled software in an isolated, clean way, featuring an elegant interactive terminal interface (TUI) based on `ratatui`.
 
@@ -57,15 +57,17 @@ For fast, non-interactive operations, `kpm` supports the following defined comma
 | `--update-bin` | *(none)* | Updates the Kore Package Manager binary to its latest version. | `kpm --update-bin` |
 
 #### Direct Installation (Multiple & Repositories)
-You can install multiple applications directly by typing their name (if they exist in the repositories) or the path of a `.tar.gz` file:
+You can install multiple applications directly by typing their name (if they exist in the repositories) or the path of a local `.tar.gz` or `.AppImage` file:
 ```bash
 kpm install obsidian waterfox discord
 # Or using the alias:
 kpm -i discord
 ```
-If you want to install a specific local tarball and customize its metadata (this applies to single installations only), you can use the following flags:
+If you want to install a specific local archive and customize its metadata (this applies to single installations only), you can use the following flags:
 ```bash
-kpm install "app.tar.gz" --app-name "AppName" --use-root "No" --category "Network"
+kpm install "/path/to/app.AppImage" --app-name "NombreApp" --use-root "No" --category "Network"
+
+kpm install "/path/to/app.tar.gz" --app-name "NombreApp" --use-root "No" --category "Network"
 ```
 * **--app-name (-a)**: Name the application will have in the system.
 * **--use-root (-u)**: Defines whether the `.desktop` shortcut will require `pkexec` (superuser).

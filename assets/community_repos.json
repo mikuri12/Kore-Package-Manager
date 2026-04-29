@@ -7,7 +7,10 @@
       "category": "Development",
       "requires_root": false,
       "terminal": false,
-      "description": "Powerful agentic AI coding assistant designed by Google Deepmind."
+      "description": "Powerful agentic AI coding assistant designed by Google Deepmind.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "JetBrains Toolbox",
@@ -16,7 +19,10 @@
       "category": "Development",
       "requires_root": false,
       "terminal": false,
-      "description": "A central dashboard to manage JetBrains IDEs, updates, and projects effortlessly."
+      "description": "A central dashboard to manage JetBrains IDEs, updates, and projects effortlessly.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Telegram",
@@ -25,7 +31,10 @@
       "category": "Internet",
       "requires_root": false,
       "terminal": false,
-      "description": "Fast and secure desktop messaging app, seamlessly synced between devices."
+      "description": "Fast and secure desktop messaging app, seamlessly synced between devices.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Heroic Games Launcher",
@@ -34,7 +43,11 @@
       "category": "Games",
       "requires_root": false,
       "terminal": false,
-      "description": "An open-source game launcher for Epic Games, GOG, and Amazon Games on Linux."
+      "description": "An open-source game launcher for Epic Games, GOG, and Amazon Games on Linux.",
+      "formats": [
+        "appimage",
+        "tarball"
+      ]
     },
     {
       "name": "Reaper",
@@ -43,7 +56,10 @@
       "category": "Music",
       "requires_root": false,
       "terminal": false,
-      "description": "A complete digital audio production application offering full multitrack audio and MIDI recording."
+      "description": "A complete digital audio production application offering full multitrack audio and MIDI recording.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Sublime Text",
@@ -52,7 +68,10 @@
       "category": "Development",
       "requires_root": false,
       "terminal": false,
-      "description": "A sophisticated text editor for code, markup, and prose with ultra-fast performance."
+      "description": "A sophisticated text editor for code, markup, and prose with ultra-fast performance.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Youtube Music",
@@ -61,7 +80,11 @@
       "category": "Music",
       "requires_root": false,
       "terminal": false,
-      "description": "Desktop client for YouTube Music with integrated media keys and background playback."
+      "description": "Desktop client for YouTube Music with integrated media keys and background playback.",
+      "formats": [
+        "appimage",
+        "tarball"
+      ]
     },
     {
       "name": "SuperTuxKart",
@@ -70,7 +93,10 @@
       "category": "Games",
       "requires_root": false,
       "terminal": false,
-      "description": "A 3D open-source arcade racer with a variety of characters, tracks, and modes."
+      "description": "A 3D open-source arcade racer with a variety of characters, tracks, and modes.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Bottom",
@@ -78,8 +104,11 @@
       "url": "https://github.com/ClementTsang/bottom",
       "category": "Utility",
       "requires_root": false,
-      "terminal": false,
-      "description": "A customizable cross-platform graphical system monitor for the terminal."
+      "terminal": true,
+      "description": "A customizable cross-platform graphical system monitor for the terminal.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Tor Browser",
@@ -88,7 +117,10 @@
       "category": "Network",
       "requires_root": false,
       "terminal": false,
-      "description": "Privacy-focused browser that protects you against tracking, surveillance, and censorship."
+      "description": "Privacy-focused browser that protects you against tracking, surveillance, and censorship.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Tor Expert Bundle",
@@ -97,7 +129,10 @@
       "category": "Network",
       "requires_root": false,
       "terminal": false,
-      "description": "The Tor binary and supporting files, without the graphical browser interface."
+      "description": "The Tor binary and supporting files, without the graphical browser interface.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "LocalSend",
@@ -106,7 +141,11 @@
       "category": "Network",
       "requires_root": false,
       "terminal": false,
-      "description": "An open-source cross-platform alternative to AirDrop for sharing files over the local network."
+      "description": "An open-source cross-platform alternative to AirDrop for sharing files over the local network.",
+      "formats": [
+        "appimage",
+        "tarball"
+      ]
     },
     {
       "name": "Prism Launcher",
@@ -115,7 +154,11 @@
       "category": "Games",
       "requires_root": false,
       "terminal": false,
-      "description": "A custom Minecraft launcher that allows you to easily manage multiple installations and mods."
+      "description": "A custom Minecraft launcher that allows you to easily manage multiple installations and mods.",
+      "formats": [
+        "appimage",
+        "tarball"
+      ]
     },
     {
       "name": "Pinecone Launcher",
@@ -124,7 +167,11 @@
       "category": "Games",
       "requires_root": false,
       "terminal": false,
-      "description": "A specialized fork of Prism Launcher optimized for specific community features and modpacks."
+      "description": "A specialized fork of Prism Launcher optimized for specific community features and modpacks.",
+      "formats": [
+        "appimage",
+        "tarball"
+      ]
     },
     {
       "name": "Blender",
@@ -133,7 +180,10 @@
       "category": "Graphics",
       "requires_root": false,
       "terminal": false,
-      "description": "The free and open source 3D creation suite, supporting the entirety of the 3D pipeline."
+      "description": "The free and open source 3D creation suite, supporting the entirety of the 3D pipeline.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Xonotic",
@@ -142,7 +192,10 @@
       "category": "Games",
       "requires_root": false,
       "terminal": false,
-      "description": "A free and open-source first-person shooter forked from the Darkplaces Quake source-port."
+      "description": "A free and open-source first-person shooter forked from the Darkplaces Quake source-port.",
+      "formats": [
+        "tarball"
+      ]
     },
     {
       "name": "Red Eclipse",
@@ -151,7 +204,10 @@
       "category": "Games",
       "requires_root": false,
       "terminal": false,
-      "description": "An open-source sci-fi first-person shooter, forked from Cube 2: Sauerbraten."
+      "description": "An open-source sci-fi first-person shooter, forked from Cube 2: Sauerbraten.",
+      "formats": [
+        "tarball"
+      ]
     }
   ]
 }

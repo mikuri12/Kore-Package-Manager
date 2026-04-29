@@ -1,3 +1,4 @@
+pub mod appimage;
 pub mod desktop;
 pub mod extract;
 pub mod operations;
@@ -5,6 +6,7 @@ pub mod resolve;
 pub mod update;
 pub mod utils;
 
+pub use appimage::*;
 pub use desktop::*;
 pub use extract::*;
 pub use operations::*;

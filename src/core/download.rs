@@ -82,7 +82,7 @@ pub async fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
 
         for link in first.assets.links {
             let n = link.name.to_lowercase();
-            if n.ends_with(".tar.gz") || n.ends_with(".tar.xz") || n.ends_with(".tar.bz2") || n.ends_with(".zip") {
+            if n.ends_with(".tar.gz") || n.ends_with(".tar.xz") || n.ends_with(".tar.bz2") || n.ends_with(".zip") || n.ends_with(".appimage") {
                 assets.push(Asset {
                     name: link.name,
                     browser_download_url: link.url,
@@ -114,7 +114,7 @@ pub async fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
             .into_iter()
             .filter(|a| {
                 let n = a.name.to_lowercase();
-                n.ends_with(".tar.gz") || n.ends_with(".tar.xz") || n.ends_with(".tar.bz2") || n.ends_with(".zip")
+                n.ends_with(".tar.gz") || n.ends_with(".tar.xz") || n.ends_with(".tar.bz2") || n.ends_with(".zip") || n.ends_with(".appimage")
             })
             .collect()
     };
