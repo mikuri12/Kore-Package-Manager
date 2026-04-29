@@ -23,7 +23,7 @@ async fn main() -> anyhow::Result<()> {
     let _guard = config.setup_logging()?;
 
     if cli.update_bin {
-        core::update_tm(&config).await?;
+        core::update_kpm(&config).await?;
         return Ok(());
     }
 

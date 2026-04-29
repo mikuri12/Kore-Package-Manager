@@ -4,7 +4,7 @@ use dialoguer::Confirm;
 use std::fs;
 use std::path::PathBuf;
 
-pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
+pub async fn update_kpm(config: &Config) -> Result<(), crate::error::KoreError> {
     tracing::info!(operation = "self_update", step = "start", "Starting kpm self-update");
     info_msg("Looking for the latest stable version on GitHub Releases...");
 
