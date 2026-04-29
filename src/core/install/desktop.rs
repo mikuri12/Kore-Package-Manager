@@ -233,6 +233,7 @@ pub fn finalize_installation(
     target: &Path,
     exec_path: &Path,
     app_name: &str,
+    display_name: &str,
     use_root: bool,
     use_terminal: bool,
     category: &str,
@@ -241,7 +242,7 @@ pub fn finalize_installation(
 ) -> Result<(), crate::error::KoreError> {
     tracing::info!(operation = "desktop_finalize", app = app_name, "Finalizing desktop integration");
     let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
-    let icon_path = find_icon(target, app_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
+    let icon_path = find_icon(target, display_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
     let bin_dest = config.bin_dir.join(app_name);
     if bin_dest.exists() {
@@ -271,14 +272,20 @@ pub fn finalize_installation(
         let content = fs::read_to_string(bd_path).unwrap_or_default();
         let mut new_lines = Vec::new();
         let mut has_terminal = false;
+        let mut has_name = false;
+
         for line in content.lines() {
-            if line.trim_start().starts_with("Exec=") {
+            let trimmed = line.trim_start();
+            if trimmed.starts_with("Exec=") {
                 new_lines.push(format!("Exec={}", final_exec));
-            } else if line.trim_start().starts_with("TryExec=") {
+            } else if trimmed.starts_with("TryExec=") {
                 new_lines.push(format!("TryExec={}", final_exec));
-            } else if line.trim_start().starts_with("Icon=") {
+            } else if trimmed.starts_with("Icon=") {
                 new_lines.push(format!("Icon={}", icon_path));
-            } else if line.trim_start().starts_with("Terminal=") {
+            } else if trimmed.starts_with("Name=") && !has_name {
+                new_lines.push(format!("Name={}", display_name));
+                has_name = true;
+            } else if trimmed.starts_with("Terminal=") {
                 new_lines.push(format!("Terminal={}", if use_terminal { "true" } else { "false" }));
                 has_terminal = true;
             } else {
@@ -287,6 +294,9 @@ pub fn finalize_installation(
         }
         if !has_terminal {
             new_lines.push(format!("Terminal={}", if use_terminal { "true" } else { "false" }));
+        }
+        if !has_name {
+            new_lines.insert(1, format!("Name={}", display_name));
         }
         new_lines.join("\n")
     } else {
@@ -299,7 +309,7 @@ Type=Application
 Terminal={}
 Path={}
 Categories={};"#,
-            app_name,
+            display_name,
             final_exec,
             icon_path,
             if use_terminal { "true" } else { "false" },

@@ -237,15 +237,27 @@ pub async fn install_app(
             };
 
             if let Some(exec_path) = exec_path {
-                let app_name = app_name_opt
+                let internal_name = app_name_opt
                     .map(|s| s.to_string())
                     .unwrap_or_else(|| {
-                        if let Some(repo_name) = &repo_name_opt {
+                        if let Some(pkg_name) = &repo_package_name_opt {
+                            pkg_name.clone()
+                        } else if let Some(repo_name) = &repo_name_opt {
                             repo_name.clone()
                         } else if downloaded {
                             source.to_string()
                         } else {
                             raw_name_folder.clone()
+                        }
+                    });
+
+                let display_name = app_name_opt
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| {
+                        if let Some(repo_name) = &repo_name_opt {
+                            repo_name.clone()
+                        } else {
+                            internal_name.clone()
                         }
                     });
 
@@ -271,7 +283,8 @@ pub async fn install_app(
                 let config_clone = config.clone();
                 let target_clone = target.clone();
                 let exec_path_clone = exec_path.clone();
-                let app_name_clone = app_name.clone();
+                let internal_name_clone = internal_name.clone();
+                let display_name_clone = display_name.clone();
                 let use_root_clone = use_root;
                 let use_terminal_clone = use_terminal;
                 let category_clone = category.clone();
@@ -279,12 +292,12 @@ pub async fn install_app(
                 let is_cli_clone = is_cli;
 
                 tokio::task::spawn_blocking(move || {
-                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &app_name_clone, use_root_clone, use_terminal_clone, &category_clone, bundled_desktop_clone, !is_cli_clone)
+                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &internal_name_clone, &display_name_clone, use_root_clone, use_terminal_clone, &category_clone, bundled_desktop_clone, !is_cli_clone)
                 }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??;
-                tracing::info!(operation = "install", app = %app_name, step = "finalize", "Installation finalized");
+                tracing::info!(operation = "install", app = %internal_name, step = "finalize", "Installation finalized");
                 if let Some(t) = &tx {
-                    if t.send(InstallMessage::Progress(format!("Successfully installed {}", app_name), 100.0)).is_err() {
-                        tracing::warn!(operation = "install", app = %app_name, step = "finalize", "Progress receiver dropped");
+                    if t.send(InstallMessage::Progress(format!("Successfully installed {}", display_name), 100.0)).is_err() {
+                        tracing::warn!(operation = "install", app = %internal_name, step = "finalize", "Progress receiver dropped");
                     }
                 }
                 if !is_cli {

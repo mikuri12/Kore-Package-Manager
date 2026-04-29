@@ -33,6 +33,7 @@ pub struct InstallerState {
     pub step: InstallStep,
     pub source: String,
     pub app_name: String,
+    pub display_name: String,
     pub use_root: bool,
     pub use_terminal: bool,
     pub category: String,
@@ -67,6 +68,7 @@ pub enum InstallerEvent {
     SetTerminal(bool),
     Downloaded(PathBuf),
     Extracted(PathBuf, String, Vec<PathBuf>, Vec<PathBuf>),
+    Metadata(String, String),
     Finalized,
     Error(String),
 }
@@ -77,7 +79,8 @@ impl InstallerState {
         Self {
             step: InstallStep::Init,
             source,
-            app_name,
+            app_name: app_name.clone(),
+            display_name: app_name,
             use_root,
             use_terminal: false,
             category,
@@ -125,6 +128,9 @@ impl Installer {
             match crate::core::install::resolve_source(&config, &source).await {
                 Ok(Some(resolved)) => {
                     let _ = tx.send(InstallerEvent::SetTerminal(resolved.repo_terminal.unwrap_or(false)));
+                    if let (Some(pkg), Some(name)) = (resolved.repo_package_name, resolved.repo_name) {
+                        let _ = tx.send(InstallerEvent::Metadata(pkg, name));
+                    }
                     if resolved.is_git {
                         let _ = tx.send(InstallerEvent::Log("Fetching GitHub/GitLab releases...".into()));
                         match crate::core::download::get_latest_release_assets(&resolved.url).await {
@@ -213,13 +219,14 @@ impl Installer {
         let target = self.state.target_folder.clone().unwrap();
         let exec_path = self.state.selected_exec.clone().unwrap();
         let app_name = self.state.app_name.clone();
+        let display_name = self.state.display_name.clone();
         let use_root = self.state.use_root;
         let use_terminal = if use_root { false } else { self.state.use_terminal };
         let category = self.state.category.clone();
         let desk = self.state.selected_desktop.clone();
 
         tokio::task::spawn_blocking(move || {
-            match crate::core::install::finalize_installation(&config, &target, &exec_path, &app_name, use_root, use_terminal, &category, desk, true) {
+            match crate::core::install::finalize_installation(&config, &target, &exec_path, &app_name, &display_name, use_root, use_terminal, &category, desk, true) {
                 Ok(_) => { let _ = tx.send(InstallerEvent::Finalized); }
                 Err(e) => { let _ = tx.send(InstallerEvent::Error(e.to_string())); }
             }
@@ -276,6 +283,10 @@ impl Installer {
                     self.state.step = InstallStep::SelectingBinary;
                     self.state.list_state.select(Some(0));
                     self.state.progress = 75.0;
+                }
+                InstallerEvent::Metadata(app_name, display_name) => {
+                    self.state.app_name = app_name;
+                    self.state.display_name = display_name;
                 }
                 InstallerEvent::Finalized => {
                     self.state.step = InstallStep::Finished;

@@ -125,7 +125,7 @@ install_completions() {
     if [ -f "$HOME/.zshrc" ]; then
         local zsh_dir="$HOME/.local/share/zsh/site-functions"
         mkdir -p "$zsh_dir"
-        curl -sSL "$RAW_URL/zsh/_kpm" -o "$zsh_dir/_tm"
+        curl -sSL "$RAW_URL/zsh/_kpm" -o "$zsh_dir/_kpm"
         info "Zsh completion installed."
         
         if ! grep -q "$zsh_dir" "$HOME/.zshrc" 2>/dev/null; then
@@ -144,7 +144,7 @@ install_completions() {
     success "Shell completions configured successfully."
 }
 
-install_tm() {
+install_kpm() {
     local mode=${1:-"Installing"}
     title "$mode Kore Package Manager..."
 
@@ -177,6 +177,8 @@ install_tm() {
         local VERSION=$("$BIN_DIR/kpm" -V 2>/dev/null | awk '{print $NF}')
         success "$mode completed (Version: $VERSION)."
         
+        install_completions
+
         if [[ "$mode" == "Installing" ]]; then
             echo ""
             setup_path
@@ -187,7 +189,7 @@ install_tm() {
     fi
 }
 
-uninstall_tm() {
+uninstall_kpm() {
     title "Uninstalling Kore Package Manager..."
 
     if [ -f "$BIN_DIR/kpm" ]; then
@@ -225,15 +227,15 @@ main_menu() {
     read -rp "  Option [1-4]: " opcion < /dev/tty
 
     case "$opcion" in
-        1) install_tm "Installing" ;;
+        1) install_kpm "Installing" ;;
         2) 
             if [ -f "$BIN_DIR/kpm" ]; then
-                install_tm "Updating"
+                install_kpm "Updating"
             else
                 error "kpm is not installed."
             fi
             ;;
-        3) uninstall_tm ;;
+        3) uninstall_kpm ;;
         4) exit 0 ;;
         *) sleep 1; main_menu ;;
     esac

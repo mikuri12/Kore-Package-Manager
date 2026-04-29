@@ -19,16 +19,16 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    #[command(name = "list", visible_alias = "list-installed", short_flag = 'l')]
+    #[command(name = "list", about = "List all installed applications", visible_alias = "list-installed", short_flag = 'l')]
     List,
     
-    #[command(name = "remove", short_flag = 'r')]
+    #[command(name = "remove", about = "Remove one or more installed applications", short_flag = 'r')]
     Remove {
         #[arg(required = true, num_args = 1..)]
         app_names: Vec<String>,
     },
     
-    #[command(name = "install", short_flag = 'i')]
+    #[command(name = "install", about = "Install applications from a local file, or repository", short_flag = 'i')]
     Install {
         #[arg(required = true, num_args = 1..)]
         sources: Vec<String>,
@@ -40,13 +40,13 @@ pub enum Commands {
         category: Option<String>,
     },
     
-    #[command(name = "update", short_flag = 'u')]
+    #[command(name = "update", about = "Update installed applications from their repositories", short_flag = 'u')]
     Update {
         #[arg(help = "Specific application to update (updates all repo apps if omitted)")]
         app_name: Option<String>,
     },
     
-    #[command(name = "repo")]
+    #[command(name = "repo", about = "Manage repositories and package lists")]
     Repo {
         #[command(subcommand)]
         repo_command: RepoCommands,
@@ -55,14 +55,17 @@ pub enum Commands {
 
 #[derive(Subcommand, Debug)]
 pub enum RepoCommands {
+    #[command(about = "List configured repositories and their package counts")]
     List,
-    #[command(name = "pkg-list")]
+    #[command(name = "pkg-list", about = "List all available packages from all repositories")]
     PkgList,
-    #[command(name = "pkg-search")]
+    #[command(name = "pkg-search", about = "Search for packages in the repositories")]
     PkgSearch {
         query: String,
     },
+    #[command(about = "Sync package lists from remote repositories")]
     Sync,
+    #[command(about = "Add a custom user repository")]
     Add {
         name: String,
         package_name: String,
@@ -71,6 +74,7 @@ pub enum RepoCommands {
         #[arg(long, default_value_t = false)]
         requires_root: bool,
     },
+    #[command(about = "Remove a custom user repository")]
     Remove {
         name: String,
     },
