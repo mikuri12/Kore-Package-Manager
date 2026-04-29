@@ -1,3 +1,5 @@
+#![allow(clippy::manual_range_contains)]
+
 pub mod state;
 pub mod ui;
 pub mod handlers;

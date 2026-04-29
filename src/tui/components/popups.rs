@@ -1,3 +1,5 @@
+#![allow(clippy::manual_clamp)]
+
 use anyhow::Result;
 use crossterm::event::KeyEvent;
 use ratatui::{

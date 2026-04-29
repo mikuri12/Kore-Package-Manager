@@ -47,7 +47,7 @@ pub fn generate_preview(config: &Config, app_name: &str) -> String {
         }
     };
 
-    let mut preview = format!("--- DETAILS ---\n");
+    let mut preview = "--- DETAILS ---\n".to_string();
     preview.push_str(&format!("Size: {}\n", size_str));
     preview.push_str(&format!("Binary: {}\n", bin_str));
     preview.push_str("\n--- CONTENT ---\n");
@@ -76,7 +76,7 @@ pub fn generate_preview(config: &Config, app_name: &str) -> String {
 }
 
 pub fn generate_archive_preview(file_path: &Path) -> String {
-    let mut preview = format!("--- ARCHIVE DETAILS ---\n");
+    let mut preview = "--- ARCHIVE DETAILS ---\n".to_string();
     if let Ok(metadata) = fs::metadata(file_path) {
         preview.push_str(&format!("Size: {}\n", format_size(metadata.len())));
     }
@@ -101,10 +101,8 @@ pub fn generate_archive_preview(file_path: &Path) -> String {
     if let Ok(mut child) = child_res {
         if let Some(stdout) = child.stdout.take() {
             let reader = BufReader::new(stdout);
-            for line in reader.lines().take(15) {
-                if let Ok(l) = line {
-                    preview.push_str(&format!("{}\n", l));
-                }
+            for l in reader.lines().map_while(Result::ok).take(15) {
+                preview.push_str(&format!("{}\n", l));
             }
         }
         let _ = child.kill(); 

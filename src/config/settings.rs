@@ -60,18 +60,28 @@ impl Config {
     }
 
     pub fn setup_logging(&self) -> anyhow::Result<tracing_appender::non_blocking::WorkerGuard> {
-        let file_appender = tracing_appender::rolling::daily(&self.log_dir, "kpm.log");
+        std::fs::create_dir_all(&self.log_dir)
+            .map_err(|e| anyhow::anyhow!("Failed to create log directory {}: {}", self.log_dir.display(), e))?;
+
+        let file_appender = tracing_appender::rolling::never(&self.log_dir, "kpm.log");
         let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
         let subscriber = tracing_subscriber::fmt::Subscriber::builder()
             .with_writer(non_blocking)
+            .with_max_level(tracing::Level::TRACE)
             .with_ansi(false)
-            .with_target(false)
+            .with_target(true)
             .finish();
             
         tracing::subscriber::set_global_default(subscriber)
             .map_err(|e| anyhow::anyhow!("Failed to set global tracing subscriber: {}", e))?;
             
         Ok(guard)
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self::new()
     }
 }

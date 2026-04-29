@@ -1,3 +1,5 @@
+#![allow(clippy::collapsible_match)]
+
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{

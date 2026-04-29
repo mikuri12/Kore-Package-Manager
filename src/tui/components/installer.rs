@@ -1,3 +1,5 @@
+#![allow(clippy::single_match, clippy::manual_clamp)]
+
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
@@ -9,6 +11,7 @@ use ratatui::{
 use std::path::PathBuf;
 
 use crate::config::Config;
+use crate::core::install::tokenize_desktop_exec;
 use crate::tui::state::{App, Route};
 use super::{AppAction, Component};
 use crate::tui::ui::centered_rect;
@@ -36,7 +39,6 @@ pub struct InstallerState {
     pub progress: f64,
     pub logs: Vec<String>,
     
-    // Internal states for transition
     pub resolved_url: Option<String>,
     pub tarball_path: Option<PathBuf>,
     pub target_folder: Option<PathBuf>,
@@ -46,14 +48,13 @@ pub struct InstallerState {
     
     pub executables: Vec<PathBuf>,
     pub desktop_files: Vec<PathBuf>,
-    pub combined_files: Vec<(String, PathBuf, bool)>, // String: Label, PathBuf: Path, bool: is_bin
+    pub combined_files: Vec<(String, PathBuf, bool)>,
     
     pub selected_exec: Option<PathBuf>,
     pub selected_desktop: Option<PathBuf>,
 
     pub list_state: ratatui::widgets::ListState,
     
-    // Channels for async operations
     pub tx: tokio::sync::mpsc::UnboundedSender<InstallerEvent>,
     pub rx: Option<tokio::sync::mpsc::UnboundedReceiver<InstallerEvent>>,
 }
@@ -170,7 +171,6 @@ impl Installer {
                 return;
             }
             
-            // Channel adapter for download progress
             let (dl_tx, mut dl_rx) = tokio::sync::mpsc::unbounded_channel();
             let dl_tx_opt = Some(dl_tx);
             let tx_clone = tx.clone();
@@ -449,14 +449,19 @@ impl Component for Installer {
                                 } else {
                                     self.state.selected_desktop = Some(path.clone());
                                     
-                                    // Intelligent parsing to find the Exec
                                     let content = std::fs::read_to_string(path).unwrap_or_default();
                                     let mut exec_name = String::new();
                                     for line in content.lines() {
                                         if line.trim_start().starts_with("Exec=") {
-                                            let parts: Vec<&str> = line.trim_start()["Exec=".len()..].split_whitespace().collect();
-                                            if !parts.is_empty() {
-                                                let name = parts[0].to_string();
+                                            let exec_value = line.trim_start()["Exec=".len()..].trim();
+                                            let tokens = tokenize_desktop_exec(exec_value);
+                                            let candidate = tokens.into_iter().find(|token| {
+                                                token != "env"
+                                                    && token != "pkexec"
+                                                    && !token.contains('=')
+                                                    && !token.starts_with('%')
+                                            });
+                                            if let Some(name) = candidate {
                                                 if let Some(n) = std::path::Path::new(&name).file_name() {
                                                     exec_name = n.to_string_lossy().to_string();
                                                 } else {

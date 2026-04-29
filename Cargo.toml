@@ -1,7 +1,8 @@
 [package]
 name = "kpm"
-version = "2.0.0"
+version = "2.0.1"
 edition = "2021"
+default-run = "kpm"
 description = "Kore Package Manager (kpm) - Edition 2026"
 
 [dependencies]

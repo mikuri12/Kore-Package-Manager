@@ -4,6 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[allow(clippy::type_complexity)]
 pub fn extract_and_scan(
     config: &Config,
     tarball: &Path,
@@ -36,7 +37,10 @@ pub fn extract_and_scan(
     
     let success = if is_zip {
         Command::new("unzip")
-            .args(["-q", tarball.to_str().unwrap(), "-d", target.to_str().unwrap()])
+            .arg("-q")
+            .arg(tarball)
+            .arg("-d")
+            .arg(&target)
             .status()
             .map(|s| s.success())
             .unwrap_or(false)
@@ -61,15 +65,13 @@ pub fn extract_and_scan(
             }
         }
 
-        let mut tar_args = vec!["-xf", tarball.to_str().unwrap(), "-C", target.to_str().unwrap()];
+        let mut tar_cmd = Command::new("tar");
+        tar_cmd.arg("-xf").arg(tarball).arg("-C").arg(&target);
         if should_strip {
-            tar_args.push("--strip-components=1");
+            tar_cmd.arg("--strip-components=1");
         }
 
-        Command::new("tar")
-            .args(&tar_args)
-            .status()?
-            .success()
+        tar_cmd.status()?.success()
     };
 
     if !success {

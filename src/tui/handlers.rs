@@ -1,9 +1,39 @@
+#![allow(clippy::collapsible_if, clippy::single_match, clippy::collapsible_match)]
+
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{backend::Backend, Terminal};
 use crate::config::Config;
 use crate::core::{remove_app, update_desktop_file};
 use super::state::{App, Route, PopupType};
 use crate::tui::components::Component;
+
+fn load_log_file_for_popup(app: &mut App, config: &Config) {
+    let log_file = config.log_dir.join("kpm.log");
+    match std::fs::read_to_string(&log_file) {
+        Ok(content) => {
+            let mut lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
+            if lines.is_empty() {
+                lines.push("Log file exists but is empty.".to_string());
+            }
+
+            let keep_last = 500usize;
+            if lines.len() > keep_last {
+                lines = lines.split_off(lines.len() - keep_last);
+            }
+
+            app.logs = lines;
+            app.logs_scroll = app.logs.len().saturating_sub(1) as u16;
+        }
+        Err(e) => {
+            app.logs = vec![format!(
+                "Could not read log file '{}': {}",
+                log_file.display(),
+                e
+            )];
+            app.logs_scroll = 0;
+        }
+    }
+}
 
 pub async fn handle_key_events<B: Backend>(
     _terminal: &mut Terminal<B>,
@@ -12,17 +42,18 @@ pub async fn handle_key_events<B: Backend>(
 ) -> anyhow::Result<bool> {
     if crossterm::event::poll(std::time::Duration::from_millis(50))? {
         if let Event::Key(key) = crossterm::event::read()? {
-            if key.kind != KeyEventKind::Release {
+                if key.kind != KeyEventKind::Release {
                 if key.code == KeyCode::F(12) {
                     if app.popup_type == PopupType::Logs {
                         app.popup_type = PopupType::None;
                     } else {
+                        load_log_file_for_popup(app, config);
                         app.popup_type = PopupType::Logs;
                     }
                     return Ok(false);
                 }
 
-                if app.popup_type != PopupType::None {
+                    if app.popup_type != PopupType::None {
                     let is_list_popup = matches!(app.popup_type,
                         PopupType::ActionSelect | PopupType::CategorySelect | PopupType::ChangeBinarySelect |
                         PopupType::ChangeRootSelect | PopupType::ConfirmUninstall | PopupType::InstallRootSelect |
@@ -425,7 +456,7 @@ pub async fn handle_key_events<B: Backend>(
                     return Ok(false);
                 }
 
-                let action = match app.route {
+                    let action = match app.route {
                     Route::MainMenu => {
                         let mut c = crate::tui::components::main_menu::MainMenu::new();
                         c.handle_key_event(key, app, config)?
@@ -452,7 +483,7 @@ pub async fn handle_key_events<B: Backend>(
                     }
                 };
 
-                if let Some(act) = action {
+                    if let Some(act) = action {
                     match act {
                         crate::tui::components::AppAction::Quit => return Ok(true),
                         crate::tui::components::AppAction::ChangeRoute(route) => app.route = route,
@@ -460,9 +491,8 @@ pub async fn handle_key_events<B: Backend>(
                         crate::tui::components::AppAction::ClosePopup => app.popup_type = PopupType::None,
                         _ => {}
                     }
+                    }
                 }
-
-            }
         }
     }
     Ok(false)

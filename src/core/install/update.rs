@@ -5,20 +5,28 @@ use std::fs;
 use std::path::PathBuf;
 
 pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
+    tracing::info!(operation = "self_update", step = "start", "Starting kpm self-update");
     info_msg("Looking for the latest stable version on GitHub Releases...");
 
     let client = reqwest::Client::builder()
         .user_agent("Kore-Package-Manager/1.0")
         .build()?;
 
-    let response = client.get("https://api.github.com/repos/ezequielgk/Kore-Package-Manager/releases/latest").send().await;
+    let response = client
+        .get("https://api.github.com/repos/ezequielgk/Kore-Package-Manager/releases/latest")
+        .send()
+        .await
+        .map_err(|e| crate::error::KoreError::Generic(format!("Error connecting to GitHub API: {}", e)))?;
 
-    if response.is_err() || !response.as_ref().unwrap().status().is_success() {
+    if !response.status().is_success() {
         error_msg("Error connecting to GitHub API.");
-        return Ok(());
+        return Err(crate::error::KoreError::Generic(format!(
+            "GitHub API returned status {}",
+            response.status()
+        )));
     }
 
-    let release_data: Result<crate::core::download::Release, _> = response.unwrap().json().await;
+    let release_data: Result<crate::core::download::Release, _> = response.json().await;
     let mut latest_url = String::new();
     let mut latest_version = String::new();
 
@@ -34,7 +42,9 @@ pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
 
     if latest_url.is_empty() {
         error_msg("Compiled 'kpm' package not found in the latest GitHub Release.");
-        return Ok(());
+        return Err(crate::error::KoreError::Generic(
+            "Compiled package not found in latest release assets".to_string(),
+        ));
     }
 
     let current_version = env!("CARGO_PKG_VERSION");
@@ -50,14 +60,15 @@ pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
         .unwrap_or(false)
     {
         info_msg("Update cancelled by user.");
+        tracing::info!(operation = "self_update", step = "confirm", "Update cancelled by user");
         return Ok(());
     }
 
     let bin_path = config.bin_dir.join("kpm");
-    let temp_dir = config.install_dir.join(".kpm_update"); // Use a dir in the same filesystem
+    let temp_dir = config.install_dir.join(".kpm_update"); 
     std::fs::create_dir_all(&temp_dir)?;
 
-    info_msg(&format!("Downloading update..."));
+    info_msg("Downloading update...");
 
     match crate::core::download::download_file(&latest_url, &temp_dir, None).await {
         Ok(downloaded_file) => {
@@ -80,9 +91,10 @@ pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
 
                     if fs::rename(&extracted_bin, &bin_path).is_ok() || fs::copy(&extracted_bin, &bin_path).is_ok() {
                         success_msg("Kore Package Manager updated successfully! You can now use 'kpm' normally.");
+                        tracing::info!(operation = "self_update", step = "replace_binary", "Binary replacement succeeded");
                         
                         let desktop_file = temp_dir.join("kpm.desktop");
-                        let icon_file = temp_dir.join("kore.ico");
+                        let icon_file = temp_dir.join("kore-logo.svg");
                         if desktop_file.exists() {
                             let home_dir = std::env::var("HOME").unwrap_or_default();
                             if !home_dir.is_empty() {
@@ -92,7 +104,7 @@ pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
                                 let _ = fs::create_dir_all(&icons_dir);
                                 
                                 if let Ok(content) = fs::read_to_string(&desktop_file) {
-                                    let icon_path = icons_dir.join("kore.ico");
+                                    let icon_path = icons_dir.join("kore-logo.svg");
                                     let new_content = content.lines().map(|line| {
                                         if line.starts_with("Icon=") {
                                             format!("Icon={}", icon_path.display())
@@ -106,27 +118,44 @@ pub async fn update_tm(config: &Config) -> Result<(), crate::error::KoreError> {
                                 }
 
                                 if icon_file.exists() {
-                                    let _ = fs::copy(&icon_file, icons_dir.join("kore.ico"));
+                                    let _ = fs::copy(&icon_file, icons_dir.join("kore-logo.svg"));
                                 }
                                 let _ = std::process::Command::new("update-desktop-database").arg(&apps_dir).output();
                             }
                         }
                     } else {
                         error_msg("Error replacing the current binary. Make sure you have permissions.");
+                        let _ = fs::remove_dir_all(&temp_dir);
+                        return Err(crate::error::KoreError::Generic(
+                            "Failed to replace current binary".to_string(),
+                        ));
                     }
                 } else {
                     error_msg("Binary 'kpm' not found inside the extracted package.");
+                    let _ = fs::remove_dir_all(&temp_dir);
+                    return Err(crate::error::KoreError::Generic(
+                        "Extracted package does not contain 'kpm' binary".to_string(),
+                    ));
                 }
             } else {
                 error_msg("Failed to extract the downloaded update package.");
+                let _ = fs::remove_dir_all(&temp_dir);
+                return Err(crate::error::KoreError::Generic(
+                    "Failed to extract downloaded update package".to_string(),
+                ));
             }
             let _ = fs::remove_dir_all(&temp_dir);
         }
-        Err(_) => {
+        Err(e) => {
             error_msg("Could not download the package from GitHub.");
             let _ = fs::remove_dir_all(&temp_dir);
+            return Err(crate::error::KoreError::Generic(format!(
+                "Could not download package from GitHub: {}",
+                e
+            )));
         }
     }
 
+    tracing::info!(operation = "self_update", step = "finish", "Self-update finished successfully");
     Ok(())
 }

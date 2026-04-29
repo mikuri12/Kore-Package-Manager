@@ -1,3 +1,25 @@
+## [2.0.1] - 2026-04-28
+
+### Estabilidad y Confiabilidad
+- **Flujo de Update CLI Corregido:** Se arregló la ejecución asíncrona de actualización en `main.rs` (`await` + propagación de errores), y se cambió el escaneo de update-all a directorios realmente instalados.
+- **Fortalecimiento de Install/Remove:** Los fallos críticos ahora se propagan correctamente (creación de symlink/launcher y operaciones de desinstalación), evitando mensajes de éxito falsos en fallos parciales.
+- **Matching Preciso de `.desktop`:** Se mejoró la resolución de accesos directos analizando `Exec`/`TryExec`/`Path`, evitando falsos positivos por coincidencias de substring al parchear o eliminar.
+- **Extracción y Temporales Seguros:** Se eliminaron `unwrap()` de rutas en comandos de extracción y se agregaron directorios temporales únicos por operación para evitar colisiones.
+
+### Logging y Diagnóstico en TUI
+- **Destino de Logs Estable:** Logging estandarizado en `~/.local/state/kpm/kpm.log` con creación confiable de directorios y campos estructurados en tracing.
+- **Mejora de Visor F12:** El popup de logs internos ahora lee directamente desde `kpm.log` (estilo tail), en vez de depender de stderr de la terminal.
+- **Supresión de Ruido en TUI:** Se silenció la salida de comandos de mantenimiento (`update-desktop-database`, `touch`) para evitar mensajes de fondo que rompían el render de la TUI.
+
+### Compatibilidad de Lanzadores
+- **Launchers para Scripts:** Si el ejecutable seleccionado es script (`.py`, `.sh`, `.zsh`, `.rb`, `.pl`, `.js`), KPM ahora genera wrappers ejecutables con intérprete correcto en `~/.local/bin`, mejorando la ejecución desde terminal y `.desktop`.
+
+### Branding y Assets
+- **Integración del Nuevo Logo:** Se actualizó empaquetado/instalación/auto-update/release para usar `kore-logo.svg` en lugar de `kore.ico`, incluyendo `kpm.desktop`, `install.sh` y el workflow de release.
+
+### Calidad del Proyecto
+- **Higiene de Build:** Se corrigieron problemas reportados por Clippy estricto en rutas core y se añadieron `allow` puntuales en módulos TUI complejos sin eliminar funcionalidades.
+
 ## [2.0.0] - 2026-04-26
 
 ### Nueva Identidad: Kore Package Manager (kpm)
@@ -6,7 +28,7 @@
 - **Manejo de Errores:** Se reemplazó el antiguo ecosistema de `TmError` por `KoreError` en todo el proyecto.
 
 ### Empaquetado y Distribución
-- **Releases en tar.gz:** Los lanzamientos de GitHub ahora empaquetan la app en `kpm-linux-x86_64.tar.gz`, incluyendo el binario `kpm`, el ícono `kore.ico` y un `kpm.desktop` configurado.
+- **Releases en tar.gz:** Los lanzamientos de GitHub ahora empaquetan la app en `kpm-linux-x86_64.tar.gz`, incluyendo el binario `kpm`, el ícono `kore-logo.svg` y un `kpm.desktop` configurado.
 - **Instalador y Auto-Update:** Se actualizó `install.sh` y el comando `kpm --update-bin` para descargar y extraer automáticamente el nuevo formato comprimido, configurando los accesos directos de escritorio al vuelo.
 
 ### Refactorización y Modularización

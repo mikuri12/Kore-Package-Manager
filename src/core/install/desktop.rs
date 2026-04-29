@@ -2,12 +2,118 @@ use crate::config::Config;
 use crate::utils::{error_msg, find_icon, success_msg};
 use std::fs;
 use std::io::{BufRead, BufReader};
-use std::os::unix::fs::symlink;
+use std::os::unix::fs::{symlink, PermissionsExt};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 use crate::core::install::utils::find_desktop_files_with_target;
 
+fn quote_desktop_exec_token(token: &str) -> String {
+    if token.is_empty() {
+        return "\"\"".to_string();
+    }
+    if token.chars().any(char::is_whitespace) {
+        let escaped = token
+            .replace('\\', "\\\\")
+            .replace('"', "\\\"")
+            .replace('`', "\\`")
+            .replace('$', "\\$");
+        format!("\"{}\"", escaped)
+    } else {
+        token.to_string()
+    }
+}
+
+pub fn tokenize_desktop_exec(exec: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let mut current = String::new();
+    let mut in_quotes = false;
+    let mut escaped = false;
+
+    for ch in exec.chars() {
+        if escaped {
+            current.push(ch);
+            escaped = false;
+            continue;
+        }
+
+        match ch {
+            '\\' => escaped = true,
+            '"' => in_quotes = !in_quotes,
+            c if c.is_whitespace() && !in_quotes => {
+                if !current.is_empty() {
+                    tokens.push(std::mem::take(&mut current));
+                }
+            }
+            _ => current.push(ch),
+        }
+    }
+
+    if !current.is_empty() {
+        tokens.push(current);
+    }
+
+    tokens
+}
+
+fn interpreter_for_extension(ext: &str) -> Option<&'static str> {
+    match ext {
+        "py" => Some("python3"),
+        "sh" => Some("bash"),
+        "zsh" => Some("zsh"),
+        "rb" => Some("ruby"),
+        "pl" => Some("perl"),
+        "js" => Some("node"),
+        _ => None,
+    }
+}
+
+fn create_launcher_or_symlink(exec_path: &Path, bin_dest: &Path) -> Result<(), crate::error::KoreError> {
+    let ext = exec_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_lowercase());
+
+    if let Some(ext) = ext {
+        if let Some(interpreter) = interpreter_for_extension(&ext) {
+            let launcher = format!(
+                "#!/usr/bin/env bash\nexec {} \"{}\" \"$@\"\n",
+                interpreter,
+                exec_path.display()
+            );
+            fs::write(bin_dest, launcher).map_err(|e| {
+                crate::error::KoreError::Generic(format!(
+                    "Failed to create launcher '{}': {}",
+                    bin_dest.display(),
+                    e
+                ))
+            })?;
+            let mut perms = fs::metadata(bin_dest)
+                .map_err(|e| crate::error::KoreError::Generic(format!("Failed to stat launcher '{}': {}", bin_dest.display(), e)))?
+                .permissions();
+            perms.set_mode(0o755);
+            fs::set_permissions(bin_dest, perms).map_err(|e| {
+                crate::error::KoreError::Generic(format!(
+                    "Failed to set launcher permissions '{}': {}",
+                    bin_dest.display(),
+                    e
+                ))
+            })?;
+            return Ok(());
+        }
+    }
+
+    symlink(exec_path, bin_dest).map_err(|e| {
+        crate::error::KoreError::Generic(format!(
+            "Unable to create symlink '{}' -> '{}': {}",
+            bin_dest.display(),
+            exec_path.display(),
+            e
+        ))
+    })
+}
+
 pub fn update_desktop_file(config: &Config, app_folder: &str, new_val: &str, field: &str, silent: bool) {
+    tracing::info!(operation = "desktop_update", app = app_folder, field = field, "Updating desktop field");
     let target_str = config.install_dir.join(app_folder).to_string_lossy().to_string();
     let found_path = find_desktop_files_with_target(config, &target_str).into_iter().next();
 
@@ -20,7 +126,7 @@ pub fn update_desktop_file(config: &Config, app_folder: &str, new_val: &str, fie
         if let Ok(file_raw) = fs::File::open(&desktop_file) {
             let reader = BufReader::new(file_raw);
             let mut new_lines = Vec::new();
-            for line in reader.lines().flatten() {
+            for line in reader.lines().map_while(Result::ok) {
                 if line.starts_with(&format!("{}=", field)) {
                     new_lines.push(format!("{}={}", field, final_val));
                 } else {
@@ -28,15 +134,21 @@ pub fn update_desktop_file(config: &Config, app_folder: &str, new_val: &str, fie
                 }
             }
             if fs::write(&desktop_file, new_lines.join("\n")).is_ok() {
-                // Simulate a directory change to refresh system menus
-                let _ = std::process::Command::new("touch").arg(&config.apps_dir).status();
+                let _ = std::process::Command::new("touch")
+                    .arg(&config.apps_dir)
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .status();
                 if !silent { success_msg(&format!("Field {} updated to: {}", field, final_val)); }
+                tracing::info!(operation = "desktop_update", app = app_folder, field = field, file = %desktop_file.display(), "Desktop field updated");
                 return;
             }
         }
         if !silent { error_msg("Could not write the .desktop file"); }
+        tracing::error!(operation = "desktop_update", app = app_folder, field = field, "Could not write desktop file");
     } else {
         if !silent { error_msg(&format!("Could not find shortcut linked to the folder {}", app_folder)); }
+        tracing::warn!(operation = "desktop_update", app = app_folder, field = field, "Desktop file not found for app");
     }
 }
 
@@ -54,9 +166,9 @@ pub fn update_exec_modifiers(
         let mut current_exec = String::new();
         if let Ok(file_raw) = fs::File::open(&desktop_file) {
             let reader = BufReader::new(file_raw);
-            for line in reader.lines().flatten() {
-                if line.starts_with("Exec=") {
-                    current_exec = line["Exec=".len()..].to_string();
+            for line in reader.lines().map_while(Result::ok) {
+                if let Some(exec) = line.strip_prefix("Exec=") {
+                    current_exec = exec.to_string();
                     break;
                 }
             }
@@ -68,40 +180,45 @@ pub fn update_exec_modifiers(
         }
 
         let mut is_root = false;
-        let mut env_vars = String::new();
+        let mut env_vars: Vec<String> = Vec::new();
         let base_bin = config.bin_dir.join(app_folder).to_string_lossy().to_string();
 
-        let parts = current_exec.split_whitespace();
-        for part in parts {
+        for part in tokenize_desktop_exec(&current_exec) {
             if part == "pkexec" {
                 is_root = true;
             } else if part == "env" {
                 continue;
             } else if part.contains('=') {
-                env_vars.push_str(part);
-                env_vars.push(' ');
+                env_vars.push(part);
             }
         }
-
-        env_vars = env_vars.trim().to_string();
 
         if let Some(r) = new_root {
             is_root = r;
         }
         if let Some(e) = new_env {
-            env_vars = e.trim().to_string();
+            env_vars = if e.trim().is_empty() {
+                Vec::new()
+            } else {
+                tokenize_desktop_exec(e.trim())
+            };
         }
 
         let mut new_exec = String::new();
         if !env_vars.is_empty() {
             new_exec.push_str("env ");
-            new_exec.push_str(&env_vars);
+            let rendered = env_vars
+                .iter()
+                .map(|v| quote_desktop_exec_token(v))
+                .collect::<Vec<_>>()
+                .join(" ");
+            new_exec.push_str(&rendered);
             new_exec.push(' ');
         }
         if is_root {
             new_exec.push_str("pkexec ");
         }
-        new_exec.push_str(&base_bin);
+        new_exec.push_str(&quote_desktop_exec_token(&base_bin));
 
         update_desktop_file(config, app_folder, &new_exec, "Exec", silent);
 
@@ -110,6 +227,7 @@ pub fn update_exec_modifiers(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn finalize_installation(
     config: &Config,
     target: &Path,
@@ -121,20 +239,30 @@ pub fn finalize_installation(
     bundled_desktop: Option<PathBuf>,
     silent: bool,
 ) -> Result<(), crate::error::KoreError> {
+    tracing::info!(operation = "desktop_finalize", app = app_name, "Finalizing desktop integration");
     let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
     let icon_path = find_icon(target, app_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
     let bin_dest = config.bin_dir.join(app_name);
     if bin_dest.exists() {
-        let _ = fs::remove_file(&bin_dest);
+        fs::remove_file(&bin_dest).map_err(|e| {
+            if !silent {
+                error_msg(&format!("Unable to remove existing symlink: {}", e));
+            }
+            crate::error::KoreError::Generic(format!(
+                "Failed to remove existing binary link '{}': {}",
+                bin_dest.display(),
+                e
+            ))
+        })?;
     }
     
-    if let Err(e) = symlink(exec_path, &bin_dest) {
-         if !silent { error_msg(&format!("Unable to create symlink: {}", e)); }
-         return Ok(());
+    if let Err(e) = create_launcher_or_symlink(exec_path, &bin_dest) {
+         if !silent { error_msg(&format!("Unable to create launcher/link: {}", e)); }
+         return Err(e);
     }
 
-    let mut final_exec = bin_dest.to_string_lossy().to_string();
+    let mut final_exec = quote_desktop_exec_token(&bin_dest.to_string_lossy());
     if use_root {
         final_exec = format!("pkexec {}", final_exec);
     }
@@ -175,7 +303,7 @@ Categories={};"#,
             final_exec,
             icon_path,
             if use_terminal { "true" } else { "false" },
-            target.display(),
+            quote_desktop_exec_token(&target.to_string_lossy()),
             category
         )
     };
@@ -183,8 +311,17 @@ Categories={};"#,
     let desktop_path = config.apps_dir.join(format!("{}.desktop", app_name.to_lowercase().replace(' ', "-")));
     fs::write(desktop_path, desktop_content)?;
 
-    let _ = Command::new("update-desktop-database").arg(&config.apps_dir).status();
-    let _ = Command::new("touch").arg(&config.apps_dir).status();
+    let _ = Command::new("update-desktop-database")
+        .arg(&config.apps_dir)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
+    let _ = Command::new("touch")
+        .arg(&config.apps_dir)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
 
+    tracing::info!(operation = "desktop_finalize", app = app_name, "Desktop integration finalized");
     Ok(())
 }

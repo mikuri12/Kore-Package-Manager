@@ -55,10 +55,11 @@ pub async fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
         "github.com"
     } else if url.contains("codeberg.org") {
         "codeberg.org"
-    } else if let Some(h) = url.split("://").nth(1).and_then(|s| s.split('/').next()) {
-        h
     } else {
-        "gitlab.com"
+        url.split("://")
+            .nth(1)
+            .and_then(|s| s.split('/').next())
+            .unwrap_or("gitlab.com")
     };
 
     let client = reqwest::Client::builder()
@@ -132,7 +133,7 @@ pub async fn download_file(url: &str, dest_dir: &Path, tx: Option<tokio::sync::m
     }
     
     let file_name = url.split('?').next().unwrap_or(url)
-        .split('/').last()
+        .split('/').next_back()
         .unwrap_or("downloaded_file.tar.gz");
         
     let dest_path = dest_dir.join(file_name);

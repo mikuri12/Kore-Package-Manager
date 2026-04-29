@@ -27,6 +27,8 @@ async fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
+    let mut had_failures = false;
+
     match &cli.command {
         Some(Commands::List) => {
             core::list_cli(&config);
@@ -35,6 +37,7 @@ async fn main() -> anyhow::Result<()> {
             for name in app_names {
                 if let Err(e) = core::remove_app(&config, name, true, false) {
                     utils::error_msg(&format!("Failed to remove {}: {}", name, e));
+                    had_failures = true;
                 }
             }
         }
@@ -50,6 +53,7 @@ async fn main() -> anyhow::Result<()> {
 
                 if let Err(e) = res {
                     utils::error_msg(&format!("Failed to install {}: {}", source, e));
+                    had_failures = true;
                 }
             }
         }
@@ -155,23 +159,35 @@ async fn main() -> anyhow::Result<()> {
             let all_repos = repo::get_all_repos(&config);
             if let Some(target) = app_name {
                 if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == target.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == target.to_lowercase())) {
-                    let _ = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true, None);
+                    if let Err(e) = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true, None).await {
+                        utils::error_msg(&format!("Failed to update {}: {}", repo_source.repo.name, e));
+                        had_failures = true;
+                    }
                 } else {
                     utils::error_msg(&format!("Application '{}' does not belong to any repository.", target));
+                    had_failures = true;
                 }
             } else {
                 let mut updated_any = false;
-                if let Ok(entries) = std::fs::read_dir(&config.apps_dir) {
+                if let Ok(entries) = std::fs::read_dir(&config.install_dir) {
                     for entry in entries.flatten() {
                         if entry.path().is_dir() {
                             let app = entry.file_name().to_string_lossy().to_string();
                             if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == app.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == app.to_lowercase())) {
                                 utils::info_msg(&format!("Updating {}...", repo_source.repo.name));
-                                let _ = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true, None).await;
-                                updated_any = true;
+                                match core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true, None).await {
+                                    Ok(_) => updated_any = true,
+                                    Err(e) => {
+                                        utils::error_msg(&format!("Failed to update {}: {}", repo_source.repo.name, e));
+                                        had_failures = true;
+                                    }
+                                }
                             }
                         }
                     }
+                } else {
+                    had_failures = true;
+                    utils::error_msg("Could not read installation directory for update scan.");
                 }
                 if !updated_any {
                     utils::info_msg("No installed applications matched any repository for updating.");
@@ -184,6 +200,10 @@ async fn main() -> anyhow::Result<()> {
             tui::main_menu(&config).await?;
         }
     }
-    
+
+    if had_failures {
+        return Err(anyhow::anyhow!("One or more operations failed."));
+    }
+
     Ok(())
 }

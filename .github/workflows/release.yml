@@ -28,7 +28,7 @@ jobs:
         run: |
           mkdir -p kpm-release
           cp target/release/kpm kpm-release/
-          cp assets/Ico/kore.ico kpm-release/
+          cp assets/Ico/kore-logo.svg kpm-release/
           cp assets/kpm.desktop kpm-release/
           tar -czvf kpm-linux-x86_64.tar.gz -C kpm-release .
       
@@ -50,7 +50,7 @@ jobs:
             
             # Opcional: Instalar el acceso directo (.desktop)
             mkdir -p ~/.local/share/icons ~/.local/share/applications
-            cp kore.ico ~/.local/share/icons/
+            cp kore-logo.svg ~/.local/share/icons/
             cp kpm.desktop ~/.local/share/applications/
             update-desktop-database ~/.local/share/applications
             ```

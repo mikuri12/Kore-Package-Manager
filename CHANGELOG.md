@@ -1,5 +1,27 @@
 [![Historial de cambios](https://img.shields.io/badge/Changelog-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
 
+## [2.0.1] - 2026-04-28
+
+### Stability & Reliability
+- **CLI Update Flow Fixed:** Corrected async update execution in `main.rs` (`await` + error propagation), and switched update-all discovery to installed app directories for reliable matching.
+- **Install/Remove Hardening:** Critical failures now propagate correctly (symlink/launcher creation, remove operations), preventing false-positive success messages during partial failures.
+- **Desktop Target Matching:** Improved `.desktop` target resolution to parse `Exec`/`TryExec`/`Path` accurately, avoiding substring false positives when patching/removing shortcuts.
+- **Safer Extraction & Temp Handling:** Removed path `unwrap()` points in extraction commands and introduced unique per-operation download temp directories to avoid collisions.
+
+### Logging & TUI Diagnostics
+- **Stable Log Sink:** Standardized logging to `~/.local/state/kpm/kpm.log` with reliable directory creation and structured tracing fields.
+- **F12 Log Viewer Upgrade:** Internal logs popup now reads directly from `kpm.log` (tail-style behavior), instead of relying on terminal stderr output.
+- **TUI Noise Suppression:** Silenced maintenance command outputs (`update-desktop-database`, `touch`) to prevent background stderr messages from breaking TUI rendering.
+
+### Launcher Compatibility Improvements
+- **Script-Aware Launchers:** When selected executables are scripts (`.py`, `.sh`, `.zsh`, `.rb`, `.pl`, `.js`), KPM now creates executable wrappers with the proper interpreter in `~/.local/bin`, improving terminal and `.desktop` launch reliability.
+
+### Branding & Assets
+- **New Logo Integration:** Updated packaging/install/update/release flows to use `kore-logo.svg` instead of `kore.ico`, including `kpm.desktop`, `install.sh`, and GitHub release workflow assets.
+
+### Quality Gates
+- **Build Hygiene:** Resolved strict Clippy issues in core paths and added targeted lint allowances in complex TUI modules without removing functionality.
+
 ## [2.0.0] - 2026-04-26
 
 ### New Identity: Kore Package Manager (kpm)
@@ -8,7 +30,7 @@
 - **Error Handling:** Completely replaced the legacy `TmError` ecosystem with `KoreError` throughout the project.
 
 ### Packaging & Distribution
-- **tar.gz Releases:** GitHub releases now package the application in `kpm-linux-x86_64.tar.gz`, including the `kpm` executable, `kore.ico` icon, and a pre-configured `kpm.desktop`.
+- **tar.gz Releases:** GitHub releases now package the application in `kpm-linux-x86_64.tar.gz`, including the `kpm` executable, `kore-logo.svg` icon, and a pre-configured `kpm.desktop`.
 - **Installer & Auto-Update:** Upgraded `install.sh` and `kpm --update-bin` to download and automatically extract the new compressed format, immediately configuring desktop shortcuts system-wide.
 
 ### Refactoring & Modularization

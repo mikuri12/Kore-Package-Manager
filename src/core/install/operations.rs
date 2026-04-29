@@ -3,7 +3,8 @@ use crate::utils::{error_msg, info_msg, success_msg};
 use dialoguer::{Select, Confirm, Input};
 use std::fs;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Stdio};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::core::install::{
     InstallMessage,
@@ -12,6 +13,17 @@ use crate::core::install::{
     finalize_installation,
     find_desktop_files_with_target,
 };
+
+fn create_unique_temp_download_dir() -> Result<PathBuf, crate::error::KoreError> {
+    let ts = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    let pid = std::process::id();
+    let tmp_dir = std::env::temp_dir().join(format!("kpm_downloads_{}_{}", pid, ts));
+    std::fs::create_dir_all(&tmp_dir)?;
+    Ok(tmp_dir)
+}
 
 pub async fn install_app(
     config: &Config,
@@ -22,6 +34,7 @@ pub async fn install_app(
     is_cli: bool,
     tx: Option<tokio::sync::mpsc::UnboundedSender<InstallMessage>>,
 ) -> Result<(), crate::error::KoreError> {
+    tracing::info!(operation = "install", source = source, cli = is_cli, "Install flow started");
     let mut actual_tarball = PathBuf::from(source);
     let mut downloaded = false;
     let mut repo_name_opt: Option<String> = None;
@@ -31,6 +44,7 @@ pub async fn install_app(
     let mut repo_terminal_opt: Option<bool> = None;
 
     if !actual_tarball.exists() {
+        tracing::info!(operation = "install", source = source, step = "resolve_source", "Resolving source");
         if let Some(resolved) = resolve_source(config, source).await? {
             repo_name_opt = resolved.repo_name;
             repo_package_name_opt = resolved.repo_package_name;
@@ -54,10 +68,7 @@ pub async fn install_app(
                                                 let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
                                                 let names: Vec<String> = assets.iter().map(|a| a.name.clone()).collect();
                                                 let _ = t.send(InstallMessage::SelectAsset(names, reply_tx));
-                                                match reply_rx.await {
-                                                    Ok(idx) => idx,
-                                                    Err(_) => 0,
-                                                }
+                                                reply_rx.await.unwrap_or_default()
                                             } else {
                                                 0
                                             }
@@ -69,10 +80,10 @@ pub async fn install_app(
                                     };
                                     let selected_asset = &assets[selected_asset_idx];
                                     
-                                    let tmp_dir = std::env::temp_dir().join("tm_downloads");
-                                    std::fs::create_dir_all(&tmp_dir)?;
+                                    let tmp_dir = create_unique_temp_download_dir()?;
                                     
                                     if is_cli { info_msg(&format!("Downloading {}...", selected_asset.name)); }
+                                    tracing::info!(operation = "install", source = source, step = "download_release_asset", asset = %selected_asset.name, "Downloading selected release asset");
                                     match crate::core::download::download_file(&selected_asset.browser_download_url, &tmp_dir, tx.clone()).await {
                                         Ok(path) => {
                                             actual_tarball = path;
@@ -104,10 +115,10 @@ pub async fn install_app(
                     }
                 };
 
-                let tmp_dir = std::env::temp_dir().join("tm_downloads");
-                std::fs::create_dir_all(&tmp_dir)?;
+                let tmp_dir = create_unique_temp_download_dir()?;
                 
                 if is_cli { info_msg(&format!("Downloading from {}...", resolved_url)); }
+                tracing::info!(operation = "install", source = source, step = "download_direct_url", url = %resolved_url, "Downloading direct URL");
                 match crate::core::download::download_file(&resolved_url, &tmp_dir, tx.clone()).await {
                     Ok(path) => {
                         actual_tarball = path;
@@ -129,8 +140,11 @@ pub async fn install_app(
     }
 
     if actual_tarball.exists() {
+        tracing::info!(operation = "install", source = source, step = "extract", archive = %actual_tarball.display(), "Starting archive extraction");
         if let Some(t) = &tx {
-            let _ = t.send(InstallMessage::Progress("Extracting archive... Please wait".to_string(), 50.0));
+            if t.send(InstallMessage::Progress("Extracting archive... Please wait".to_string(), 50.0)).is_err() {
+                tracing::warn!(operation = "install", source = source, step = "extract", "Progress receiver dropped");
+            }
         }
         let config_clone = config.clone();
         let tarball_clone = actual_tarball.clone();
@@ -250,7 +264,9 @@ pub async fn install_app(
                     .unwrap_or_else(|| "Utility".to_string());
                 
                 if let Some(t) = &tx {
-                    let _ = t.send(InstallMessage::Progress("Finalizing installation...".to_string(), 90.0));
+                    if t.send(InstallMessage::Progress("Finalizing installation...".to_string(), 90.0)).is_err() {
+                        tracing::warn!(operation = "install", source = source, step = "finalize", "Progress receiver dropped");
+                    }
                 }
                 let config_clone = config.clone();
                 let target_clone = target.clone();
@@ -265,40 +281,62 @@ pub async fn install_app(
                 tokio::task::spawn_blocking(move || {
                     finalize_installation(&config_clone, &target_clone, &exec_path_clone, &app_name_clone, use_root_clone, use_terminal_clone, &category_clone, bundled_desktop_clone, !is_cli_clone)
                 }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??;
+                tracing::info!(operation = "install", app = %app_name, step = "finalize", "Installation finalized");
                 if let Some(t) = &tx {
-                    let _ = t.send(InstallMessage::Progress(format!("Successfully installed {}", app_name), 100.0));
+                    if t.send(InstallMessage::Progress(format!("Successfully installed {}", app_name), 100.0)).is_err() {
+                        tracing::warn!(operation = "install", app = %app_name, step = "finalize", "Progress receiver dropped");
+                    }
                 }
                 if !is_cli {
                     std::thread::sleep(std::time::Duration::from_secs(1));
                 }
             } else {
                 if let Some(t) = &tx {
-                    let _ = t.send(InstallMessage::Progress("Installation cancelled: No binary selected".to_string(), -1.0));
+                    if t.send(InstallMessage::Progress("Installation cancelled: No binary selected".to_string(), -1.0)).is_err() {
+                        tracing::warn!(operation = "install", source = source, step = "binary_selection", "Progress receiver dropped");
+                    }
                 }
             }
         } else {
             if let Some(t) = &tx {
-                let _ = t.send(InstallMessage::Progress("Failed to extract the archive".to_string(), -1.0));
+                if t.send(InstallMessage::Progress("Failed to extract the archive".to_string(), -1.0)).is_err() {
+                    tracing::warn!(operation = "install", source = source, step = "extract", "Progress receiver dropped");
+                }
             }
         }
     } else {
         if let Some(t) = &tx {
-            let _ = t.send(InstallMessage::Progress("Archive file not found after download".to_string(), -1.0));
+            if t.send(InstallMessage::Progress("Archive file not found after download".to_string(), -1.0)).is_err() {
+                tracing::warn!(operation = "install", source = source, step = "download", "Progress receiver dropped");
+            }
         }
     }
     
-    if downloaded && actual_tarball.exists() {
-        let _ = std::fs::remove_file(&actual_tarball);
+    if downloaded {
+        if actual_tarball.exists() {
+            let _ = std::fs::remove_file(&actual_tarball);
+        }
+        if let Some(parent) = actual_tarball.parent() {
+            if parent
+                .file_name()
+                .and_then(|n| n.to_str())
+                .map(|n| n.starts_with("kpm_downloads_"))
+                .unwrap_or(false)
+            {
+                let _ = std::fs::remove_dir_all(parent);
+            }
+        }
     }
     
+    tracing::info!(operation = "install", source = source, "Install flow finished");
     Ok(())
 }
 
 pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -> Result<(), crate::error::KoreError> {
+    tracing::info!(operation = "remove", app = app_name, cli = is_cli, "Remove flow started");
     let mut target_path = config.install_dir.join(app_name);
 
     if !target_path.exists() {
-        // Suggest name if it doesn't exist exactly (case insensitive or similar)
         let entries = fs::read_dir(&config.install_dir)?;
         let mut found = None;
         for entry in entries.flatten() {
@@ -337,32 +375,79 @@ pub fn remove_app(config: &Config, app_name: &str, is_cli: bool, silent: bool) -
     }
 
     if !silent { info_msg("Searching for associated files..."); }
-    // Locate and iterate through .desktop files containing this path
+    let mut critical_errors: Vec<String> = Vec::new();
+
     let target_str = target_path.to_string_lossy().to_string();
     for path in find_desktop_files_with_target(config, &target_str) {
         let app_name_from_file = path.file_stem().unwrap_or_default();
         let associated_bin = config.bin_dir.join(app_name_from_file);
-        let _ = fs::remove_file(&associated_bin);
-        let _ = fs::remove_file(&path);
-        if !silent { success_msg(&format!("Removed shortcut: {}", path.file_name().unwrap_or_default().to_string_lossy())); }
+
+        match fs::remove_file(&associated_bin) {
+            Ok(_) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => critical_errors.push(format!("Failed to remove binary '{}': {}", associated_bin.display(), e)),
+        }
+
+        match fs::remove_file(&path) {
+            Ok(_) => {
+                if !silent { success_msg(&format!("Removed shortcut: {}", path.file_name().unwrap_or_default().to_string_lossy())); }
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => critical_errors.push(format!("Failed to remove shortcut '{}': {}", path.display(), e)),
+        }
     }
 
-    let _ = fs::remove_dir_all(&target_path);
-    // Additionally remove a homonymous binary directly in case of broken links
-    let _ = fs::remove_file(config.bin_dir.join(target_path.file_name().unwrap_or_default()));
+    match fs::remove_dir_all(&target_path) {
+        Ok(_) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => critical_errors.push(format!("Failed to remove directory '{}': {}", target_path.display(), e)),
+    }
+
+    let homonymous_bin = config.bin_dir.join(target_path.file_name().unwrap_or_default());
+    if let Err(e) = fs::remove_file(&homonymous_bin) {
+        if e.kind() != std::io::ErrorKind::NotFound {
+            critical_errors.push(format!("Failed to remove binary '{}': {}", homonymous_bin.display(), e));
+        }
+    }
 
     if let Ok(mut child) = Command::new("update-desktop-database")
         .arg(&config.apps_dir)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .spawn() 
     {
-        let _ = child.wait();
+        if let Err(e) = child.wait() {
+            tracing::warn!("Failed to wait for update-desktop-database: {}", e);
+        }
+    } else if !silent {
+        tracing::warn!("Failed to launch update-desktop-database.");
     }
-    let _ = std::process::Command::new("touch").arg(&config.apps_dir).status();
+
+    if let Err(e) = std::process::Command::new("touch")
+        .arg(&config.apps_dir)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+    {
+        tracing::warn!("Failed to refresh app dir mtime '{}': {}", config.apps_dir.display(), e);
+    }
+
+    if !critical_errors.is_empty() {
+        for err in &critical_errors {
+            if !silent { error_msg(err); }
+            tracing::error!("{}", err);
+        }
+        return Err(crate::error::KoreError::Generic(format!(
+            "Removal failed with {} critical error(s).",
+            critical_errors.len()
+        )));
+    }
 
     if !silent { success_msg(&format!("{} successfully removed!", target_path.file_name().unwrap_or_default().to_string_lossy())); }
     if !is_cli {
         std::thread::sleep(std::time::Duration::from_secs(2));
     }
-    
+    tracing::info!(operation = "remove", app = app_name, "Remove flow finished");
+
     Ok(())
 }

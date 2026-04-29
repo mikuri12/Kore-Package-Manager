@@ -4,6 +4,6 @@ Type=Application
 Name=Kore Package Manager
 Comment=Manage Linux tarballs, AppImages and binaries directly from the terminal.
 Exec=~/.local/bin/kpm
-Icon=kore.ico
+Icon=kore-logo.svg
 Terminal=true
 Categories=Utility;System;

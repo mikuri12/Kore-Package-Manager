@@ -5,6 +5,25 @@ use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
+fn normalize_desktop_value(value: &str) -> String {
+    value.trim().trim_matches('"').to_string()
+}
+
+fn desktop_line_references_target(line: &str, target_str: &str) -> bool {
+    let trimmed = line.trim_start();
+
+    if let Some(exec) = trimmed.strip_prefix("Exec=").or_else(|| trimmed.strip_prefix("TryExec=")) {
+        let tokens = crate::core::install::tokenize_desktop_exec(exec);
+        return tokens.iter().any(|t| normalize_desktop_value(t) == target_str);
+    }
+
+    if let Some(path) = trimmed.strip_prefix("Path=") {
+        return normalize_desktop_value(path) == target_str;
+    }
+
+    false
+}
+
 pub fn find_desktop_files_with_target(config: &Config, target_str: &str) -> Vec<PathBuf> {
     let mut found = Vec::new();
     if let Ok(entries) = fs::read_dir(&config.apps_dir) {
@@ -12,7 +31,10 @@ pub fn find_desktop_files_with_target(config: &Config, target_str: &str) -> Vec<
             let path = entry.path();
             if path.extension().and_then(|s| s.to_str()) == Some("desktop") {
                 if let Ok(content) = fs::read_to_string(&path) {
-                    if content.contains(target_str) {
+                    if content
+                        .lines()
+                        .any(|line| desktop_line_references_target(line, target_str))
+                    {
                         found.push(path);
                     }
                 }
@@ -57,9 +79,9 @@ pub fn get_all_categories(config: &Config) -> Vec<String> {
             if path.extension().and_then(|s| s.to_str()) == Some("desktop") {
                 if let Ok(file_raw) = fs::File::open(&path) {
                     let reader = BufReader::new(file_raw);
-                    for line in reader.lines().flatten() {
-                        if line.starts_with("Categories=") {
-                            let cats = line["Categories=".len()..].split(&[';', ','][..]);
+                    for line in reader.lines().map_while(Result::ok) {
+                        if let Some(categories_line) = line.strip_prefix("Categories=") {
+                            let cats = categories_line.split(&[';', ','][..]);
                             for cat in cats {
                                 let trimmed = cat.trim();
                                 if !trimmed.is_empty() {
@@ -75,6 +97,6 @@ pub fn get_all_categories(config: &Config) -> Vec<String> {
     }
 
     let mut sorted: Vec<String> = categories.into_iter().collect();
-    sorted.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+    sorted.sort_by_key(|a| a.to_lowercase());
     sorted
 }
