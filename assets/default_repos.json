@@ -18,6 +18,15 @@
       "terminal": false,
       "description": "An all-in-one Discord client with built-in Vencord and plugins for a better experience."
     },
+        {
+      "name": "Helium Browswr",
+      "package_name": "helium",
+      "url": "https://github.com/imputnet/helium-linux",
+      "category": "Network",
+      "requires_root": false,
+      "terminal": false,
+      "description": "The Chromium-based web browser made for people, with love. Privacy-first with unbiased ad-blocking. No bloat and no noise.."
+    },
     {
       "name": "Neovim",
       "package_name": "nvim",
