@@ -117,7 +117,7 @@ install_completions() {
     if [ -f "$HOME/.bashrc" ]; then
         local bash_dir="$HOME/.local/share/bash-completion/completions"
         mkdir -p "$bash_dir"
-        curl -sSL "$RAW_URL/bash/kpm" -o "$bash_dir/kpm"
+        curl -sSL "$RAW_URL/bash/kpm.bash" -o "$bash_dir/kpm"
         info "Bash completion installed."
     fi
 
@@ -125,7 +125,7 @@ install_completions() {
     if [ -f "$HOME/.zshrc" ]; then
         local zsh_dir="$HOME/.local/share/zsh/site-functions"
         mkdir -p "$zsh_dir"
-        curl -sSL "$RAW_URL/zsh/_tm" -o "$zsh_dir/_tm"
+        curl -sSL "$RAW_URL/zsh/_kpm" -o "$zsh_dir/_tm"
         info "Zsh completion installed."
         
         if ! grep -q "$zsh_dir" "$HOME/.zshrc" 2>/dev/null; then
