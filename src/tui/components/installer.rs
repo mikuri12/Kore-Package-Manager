@@ -171,7 +171,7 @@ impl Installer {
     fn spawn_downloader(&self, url: String) {
         let tx = self.state.tx.clone();
         tokio::spawn(async move {
-            let tmp_dir = std::env::temp_dir().join("tm_downloads");
+            let tmp_dir = std::env::temp_dir().join("kpm_downloads");
             if let Err(e) = std::fs::create_dir_all(&tmp_dir) {
                 let _ = tx.send(InstallerEvent::Error(format!("Failed to create temp dir: {}", e)));
                 return;

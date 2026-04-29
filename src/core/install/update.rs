@@ -96,32 +96,29 @@ pub async fn update_kpm(config: &Config) -> Result<(), crate::error::KoreError> 
                         let desktop_file = temp_dir.join("kpm.desktop");
                         let icon_file = temp_dir.join("kore-logo.svg");
                         if desktop_file.exists() {
-                            let home_dir = std::env::var("HOME").unwrap_or_default();
-                            if !home_dir.is_empty() {
-                                let apps_dir = PathBuf::from(&home_dir).join(".local/share/applications");
-                                let icons_dir = PathBuf::from(&home_dir).join(".local/share/icons");
-                                let _ = fs::create_dir_all(&apps_dir);
-                                let _ = fs::create_dir_all(&icons_dir);
+                            let apps_dir = &config.apps_dir;
+                            let icons_dir = config.apps_dir.parent().unwrap_or(&config.apps_dir).join("icons");
+                            let _ = fs::create_dir_all(apps_dir);
+                            let _ = fs::create_dir_all(&icons_dir);
                                 
-                                if let Ok(content) = fs::read_to_string(&desktop_file) {
-                                    let icon_path = icons_dir.join("kore-logo.svg");
-                                    let new_content = content.lines().map(|line| {
-                                        if line.starts_with("Icon=") {
-                                            format!("Icon={}", icon_path.display())
-                                        } else {
-                                            line.to_string()
-                                        }
-                                    }).collect::<Vec<_>>().join("\n");
-                                    let _ = fs::write(apps_dir.join("kpm.desktop"), new_content);
-                                } else {
-                                    let _ = fs::copy(&desktop_file, apps_dir.join("kpm.desktop"));
-                                }
-
-                                if icon_file.exists() {
-                                    let _ = fs::copy(&icon_file, icons_dir.join("kore-logo.svg"));
-                                }
-                                let _ = std::process::Command::new("update-desktop-database").arg(&apps_dir).output();
+                            if let Ok(content) = fs::read_to_string(&desktop_file) {
+                                let icon_path = icons_dir.join("kore-logo.svg");
+                                let new_content = content.lines().map(|line| {
+                                    if line.starts_with("Icon=") {
+                                        format!("Icon={}", icon_path.display())
+                                    } else {
+                                        line.to_string()
+                                    }
+                                }).collect::<Vec<_>>().join("\n");
+                                let _ = fs::write(apps_dir.join("kpm.desktop"), new_content);
+                            } else {
+                                let _ = fs::copy(&desktop_file, apps_dir.join("kpm.desktop"));
                             }
+    
+                            if icon_file.exists() {
+                                let _ = fs::copy(&icon_file, icons_dir.join("kore-logo.svg"));
+                            }
+                            let _ = std::process::Command::new("update-desktop-database").arg(apps_dir).output();
                         }
                     } else {
                         error_msg("Error replacing the current binary. Make sure you have permissions.");

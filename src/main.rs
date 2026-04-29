@@ -45,7 +45,6 @@ async fn main() -> anyhow::Result<()> {
             let multi = sources.len() > 1;
             for source in sources {
                 let res = if multi {
-                    // For bulk installs, prioritize repo metadata by passing None for manual overrides
                     core::install_app(&config, source, None, None, None, true, None).await
                 } else {
                     core::install_app(&config, source, app_name.as_deref(), use_root.as_deref(), category.as_deref(), true, None).await
