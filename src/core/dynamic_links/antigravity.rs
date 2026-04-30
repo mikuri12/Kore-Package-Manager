@@ -6,30 +6,29 @@ pub async fn resolve(url_template: &str) -> Result<String> {
         .user_agent("Kore-Package-Manager/1.0")
         .build()?;
 
-    // 1. Intentar obtener la versión desde la API de GitHub
-    // Antigravity usa un WAF agresivo en su web, pero GitHub es amigable para APIs.
     let repo_url = "https://api.github.com/repos/antigravity-project/antigravity/releases/latest";
-    
     let mut version = String::new();
 
+    // 1. Intento de obtención vía API
     if let Ok(resp) = client.get(repo_url).send().await {
         if resp.status().is_success() {
-            let json: Value = resp.json().await?;
-            // Extraemos el tag_name (ej: "v1.23.2-4781536860569600") y limpiamos la 'v'
-            if let Some(tag) = json["tag_name"].as_str() {
-                version = tag.trim_start_matches('v').to_string();
+            if let Ok(json) = resp.json::<Value>().await {
+                if let Some(tag) = json["tag_name"].as_str() {
+                    // Limpiamos la 'v' inicial si existe
+                    version = tag.trim_start_matches('v').to_string();
+                }
             }
         }
     }
 
-    // 2. Fallback: Si la API falla, usamos tu último valor conocido
-    // Esto evita que kpm se rompa si no hay internet o GitHub cae.
+    // 2. Fallback con valor constante
+    // Esto es lo que garantiza que kpm siempre funcione incluso offline o con rate-limit de GitHub
     if version.is_empty() {
+        // Log opcional: println!("Advertencia: Usando versión de respaldo para Antigravity");
         version = "1.23.2-4781536860569600".to_string();
     }
 
-    // 3. Construir la URL final
-    // Reemplazamos el placeholder que definas en tu repo.json (ej: $ag_ver)
+    // 3. Reemplazo dinámico
     let resolved_url = url_template.replace("$ag_ver", &version);
 
     Ok(resolved_url)
