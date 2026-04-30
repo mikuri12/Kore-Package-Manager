@@ -3,6 +3,7 @@ pub mod sublime;
 pub mod waterfox;
 pub mod jetbrains;
 pub mod blender;
+pub mod antigravity;
 
 use anyhow::Result;
 
@@ -23,6 +24,9 @@ pub async fn resolve_dynamic_url(url: &str) -> Result<String> {
     }
     if resolved_url.contains("$blender_ver") || resolved_url.contains("$blender_major") {
         resolved_url = blender::resolve(&resolved_url).await?;
+    }
+    if resolved_url.contains("$ag_ver") {
+        resolved_url = antigravity::resolve(&resolved_url).await?;
     }
 
     Ok(resolved_url)
