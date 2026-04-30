@@ -1,6 +1,6 @@
 [package]
 name = "kpm"
-version = "2.1.8"
+version = "2.1.9"
 edition = "2021"
 default-run = "kpm"
 description = "Kore Package Manager (kpm) - Edition 2026"
