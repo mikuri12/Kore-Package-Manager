@@ -49,7 +49,17 @@ pub fn list_cli(config: &Config) {
         let mut apps = Vec::new();
         for entry in entries.flatten() {
             if entry.path().is_dir() {
-                apps.push(entry.file_name().to_string_lossy().to_string());
+                let app_name = entry.file_name().to_string_lossy().to_string();
+                let manifest_path = entry.path().join(".kpm_manifest.json");
+                let mut version_str = String::new();
+                if let Ok(content) = fs::read_to_string(&manifest_path) {
+                    if let Ok(manifest) = serde_json::from_str::<serde_json::Value>(&content) {
+                        if let Some(v) = manifest.get("version").and_then(|val| val.as_str()) {
+                            version_str = format!(" (v{})", v);
+                        }
+                    }
+                }
+                apps.push(format!("{}{}", app_name, version_str));
             }
         }
         

@@ -236,7 +236,7 @@ impl Installer {
         let version = self.state.version.clone();
 
         tokio::task::spawn_blocking(move || {
-            match crate::core::install::finalize_installation(&config, &target, &exec_path, &app_name, &display_name, use_root, use_terminal, &category, desk, version, true) {
+            match crate::core::install::finalize_installation(&config, &target, &exec_path, &app_name, &display_name, use_root, use_terminal, &category, desk, version, None, true) {
                 Ok(_) => { let _ = tx.send(InstallerEvent::Finalized); }
                 Err(e) => { let _ = tx.send(InstallerEvent::Error(e.to_string())); }
             }

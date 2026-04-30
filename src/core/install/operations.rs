@@ -44,6 +44,9 @@ pub async fn install_app(
     let mut repo_requires_root_opt: Option<bool> = None;
     let mut repo_terminal_opt: Option<bool> = None;
     let mut repo_version_opt: Option<String> = None;
+    let mut saved_asset: Option<String> = None;
+    let mut saved_binary: Option<String> = None;
+    let mut saved_desktop: Option<String> = None;
 
     if !actual_tarball.exists() {
         tracing::info!(operation = "install", source = source, step = "resolve_source", "Resolving source");
@@ -73,11 +76,17 @@ pub async fn install_app(
                                         }
                                     });
 
+                                let mut local_version_opt: Option<String> = None;
                                 if update_mode && !prospective_name.is_empty() {
                                     let manifest_path = config.install_dir.join(&prospective_name).join(".kpm_manifest.json");
                                     if let Ok(content) = std::fs::read_to_string(&manifest_path) {
                                         if let Ok(manifest) = serde_json::from_str::<serde_json::Value>(&content) {
+                                            saved_asset = manifest.get("asset_name").and_then(|v| v.as_str()).map(|s| s.to_string());
+                                            saved_binary = manifest.get("binary_path").and_then(|v| v.as_str()).map(|s| s.to_string());
+                                            saved_desktop = manifest.get("desktop_file").and_then(|v| v.as_str()).map(|s| s.to_string());
+                                            
                                             if let Some(local_version) = manifest.get("version").and_then(|v| v.as_str()) {
+                                                local_version_opt = Some(local_version.to_string());
                                                 if local_version == version {
                                                     if is_cli {
                                                         info_msg(&format!("{} is already up-to-date ({}).", prospective_name, version));
@@ -95,8 +104,27 @@ pub async fn install_app(
                                 if assets.is_empty() {
                                     if is_cli { error_msg("No suitable tarball assets found in the latest release."); }
                                 } else {
+                                    let mut resolved_idx = None;
+                                    if let Some(ref a) = saved_asset {
+                                        if let Some(idx) = assets.iter().position(|asset| &asset.name == a) {
+                                            resolved_idx = Some(idx);
+                                        } else if let Some(ref lv) = local_version_opt {
+                                            let attempt1 = a.replace(lv, &version);
+                                            if let Some(idx) = assets.iter().position(|asset| asset.name == attempt1) {
+                                                resolved_idx = Some(idx);
+                                            } else {
+                                                let attempt2 = a.replace(lv.trim_start_matches('v'), version.trim_start_matches('v'));
+                                                if let Some(idx) = assets.iter().position(|asset| asset.name == attempt2) {
+                                                    resolved_idx = Some(idx);
+                                                }
+                                            }
+                                        }
+                                    }
+
                                     let selected_asset_idx = if assets.len() == 1 {
                                         0
+                                    } else if let Some(idx) = resolved_idx {
+                                        idx
                                     } else {
                                         if !is_cli {
                                             if let Some(t) = &tx {
@@ -114,6 +142,7 @@ pub async fn install_app(
                                         }
                                     };
                                     let selected_asset = &assets[selected_asset_idx];
+                                    saved_asset = Some(selected_asset.name.clone());
                                     
                                     let tmp_dir = create_unique_temp_download_dir()?;
                                     
@@ -198,7 +227,9 @@ pub async fn install_app(
         };
 
         if let Some((target, raw_name_folder, executables, desktop_files)) = extract_result {
-            let exec_path = if !is_cli {
+            let exec_path = if let Some(ref b) = saved_binary {
+                Some(target.join(b))
+            } else if !is_cli {
                 if executables.is_empty() {
                     None
                 } else if let Some(t) = &tx {
@@ -250,7 +281,10 @@ pub async fn install_app(
                 }
             };
 
-            let bundled_desktop = if desktop_files.is_empty() {
+            let bundled_desktop = if let Some(ref d) = saved_desktop {
+                let p = target.join(d);
+                if p.exists() { Some(p) } else { None }
+            } else if desktop_files.is_empty() {
                 None
             } else {
                 if !is_cli {
@@ -333,10 +367,11 @@ pub async fn install_app(
                 let category_clone = category.clone();
                 let bundled_desktop_clone = bundled_desktop.clone();
                 let version_clone = repo_version_opt.clone();
+                let asset_name_clone = saved_asset.clone();
                 let is_cli_clone = is_cli;
 
                 tokio::task::spawn_blocking(move || {
-                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &internal_name_clone, &display_name_clone, use_root_clone, use_terminal_clone, &category_clone, bundled_desktop_clone, version_clone, !is_cli_clone)
+                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &internal_name_clone, &display_name_clone, use_root_clone, use_terminal_clone, &category_clone, bundled_desktop_clone, version_clone, asset_name_clone, !is_cli_clone)
                 }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??;
                 tracing::info!(operation = "install", app = %internal_name, step = "finalize", "Installation finalized");
                 if let Some(t) = &tx {

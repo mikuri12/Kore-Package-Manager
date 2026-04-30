@@ -239,6 +239,7 @@ pub fn finalize_installation(
     category: &str,
     bundled_desktop: Option<PathBuf>,
     version: Option<String>,
+    asset_name: Option<String>,
     silent: bool,
 ) -> Result<(), crate::error::KoreError> {
     tracing::info!(operation = "desktop_finalize", app = app_name, "Finalizing desktop integration");
@@ -269,7 +270,7 @@ pub fn finalize_installation(
         final_exec = format!("pkexec {}", final_exec);
     }
 
-    let desktop_content = if let Some(bd_path) = bundled_desktop {
+    let desktop_content = if let Some(ref bd_path) = bundled_desktop {
         let content = fs::read_to_string(bd_path).unwrap_or_default();
         let mut new_lines = Vec::new();
         let mut has_terminal = false;
@@ -335,11 +336,23 @@ Categories={};"#,
 
     if let Some(v) = version {
         let manifest_path = target.join(".kpm_manifest.json");
-        let manifest = format!(r#"{{
-    "app_name": "{}",
-    "version": "{}"
-}}"#, app_name, v);
-        let _ = fs::write(manifest_path, manifest);
+        let rel_exec = exec_path.strip_prefix(target).unwrap_or(exec_path).to_string_lossy();
+        let rel_desktop = bundled_desktop.as_ref().map(|d| d.strip_prefix(target).unwrap_or(d).to_string_lossy().into_owned());
+        
+        let mut manifest = serde_json::json!({
+            "app_name": app_name,
+            "version": v,
+            "binary_path": rel_exec,
+        });
+        
+        if let Some(a) = asset_name {
+            manifest["asset_name"] = serde_json::Value::String(a);
+        }
+        if let Some(d) = rel_desktop {
+            manifest["desktop_file"] = serde_json::Value::String(d);
+        }
+        
+        let _ = fs::write(manifest_path, serde_json::to_string_pretty(&manifest).unwrap_or_default());
     }
 
     tracing::info!(operation = "desktop_finalize", app = app_name, "Desktop integration finalized");
