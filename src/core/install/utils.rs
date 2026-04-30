@@ -3,7 +3,9 @@ use crate::utils::error_msg;
 use std::collections::HashSet;
 use std::fs;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::os::unix::fs::PermissionsExt;
+use anyhow::{Context, Result};
 
 fn normalize_desktop_value(value: &str) -> String {
     value.trim().trim_matches('"').to_string()
@@ -109,4 +111,38 @@ pub fn get_all_categories(config: &Config) -> Vec<String> {
     let mut sorted: Vec<String> = categories.into_iter().collect();
     sorted.sort_by_key(|a| a.to_lowercase());
     sorted
+}
+
+/// Prepara un binario para su ejecución, asegurando permisos 0o755.
+/// Intenta remover la extensión renombrándolo localmente si es posible.
+/// Devuelve una tupla: (Ruta_del_ejecutable, Nombre_agnóstico_del_comando)
+pub fn process_binary_extension<P: AsRef<Path>>(file_path: P) -> Result<(PathBuf, String)> {
+    let path = file_path.as_ref();
+
+    let stem = path
+        .file_stem()
+        .context("El path no tiene un nombre de archivo válido")?
+        .to_string_lossy()
+        .to_string();
+
+    // Obtenemos los permisos actuales y aplicamos 0o755 (rwxr-xr-x) al archivo original
+    let mut perms = fs::metadata(path)
+        .context("No se pudo obtener la metadata del archivo")?
+        .permissions();
+    perms.set_mode(0o755);
+    fs::set_permissions(path, perms)
+        .context("No se pudieron establecer los permisos de ejecución")?;
+
+    let parent = path.parent().unwrap_or_else(|| Path::new(""));
+    let new_path = parent.join(&stem);
+
+    // Renombramos el archivo solo si tiene extensión y no hay colisión (ej. carpeta con el mismo nombre)
+    if path != new_path && !new_path.exists() {
+        if fs::rename(path, &new_path).is_ok() {
+            return Ok((new_path, stem));
+        }
+    }
+
+    // Si hubo colisión o no necesitaba renombre, devolvemos el path original intacto pero con el comando agnóstico
+    Ok((path.to_path_buf(), stem))
 }

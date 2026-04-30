@@ -243,12 +243,17 @@ pub fn finalize_installation(
     silent: bool,
 ) -> Result<(), crate::error::KoreError> {
     tracing::info!(operation = "desktop_finalize", app = app_name, "Finalizing desktop integration");
-    let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
-    let mut bin_name = exec_name.to_string();
-    if bin_name.to_lowercase().ends_with(".appimage") {
-        bin_name = bin_name[..bin_name.len() - 9].to_string();
-    }
+
+    let (processed_exec_path, bin_name) = crate::core::install::utils::process_binary_extension(exec_path).unwrap_or_else(|e| {
+        tracing::warn!("Failed to process binary extension for {:?}: {}", exec_path, e);
+        if !silent {
+            error_msg(&format!("Failed to process binary extension: {}", e));
+        }
+        let fallback_stem = exec_path.file_stem().unwrap_or_default().to_string_lossy().to_string();
+        (exec_path.to_path_buf(), fallback_stem)
+    });
     
+    let exec_name = processed_exec_path.file_name().unwrap_or_default().to_string_lossy();
     let icon_path = find_icon(target, display_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
     let bin_dest = config.bin_dir.join(&bin_name);
@@ -265,7 +270,7 @@ pub fn finalize_installation(
         })?;
     }
     
-    if let Err(e) = create_launcher_or_symlink(exec_path, &bin_dest) {
+    if let Err(e) = create_launcher_or_symlink(&processed_exec_path, &bin_dest) {
          if !silent { error_msg(&format!("Unable to create launcher/link: {}", e)); }
          return Err(e);
     }
@@ -341,7 +346,7 @@ Categories={};"#,
 
     if let Some(v) = version {
         let manifest_path = target.join(".kpm_manifest.json");
-        let rel_exec = exec_path.strip_prefix(target).unwrap_or(exec_path).to_string_lossy();
+        let rel_exec = processed_exec_path.strip_prefix(target).unwrap_or(&processed_exec_path).to_string_lossy();
         let rel_desktop = bundled_desktop.as_ref().map(|d| d.strip_prefix(target).unwrap_or(d).to_string_lossy().into_owned());
         
         let mut manifest = serde_json::json!({
