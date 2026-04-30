@@ -33,6 +33,7 @@ pub async fn install_app(
     category_opt: Option<&str>,
     is_cli: bool,
     tx: Option<tokio::sync::mpsc::UnboundedSender<InstallMessage>>,
+    update_mode: bool,
 ) -> Result<(), crate::error::KoreError> {
     tracing::info!(operation = "install", source = source, cli = is_cli, "Install flow started");
     let mut actual_tarball = PathBuf::from(source);
@@ -42,6 +43,7 @@ pub async fn install_app(
     let mut repo_category_opt: Option<String> = None;
     let mut repo_requires_root_opt: Option<bool> = None;
     let mut repo_terminal_opt: Option<bool> = None;
+    let mut repo_version_opt: Option<String> = None;
 
     if !actual_tarball.exists() {
         tracing::info!(operation = "install", source = source, step = "resolve_source", "Resolving source");
@@ -56,7 +58,40 @@ pub async fn install_app(
             if resolved.is_git {
                 if is_cli { info_msg(&format!("Fetching releases for {}...", repo_name_opt.as_deref().unwrap_or("repository"))); }
                         match crate::core::download::get_latest_release_assets(url).await {
-                            Ok(assets) => {
+                            Ok((version, assets)) => {
+                                repo_version_opt = Some(version.clone());
+
+                                let prospective_name = app_name_opt
+                                    .map(|s| s.to_string())
+                                    .unwrap_or_else(|| {
+                                        if let Some(pkg_name) = &repo_package_name_opt {
+                                            pkg_name.clone()
+                                        } else if let Some(repo_name) = &repo_name_opt {
+                                            repo_name.clone()
+                                        } else {
+                                            "".to_string()
+                                        }
+                                    });
+
+                                if update_mode && !prospective_name.is_empty() {
+                                    let manifest_path = config.install_dir.join(&prospective_name).join(".kpm_manifest.json");
+                                    if let Ok(content) = std::fs::read_to_string(&manifest_path) {
+                                        if let Ok(manifest) = serde_json::from_str::<serde_json::Value>(&content) {
+                                            if let Some(local_version) = manifest.get("version").and_then(|v| v.as_str()) {
+                                                if local_version == version {
+                                                    if is_cli {
+                                                        info_msg(&format!("{} is already up-to-date ({}).", prospective_name, version));
+                                                    }
+                                                    if let Some(t) = &tx {
+                                                        let _ = t.send(InstallMessage::Progress("Already up-to-date.".to_string(), 100.0));
+                                                    }
+                                                    return Ok(());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
                                 if assets.is_empty() {
                                     if is_cli { error_msg("No suitable tarball assets found in the latest release."); }
                                 } else {
@@ -116,6 +151,7 @@ pub async fn install_app(
                 };
 
                 let tmp_dir = create_unique_temp_download_dir()?;
+                repo_version_opt = Some("latest".to_string());
                 
                 if is_cli { info_msg(&format!("Downloading from {}...", resolved_url)); }
                 tracing::info!(operation = "install", source = source, step = "download_direct_url", url = %resolved_url, "Downloading direct URL");
@@ -296,10 +332,11 @@ pub async fn install_app(
                 let use_terminal_clone = use_terminal;
                 let category_clone = category.clone();
                 let bundled_desktop_clone = bundled_desktop.clone();
+                let version_clone = repo_version_opt.clone();
                 let is_cli_clone = is_cli;
 
                 tokio::task::spawn_blocking(move || {
-                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &internal_name_clone, &display_name_clone, use_root_clone, use_terminal_clone, &category_clone, bundled_desktop_clone, !is_cli_clone)
+                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &internal_name_clone, &display_name_clone, use_root_clone, use_terminal_clone, &category_clone, bundled_desktop_clone, version_clone, !is_cli_clone)
                 }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??;
                 tracing::info!(operation = "install", app = %internal_name, step = "finalize", "Installation finalized");
                 if let Some(t) = &tx {

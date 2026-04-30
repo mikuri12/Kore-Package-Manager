@@ -44,6 +44,7 @@ pub struct InstallerState {
     pub tarball_path: Option<PathBuf>,
     pub target_folder: Option<PathBuf>,
     pub raw_name_folder: Option<String>,
+    pub version: Option<String>,
     
     pub available_assets: Vec<(String, String)>,
     
@@ -63,8 +64,8 @@ pub struct InstallerState {
 pub enum InstallerEvent {
     Log(String),
     Progress(f64),
-    SelectAsset(Vec<(String, String)>),
-    Resolved(String),
+    SelectAsset(String, Vec<(String, String)>),
+    Resolved(String, String),
     SetTerminal(bool),
     Downloaded(PathBuf),
     Extracted(PathBuf, String, Vec<PathBuf>, Vec<PathBuf>),
@@ -90,6 +91,7 @@ impl InstallerState {
             tarball_path: None,
             target_folder: None,
             raw_name_folder: None,
+            version: None,
             available_assets: vec![],
             executables: vec![],
             desktop_files: vec![],
@@ -134,7 +136,7 @@ impl Installer {
                     if resolved.is_git {
                         let _ = tx.send(InstallerEvent::Log("Fetching GitHub/GitLab releases...".into()));
                         match crate::core::download::get_latest_release_assets(&resolved.url).await {
-                            Ok(assets) => {
+                            Ok((version, assets)) => {
                                 if assets.is_empty() {
                                     let _ = tx.send(InstallerEvent::Error("No suitable tarball assets found in the latest release.".into()));
                                 } else {
@@ -142,7 +144,7 @@ impl Installer {
                                     for a in assets {
                                         tuples.push((a.name.clone(), a.browser_download_url.clone()));
                                     }
-                                    let _ = tx.send(InstallerEvent::SelectAsset(tuples));
+                                    let _ = tx.send(InstallerEvent::SelectAsset(version, tuples));
                                 }
                             }
                             Err(e) => { let _ = tx.send(InstallerEvent::Error(e.to_string())); }
@@ -150,7 +152,7 @@ impl Installer {
                     } else {
                         let _ = tx.send(InstallerEvent::Log("Resolving dynamic URL...".into()));
                         match crate::core::dynamic_links::resolve_dynamic_url(&resolved.url).await {
-                            Ok(u) => { let _ = tx.send(InstallerEvent::Resolved(u)); }
+                            Ok(u) => { let _ = tx.send(InstallerEvent::Resolved("latest".into(), u)); }
                             Err(e) => { let _ = tx.send(InstallerEvent::Error(e.to_string())); }
                         }
                     }
@@ -231,9 +233,10 @@ impl Installer {
         let use_terminal = if use_root { false } else { self.state.use_terminal };
         let category = self.state.category.clone();
         let desk = self.state.selected_desktop.clone();
+        let version = self.state.version.clone();
 
         tokio::task::spawn_blocking(move || {
-            match crate::core::install::finalize_installation(&config, &target, &exec_path, &app_name, &display_name, use_root, use_terminal, &category, desk, true) {
+            match crate::core::install::finalize_installation(&config, &target, &exec_path, &app_name, &display_name, use_root, use_terminal, &category, desk, version, true) {
                 Ok(_) => { let _ = tx.send(InstallerEvent::Finalized); }
                 Err(e) => { let _ = tx.send(InstallerEvent::Error(e.to_string())); }
             }
@@ -250,14 +253,16 @@ impl Installer {
             match event {
                 InstallerEvent::Log(msg) => self.log(msg),
                 InstallerEvent::Progress(p) => self.state.progress = p,
-                InstallerEvent::SelectAsset(assets) => {
+                InstallerEvent::SelectAsset(version, assets) => {
+                    self.state.version = Some(version);
                     self.state.available_assets = assets;
                     self.state.step = InstallStep::SelectingTarball;
                     self.state.list_state.select(Some(0));
                     self.state.progress = 0.0;
                     self.log("Waiting for user to select an asset...".into());
                 }
-                InstallerEvent::Resolved(url) => {
+                InstallerEvent::Resolved(version, url) => {
+                    self.state.version = Some(version);
                     self.state.resolved_url = Some(url.clone());
                     self.state.step = InstallStep::Downloading;
                     self.state.progress = 0.0;

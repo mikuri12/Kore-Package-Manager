@@ -238,6 +238,7 @@ pub fn finalize_installation(
     use_terminal: bool,
     category: &str,
     bundled_desktop: Option<PathBuf>,
+    version: Option<String>,
     silent: bool,
 ) -> Result<(), crate::error::KoreError> {
     tracing::info!(operation = "desktop_finalize", app = app_name, "Finalizing desktop integration");
@@ -331,6 +332,15 @@ Categories={};"#,
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status();
+
+    if let Some(v) = version {
+        let manifest_path = target.join(".kpm_manifest.json");
+        let manifest = format!(r#"{{
+    "app_name": "{}",
+    "version": "{}"
+}}"#, app_name, v);
+        let _ = fs::write(manifest_path, manifest);
+    }
 
     tracing::info!(operation = "desktop_finalize", app = app_name, "Desktop integration finalized");
     Ok(())

@@ -17,6 +17,7 @@ pub struct Asset {
 
 #[derive(Debug, Deserialize)]
 pub struct GitlabRelease {
+    pub tag_name: String,
     pub assets: GitlabAssets,
 }
 
@@ -43,7 +44,7 @@ pub fn is_supported_git_url(url: &str) -> bool {
     url.contains("github.com") || url.contains("gitlab.") || url.contains("codeberg.org")
 }
 
-pub async fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
+pub async fn get_latest_release_assets(url: &str) -> Result<(String, Vec<Asset>)> {
     let mut parts: Vec<&str> = url.trim_end_matches('/').split('/').collect();
     if parts.len() < 2 {
         return Err(anyhow::anyhow!("Invalid Git URL"));
@@ -98,7 +99,7 @@ pub async fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
             });
         }
 
-        assets
+        (first.tag_name, assets)
     } else {
         let api_url = if url.contains("codeberg.org") {
             format!("https://codeberg.org/api/v1/repos/{}/{}/releases/latest", owner, repo)
@@ -110,13 +111,16 @@ pub async fn get_latest_release_assets(url: &str) -> Result<Vec<Asset>> {
             return Err(anyhow::anyhow!("Failed to fetch release: {}", response.status()));
         }
         let release: Release = response.json().await?;
-        release.assets
+        let version = release.tag_name.clone();
+        let valid_assets: Vec<Asset> = release.assets
             .into_iter()
             .filter(|a| {
                 let n = a.name.to_lowercase();
                 n.ends_with(".tar.gz") || n.ends_with(".tar.xz") || n.ends_with(".tar.bz2") || n.ends_with(".zip") || n.ends_with(".appimage")
             })
-            .collect()
+            .collect();
+            
+        (version, valid_assets)
     };
 
     Ok(valid_assets)
