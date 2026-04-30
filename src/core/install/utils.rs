@@ -3,7 +3,9 @@ use crate::utils::error_msg;
 use std::collections::HashSet;
 use std::fs;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::os::unix::fs::PermissionsExt;
+use anyhow::{Context, Result};
 
 fn normalize_desktop_value(value: &str) -> String {
     value.trim().trim_matches('"').to_string()
@@ -109,4 +111,45 @@ pub fn get_all_categories(config: &Config) -> Vec<String> {
     let mut sorted: Vec<String> = categories.into_iter().collect();
     sorted.sort_by_key(|a| a.to_lowercase());
     sorted
+}
+
+pub fn process_binary_extension<P: AsRef<Path>>(file_path: P) -> Result<(PathBuf, String)> {
+    let path = file_path.as_ref();
+
+    let stem = path
+        .file_stem()
+        .context("El path no tiene un nombre de archivo válido")?
+        .to_string_lossy()
+        .to_string();
+
+    if let Ok(mut file) = fs::File::open(path) {
+        let mut buffer = [0; 128];
+        use std::io::Read;
+        if let Ok(n) = file.read(&mut buffer) {
+            let header = String::from_utf8_lossy(&buffer[..n]);
+            if header.starts_with("#!") {
+                let first_line = header.lines().next().unwrap_or("");
+                if first_line.contains("python") && !first_line.contains("python3") {
+                    let new_shebang = first_line.replace("python", "python3");
+                    if let Ok(content) = fs::read(path) {
+                        if let Some(newline_pos) = content.iter().position(|&b| b == b'\n') {
+                            let mut new_content = new_shebang.into_bytes();
+                            new_content.push(b'\n');
+                            new_content.extend_from_slice(&content[newline_pos + 1..]);
+                            let _ = fs::write(path, new_content);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let mut perms = fs::metadata(path)
+        .context("No se pudo obtener la metadata del archivo")?
+        .permissions();
+    perms.set_mode(0o755);
+    fs::set_permissions(path, perms)
+        .context("No se pudieron establecer los permisos de ejecución")?;
+
+    Ok((path.to_path_buf(), stem))
 }

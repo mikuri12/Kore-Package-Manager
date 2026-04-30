@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::utils::{error_msg, find_icon, success_msg};
 use std::fs;
 use std::io::{BufRead, BufReader};
-use std::os::unix::fs::{symlink, PermissionsExt};
+use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use crate::core::install::utils::find_desktop_files_with_target;
@@ -55,53 +55,9 @@ pub fn tokenize_desktop_exec(exec: &str) -> Vec<String> {
     tokens
 }
 
-fn interpreter_for_extension(ext: &str) -> Option<&'static str> {
-    match ext {
-        "py" => Some("python3"),
-        "sh" => Some("bash"),
-        "zsh" => Some("zsh"),
-        "rb" => Some("ruby"),
-        "pl" => Some("perl"),
-        "js" => Some("node"),
-        _ => None,
-    }
-}
+
 
 fn create_launcher_or_symlink(exec_path: &Path, bin_dest: &Path) -> Result<(), crate::error::KoreError> {
-    let ext = exec_path
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase());
-
-    if let Some(ext) = ext {
-        if let Some(interpreter) = interpreter_for_extension(&ext) {
-            let launcher = format!(
-                "#!/usr/bin/env bash\nexec {} \"{}\" \"$@\"\n",
-                interpreter,
-                exec_path.display()
-            );
-            fs::write(bin_dest, launcher).map_err(|e| {
-                crate::error::KoreError::Generic(format!(
-                    "Failed to create launcher '{}': {}",
-                    bin_dest.display(),
-                    e
-                ))
-            })?;
-            let mut perms = fs::metadata(bin_dest)
-                .map_err(|e| crate::error::KoreError::Generic(format!("Failed to stat launcher '{}': {}", bin_dest.display(), e)))?
-                .permissions();
-            perms.set_mode(0o755);
-            fs::set_permissions(bin_dest, perms).map_err(|e| {
-                crate::error::KoreError::Generic(format!(
-                    "Failed to set launcher permissions '{}': {}",
-                    bin_dest.display(),
-                    e
-                ))
-            })?;
-            return Ok(());
-        }
-    }
-
     symlink(exec_path, bin_dest).map_err(|e| {
         crate::error::KoreError::Generic(format!(
             "Unable to create symlink '{}' -> '{}': {}",
@@ -244,12 +200,17 @@ pub fn finalize_installation(
     original_archive: Option<&Path>,
 ) -> Result<(), crate::error::KoreError> {
     tracing::info!(operation = "desktop_finalize", app = app_name, "Finalizing desktop integration");
-    let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
-    let mut bin_name = exec_name.to_string();
-    if bin_name.to_lowercase().ends_with(".appimage") {
-        bin_name = bin_name[..bin_name.len() - 9].to_string();
-    }
+
+    let (processed_exec_path, bin_name) = crate::core::install::utils::process_binary_extension(exec_path).unwrap_or_else(|e| {
+        tracing::warn!("Failed to process binary extension for {:?}: {}", exec_path, e);
+        if !silent {
+            error_msg(&format!("Failed to process binary extension: {}", e));
+        }
+        let fallback_stem = exec_path.file_stem().unwrap_or_default().to_string_lossy().to_string();
+        (exec_path.to_path_buf(), fallback_stem)
+    });
     
+    let exec_name = processed_exec_path.file_name().unwrap_or_default().to_string_lossy();
     let icon_path = find_icon(target, display_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
     // --- NixOS: try to nixify before creating symlinks ---
@@ -390,7 +351,7 @@ Categories={};"#,
 
     if let Some(v) = version {
         let manifest_path = target.join(".kpm_manifest.json");
-        let rel_exec = exec_path.strip_prefix(target).unwrap_or(exec_path).to_string_lossy();
+        let rel_exec = processed_exec_path.strip_prefix(target).unwrap_or(&processed_exec_path).to_string_lossy();
         let rel_desktop = bundled_desktop.as_ref().map(|d| d.strip_prefix(target).unwrap_or(d).to_string_lossy().into_owned());
         
         let mut manifest = serde_json::json!({
