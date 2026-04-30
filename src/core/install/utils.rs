@@ -113,9 +113,6 @@ pub fn get_all_categories(config: &Config) -> Vec<String> {
     sorted
 }
 
-/// Prepara un binario para su ejecución, asegurando permisos 0o755.
-/// Parchea el shebang si es necesario (ej. python a python3) para mantener la pureza del binario sin wrappers.
-/// Devuelve una tupla: (Ruta_del_ejecutable, Nombre_agnóstico_del_comando)
 pub fn process_binary_extension<P: AsRef<Path>>(file_path: P) -> Result<(PathBuf, String)> {
     let path = file_path.as_ref();
 
@@ -125,7 +122,6 @@ pub fn process_binary_extension<P: AsRef<Path>>(file_path: P) -> Result<(PathBuf
         .to_string_lossy()
         .to_string();
 
-    // Fix legacy shebangs (e.g. #!/usr/bin/python -> #!/usr/bin/python3)
     if let Ok(mut file) = fs::File::open(path) {
         let mut buffer = [0; 128];
         use std::io::Read;
@@ -148,7 +144,6 @@ pub fn process_binary_extension<P: AsRef<Path>>(file_path: P) -> Result<(PathBuf
         }
     }
 
-    // Obtenemos los permisos actuales y aplicamos 0o755 (rwxr-xr-x) al archivo original
     let mut perms = fs::metadata(path)
         .context("No se pudo obtener la metadata del archivo")?
         .permissions();
