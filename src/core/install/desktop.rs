@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::utils::{error_msg, find_icon, success_msg};
 use std::fs;
 use std::io::{BufRead, BufReader};
-use std::os::unix::fs::{symlink, PermissionsExt};
+use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use crate::core::install::utils::find_desktop_files_with_target;
@@ -55,53 +55,9 @@ pub fn tokenize_desktop_exec(exec: &str) -> Vec<String> {
     tokens
 }
 
-fn interpreter_for_extension(ext: &str) -> Option<&'static str> {
-    match ext {
-        "py" => Some("python3"),
-        "sh" => Some("bash"),
-        "zsh" => Some("zsh"),
-        "rb" => Some("ruby"),
-        "pl" => Some("perl"),
-        "js" => Some("node"),
-        _ => None,
-    }
-}
+
 
 fn create_launcher_or_symlink(exec_path: &Path, bin_dest: &Path) -> Result<(), crate::error::KoreError> {
-    let ext = exec_path
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase());
-
-    if let Some(ext) = ext {
-        if let Some(interpreter) = interpreter_for_extension(&ext) {
-            let launcher = format!(
-                "#!/usr/bin/env bash\nexec {} \"{}\" \"$@\"\n",
-                interpreter,
-                exec_path.display()
-            );
-            fs::write(bin_dest, launcher).map_err(|e| {
-                crate::error::KoreError::Generic(format!(
-                    "Failed to create launcher '{}': {}",
-                    bin_dest.display(),
-                    e
-                ))
-            })?;
-            let mut perms = fs::metadata(bin_dest)
-                .map_err(|e| crate::error::KoreError::Generic(format!("Failed to stat launcher '{}': {}", bin_dest.display(), e)))?
-                .permissions();
-            perms.set_mode(0o755);
-            fs::set_permissions(bin_dest, perms).map_err(|e| {
-                crate::error::KoreError::Generic(format!(
-                    "Failed to set launcher permissions '{}': {}",
-                    bin_dest.display(),
-                    e
-                ))
-            })?;
-            return Ok(());
-        }
-    }
-
     symlink(exec_path, bin_dest).map_err(|e| {
         crate::error::KoreError::Generic(format!(
             "Unable to create symlink '{}' -> '{}': {}",

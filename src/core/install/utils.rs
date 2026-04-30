@@ -114,7 +114,7 @@ pub fn get_all_categories(config: &Config) -> Vec<String> {
 }
 
 /// Prepara un binario para su ejecución, asegurando permisos 0o755.
-/// Intenta remover la extensión renombrándolo localmente si es posible.
+/// Parchea el shebang si es necesario (ej. python a python3) para mantener la pureza del binario sin wrappers.
 /// Devuelve una tupla: (Ruta_del_ejecutable, Nombre_agnóstico_del_comando)
 pub fn process_binary_extension<P: AsRef<Path>>(file_path: P) -> Result<(PathBuf, String)> {
     let path = file_path.as_ref();
@@ -125,6 +125,29 @@ pub fn process_binary_extension<P: AsRef<Path>>(file_path: P) -> Result<(PathBuf
         .to_string_lossy()
         .to_string();
 
+    // Fix legacy shebangs (e.g. #!/usr/bin/python -> #!/usr/bin/python3)
+    if let Ok(mut file) = fs::File::open(path) {
+        let mut buffer = [0; 128];
+        use std::io::Read;
+        if let Ok(n) = file.read(&mut buffer) {
+            let header = String::from_utf8_lossy(&buffer[..n]);
+            if header.starts_with("#!") {
+                let first_line = header.lines().next().unwrap_or("");
+                if first_line.contains("python") && !first_line.contains("python3") {
+                    let new_shebang = first_line.replace("python", "python3");
+                    if let Ok(content) = fs::read(path) {
+                        if let Some(newline_pos) = content.iter().position(|&b| b == b'\n') {
+                            let mut new_content = new_shebang.into_bytes();
+                            new_content.push(b'\n');
+                            new_content.extend_from_slice(&content[newline_pos + 1..]);
+                            let _ = fs::write(path, new_content);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Obtenemos los permisos actuales y aplicamos 0o755 (rwxr-xr-x) al archivo original
     let mut perms = fs::metadata(path)
         .context("No se pudo obtener la metadata del archivo")?
@@ -133,16 +156,5 @@ pub fn process_binary_extension<P: AsRef<Path>>(file_path: P) -> Result<(PathBuf
     fs::set_permissions(path, perms)
         .context("No se pudieron establecer los permisos de ejecución")?;
 
-    let parent = path.parent().unwrap_or_else(|| Path::new(""));
-    let new_path = parent.join(&stem);
-
-    // Renombramos el archivo solo si tiene extensión y no hay colisión (ej. carpeta con el mismo nombre)
-    if path != new_path && !new_path.exists() {
-        if fs::rename(path, &new_path).is_ok() {
-            return Ok((new_path, stem));
-        }
-    }
-
-    // Si hubo colisión o no necesitaba renombre, devolvemos el path original intacto pero con el comando agnóstico
     Ok((path.to_path_buf(), stem))
 }
