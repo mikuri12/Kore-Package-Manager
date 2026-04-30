@@ -1,7 +1,7 @@
 # Kore Package Manager (kpm)
 ![License](https://img.shields.io/badge/license-BSD-cyan)
 ![Rust](https://img.shields.io/badge/language-Rust-orange)
-[![Changelog](https://img.shields.io/badge/Changelog-v2.1.0-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/CHANGELOG.md)
+[![Changelog](https://img.shields.io/badge/Changelog-v2.1.6-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/CHANGELOG.md)
 [![Contributing](https://img.shields.io/badge/Contributing-here-green)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/CONTRIBUTING.md)
 [![Readme](https://img.shields.io/badge/Readme-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Kore-Package-Manager/blob/main/README_es.md)
 
