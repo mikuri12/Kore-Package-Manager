@@ -64,7 +64,11 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
     let mut max_score = -1;
     let app_lower = app_name.to_lowercase();
     let app_sanitized = app_lower.replace(" ", "-");
-    let exec_lower = exec_name.to_lowercase();
+    let exec_lower = exec_name.to_lowercase()
+        .replace(".appimage", "")
+        .replace(".exe", "")
+        .replace(".bin", "");
+    let target_name = target.file_name().unwrap_or_default().to_string_lossy().to_lowercase();
 
     for entry in WalkDir::new(target)
         .into_iter()
@@ -87,9 +91,9 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
                     if ext == "svg" { score += 10; }
                     if ext == "png" { score += 5; }
                     
-                    if file_stem == app_lower || file_stem == app_sanitized {
+                    if file_stem == app_lower || file_stem == app_sanitized || file_stem == target_name {
                         score += 100;
-                    } else if (file_stem.contains(&app_lower) || file_stem.contains(&app_sanitized)) && app_sanitized.len() > 2 {
+                    } else if (file_stem.contains(&app_lower) || file_stem.contains(&app_sanitized) || file_stem.contains(&target_name)) && target_name.len() > 2 {
                         score += 40;
                     }
 
@@ -99,7 +103,7 @@ pub fn find_icon(target: &Path, app_name: &str, exec_name: &str) -> Option<Strin
                         score += 20;
                     }
 
-                    if path_str.contains(&app_lower) || path_str.contains(&app_sanitized) {
+                    if path_str.contains(&app_lower) || path_str.contains(&app_sanitized) || path_str.contains(&target_name) {
                         score += 30;
                     }
 

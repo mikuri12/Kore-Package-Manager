@@ -63,14 +63,14 @@ impl Config {
         std::fs::create_dir_all(&self.log_dir)
             .map_err(|e| anyhow::anyhow!("Failed to create log directory {}: {}", self.log_dir.display(), e))?;
 
-        let file_appender = tracing_appender::rolling::never(&self.log_dir, "kpm.log");
+        let file_appender = tracing_appender::rolling::daily(&self.log_dir, "kpm.log");
         let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
         let subscriber = tracing_subscriber::fmt::Subscriber::builder()
             .with_writer(non_blocking)
-            .with_max_level(tracing::Level::TRACE)
+            .with_max_level(tracing::Level::INFO)
             .with_ansi(false)
-            .with_target(true)
+            .with_target(false)
             .finish();
             
         tracing::subscriber::set_global_default(subscriber)
