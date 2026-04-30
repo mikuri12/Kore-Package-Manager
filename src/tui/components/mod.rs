@@ -20,6 +20,7 @@ pub enum AppAction {
     ChangeRoute(Route),
     ShowPopup(PopupType),
     ClosePopup,
+    StartUpdateProcess,
 }
 
 #[allow(dead_code)]

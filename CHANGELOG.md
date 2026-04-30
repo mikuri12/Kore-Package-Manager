@@ -1,5 +1,14 @@
 [![Historial de cambios](https://img.shields.io/badge/Changelog-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
 
+## [2.1.7 - 2.1.8] - 2026-04-30
+
+### TUI Batch Updates & Enhancements
+- **Batch Update Interface:** Added a new "Update Applications" route to the TUI. Users can now press `u` to queue all out-of-date tracked applications for an automatic batch update, or press `Enter` to update them individually.
+- **Smart Update Fix:** Fixed an issue where the update mechanism would fail to match local folder names with official repository names, causing unnecessary redownloads. The system now strictly reads the `.kpm_manifest.json` from the user-defined folder.
+- **Tag Prefix Normalization:** Resolved a bug causing false positive updates by stripping `v` prefixes (e.g., `v1.2.3` vs `1.2.3`) during version comparisons against GitHub release tags.
+- **Graceful Cancellation:** Pressing `Esc` during asset, binary, or desktop shortcut selection popups now immediately aborts the installation/update process instead of defaulting to the first option.
+- **Dynamic Log Discovery:** Restored the `daily` logging format (`kpm.log.YYYY-MM-DD`) for better history retention, while updating the TUI's internal log viewer (`F12`) to automatically scan, sort, and open the most recent log file.
+
 ## [2.1.1 - 2.1.6] - 2026-04-29
 
 ### Version Control & Manifest System

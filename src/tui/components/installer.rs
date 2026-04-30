@@ -205,12 +205,13 @@ impl Installer {
     fn spawn_extractor(&self, config: Config, tarball: PathBuf) {
         let tx = self.state.tx.clone();
         let app_name = self.state.app_name.clone();
+        let safe_name = app_name.to_lowercase().replace(' ', "-");
         tokio::task::spawn_blocking(move || {
             let is_appimage = tarball.to_string_lossy().to_lowercase().ends_with(".appimage");
             let result = if is_appimage {
-                crate::core::install::appimage::process_appimage(&config, &tarball, Some(&app_name))
+                crate::core::install::appimage::process_appimage(&config, &tarball, Some(&safe_name))
             } else {
-                crate::core::install::extract_and_scan(&config, &tarball, Some(&app_name), true)
+                crate::core::install::extract_and_scan(&config, &tarball, Some(&safe_name), true)
             };
 
             match result {
@@ -227,8 +228,8 @@ impl Installer {
         let tx = self.state.tx.clone();
         let target = self.state.target_folder.clone().unwrap();
         let exec_path = self.state.selected_exec.clone().unwrap();
-        let app_name = self.state.app_name.clone();
         let display_name = self.state.display_name.clone();
+        let safe_name = display_name.to_lowercase().replace(' ', "-");
         let use_root = self.state.use_root;
         let use_terminal = if use_root { false } else { self.state.use_terminal };
         let category = self.state.category.clone();
@@ -236,7 +237,7 @@ impl Installer {
         let version = self.state.version.clone();
 
         tokio::task::spawn_blocking(move || {
-            match crate::core::install::finalize_installation(&config, &target, &exec_path, &app_name, &display_name, use_root, use_terminal, &category, desk, version, None, true) {
+            match crate::core::install::finalize_installation(&config, &target, &exec_path, &safe_name, &display_name, use_root, use_terminal, &category, desk, version, None, true) {
                 Ok(_) => { let _ = tx.send(InstallerEvent::Finalized); }
                 Err(e) => { let _ = tx.send(InstallerEvent::Error(e.to_string())); }
             }

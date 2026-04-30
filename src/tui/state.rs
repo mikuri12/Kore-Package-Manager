@@ -12,6 +12,7 @@ pub enum Route {
     MainMenu,
     ManageApps,
     RemoveApps,
+    UpdateApps,
     FileBrowser,
     IconBrowser,
     ManageRepos,
@@ -101,6 +102,7 @@ pub struct App {
     pub help_scroll: u16,
     pub logs_scroll: u16,
     pub logs: Vec<String>,
+    pub update_queue: Vec<String>,
 }
 
 impl App {
@@ -152,6 +154,7 @@ impl App {
             logs_scroll: 0,
             logs: Vec::new(),
             installer: None,
+            update_queue: Vec::new(),
         }
     }
 
@@ -177,6 +180,29 @@ impl App {
             for entry in entries.flatten() {
                 if entry.path().is_dir() {
                     self.apps.push(entry.file_name().to_string_lossy().to_string());
+                }
+            }
+        }
+        self.apps.sort();
+        self.input.clear();
+        self.filter_apps();
+    }
+
+    pub fn load_updatable_apps(&mut self, config: &Config) {
+        self.apps.clear();
+        let all_repos = crate::repo::get_all_repos(config);
+        if let Ok(entries) = fs::read_dir(&config.install_dir) {
+            for entry in entries.flatten() {
+                if entry.path().is_dir() {
+                    let app = entry.file_name().to_string_lossy().to_string();
+                    if all_repos.iter().any(|r| {
+                        let name_cmp = r.repo.name.to_lowercase().replace(' ', "-");
+                        let pkg_cmp = r.repo.package_name.to_lowercase().replace(' ', "-");
+                        let app_cmp = app.to_lowercase();
+                        name_cmp == app_cmp || (!r.repo.package_name.is_empty() && pkg_cmp == app_cmp)
+                    }) {
+                        self.apps.push(app);
+                    }
                 }
             }
         }
@@ -291,7 +317,7 @@ impl App {
             };
             self.popup_state.select(Some(i));
         } else if self.route == Route::MainMenu {
-            let len = 5;
+            let len = 6;
             let i = match self.list_state.selected() {
                 Some(i) => (i + 1) % len,
                 None => 0,
@@ -345,7 +371,7 @@ impl App {
             };
             self.popup_state.select(Some(i));
         } else if self.route == Route::MainMenu {
-            let len = 5;
+            let len = 6;
             let i = match self.list_state.selected() {
                 Some(i) => {
                     if i == 0 { len - 1 } else { i - 1 }

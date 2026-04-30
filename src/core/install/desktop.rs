@@ -244,9 +244,14 @@ pub fn finalize_installation(
 ) -> Result<(), crate::error::KoreError> {
     tracing::info!(operation = "desktop_finalize", app = app_name, "Finalizing desktop integration");
     let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
+    let mut bin_name = exec_name.to_string();
+    if bin_name.to_lowercase().ends_with(".appimage") {
+        bin_name = bin_name[..bin_name.len() - 9].to_string();
+    }
+    
     let icon_path = find_icon(target, display_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
-    let bin_dest = config.bin_dir.join(app_name);
+    let bin_dest = config.bin_dir.join(&bin_name);
     if bin_dest.exists() {
         fs::remove_file(&bin_dest).map_err(|e| {
             if !silent {

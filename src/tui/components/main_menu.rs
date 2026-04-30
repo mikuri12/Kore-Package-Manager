@@ -21,7 +21,7 @@ impl MainMenu {
 
     fn next(app: &mut App) {
         let i = match app.list_state.selected() {
-            Some(i) => (i + 1) % 5,
+            Some(i) => (i + 1) % 6,
             None => 0,
         };
         app.list_state.select(Some(i));
@@ -29,7 +29,7 @@ impl MainMenu {
 
     fn previous(app: &mut App) {
         let i = match app.list_state.selected() {
-            Some(i) => if i == 0 { 4 } else { i - 1 },
+            Some(i) => if i == 0 { 5 } else { i - 1 },
             None => 0,
         };
         app.list_state.select(Some(i));
@@ -42,6 +42,7 @@ impl Component for MainMenu {
             ListItem::new("󰉍 Install New Package"),
             ListItem::new("󰏗 Manage Installed"),
             ListItem::new("󰆴 Uninstall Application"),
+            ListItem::new("󰚰 Update Applications"),
             ListItem::new("󰒋 Repositories"),
             ListItem::new("󰈆 Exit"),
         ];
@@ -88,6 +89,10 @@ impl Component for MainMenu {
                         return Ok(Some(AppAction::ChangeRoute(Route::RemoveApps)));
                     }
                     3 => {
+                        app.load_updatable_apps(config);
+                        return Ok(Some(AppAction::ChangeRoute(Route::UpdateApps)));
+                    }
+                    4 => {
                         app.repo_category_state.select(Some(0));
                         return Ok(Some(AppAction::ChangeRoute(Route::RepoCategorySelect)));
                     }

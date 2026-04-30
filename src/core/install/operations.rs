@@ -39,7 +39,7 @@ pub async fn install_app(
     let mut actual_tarball = PathBuf::from(source);
     let mut downloaded = false;
     let mut repo_name_opt: Option<String> = None;
-    let mut repo_package_name_opt: Option<String> = None;
+    let mut _repo_package_name_opt: Option<String> = None;
     let mut repo_category_opt: Option<String> = None;
     let mut repo_requires_root_opt: Option<bool> = None;
     let mut repo_terminal_opt: Option<bool> = None;
@@ -52,7 +52,7 @@ pub async fn install_app(
         tracing::info!(operation = "install", source = source, step = "resolve_source", "Resolving source");
         if let Some(resolved) = resolve_source(config, source).await? {
             repo_name_opt = resolved.repo_name;
-            repo_package_name_opt = resolved.repo_package_name;
+            _repo_package_name_opt = resolved.repo_package_name;
             repo_category_opt = resolved.repo_category;
             repo_requires_root_opt = resolved.repo_requires_root;
             repo_terminal_opt = resolved.repo_terminal;
@@ -64,17 +64,16 @@ pub async fn install_app(
                             Ok((version, assets)) => {
                                 repo_version_opt = Some(version.clone());
 
-                                let prospective_name = app_name_opt
+                                let display_name_for_update = app_name_opt
                                     .map(|s| s.to_string())
                                     .unwrap_or_else(|| {
-                                        if let Some(pkg_name) = &repo_package_name_opt {
-                                            pkg_name.clone()
-                                        } else if let Some(repo_name) = &repo_name_opt {
+                                        if let Some(repo_name) = &repo_name_opt {
                                             repo_name.clone()
                                         } else {
                                             "".to_string()
                                         }
                                     });
+                                let prospective_name = display_name_for_update.to_lowercase().replace(' ', "-");
 
                                 let mut local_version_opt: Option<String> = None;
                                 if update_mode && !prospective_name.is_empty() {
@@ -87,7 +86,7 @@ pub async fn install_app(
                                             
                                             if let Some(local_version) = manifest.get("version").and_then(|v| v.as_str()) {
                                                 local_version_opt = Some(local_version.to_string());
-                                                if local_version == version {
+                                                if local_version.trim_start_matches('v') == version.trim_start_matches('v') {
                                                     if is_cli {
                                                         info_msg(&format!("{} is already up-to-date ({}).", prospective_name, version));
                                                     }
@@ -131,16 +130,20 @@ pub async fn install_app(
                                                 let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
                                                 let names: Vec<String> = assets.iter().map(|a| a.name.clone()).collect();
                                                 let _ = t.send(InstallMessage::SelectAsset(names, reply_tx));
-                                                reply_rx.await.unwrap_or_default()
+                                                reply_rx.await.unwrap_or(usize::MAX)
                                             } else {
                                                 0
                                             }
                                         } else {
                                             let choices: Vec<String> = assets.iter().map(|a| a.name.clone()).collect();
                                             info_msg("Multiple tarballs found. Please select one:");
-                                            Select::new().with_prompt("Tarball").items(&choices).default(0).interact().unwrap_or(0)
+                                            Select::new().with_prompt("Tarball").items(&choices).default(0).interact().unwrap_or(usize::MAX)
                                         }
                                     };
+                                    if selected_asset_idx == usize::MAX {
+                                        if let Some(t) = &tx { let _ = t.send(InstallMessage::Progress("Cancelled by user".to_string(), -1.0)); }
+                                        return Err(crate::error::KoreError::Generic("Installation cancelled by user".to_string()));
+                                    }
                                     let selected_asset = &assets[selected_asset_idx];
                                     saved_asset = Some(selected_asset.name.clone());
                                     
@@ -211,22 +214,37 @@ pub async fn install_app(
                 tracing::warn!(operation = "install", source = source, step = "extract", "Progress receiver dropped");
             }
         }
+        let computed_display_name = app_name_opt
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| {
+                if let Some(repo_name) = &repo_name_opt {
+                    repo_name.clone()
+                } else if downloaded {
+                    source.to_string()
+                } else {
+                    actual_tarball.file_name().unwrap_or_default().to_string_lossy()
+                        .replace(".tar.gz", "").replace(".tar.xz", "").replace(".AppImage", "")
+                        .replace(".appimage", "").replace(".zip", "")
+                }
+            });
+        let safe_name = computed_display_name.to_lowercase().replace(' ', "-");
+
         let config_clone = config.clone();
         let tarball_clone = actual_tarball.clone();
-        let repo_package_clone = repo_package_name_opt.clone();
+        let target_folder_name_opt = Some(safe_name.clone());
         let is_cli_clone = is_cli;
         let is_appimage = actual_tarball.to_string_lossy().to_lowercase().ends_with(".appimage");
         let extract_result = if is_appimage {
             tokio::task::spawn_blocking(move || {
-                crate::core::install::appimage::process_appimage(&config_clone, &tarball_clone, repo_package_clone.as_deref())
+                crate::core::install::appimage::process_appimage(&config_clone, &tarball_clone, target_folder_name_opt.as_deref())
             }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??
         } else {
             tokio::task::spawn_blocking(move || {
-                extract_and_scan(&config_clone, &tarball_clone, repo_package_clone.as_deref(), !is_cli_clone)
+                extract_and_scan(&config_clone, &tarball_clone, target_folder_name_opt.as_deref(), !is_cli_clone)
             }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??
         };
 
-        if let Some((target, raw_name_folder, executables, desktop_files)) = extract_result {
+        if let Some((target, _raw_name_folder, executables, desktop_files)) = extract_result {
             let exec_path = if let Some(ref b) = saved_binary {
                 Some(target.join(b))
             } else if !is_cli {
@@ -238,6 +256,7 @@ pub async fn install_app(
                     choices.push("Skip / Manual link later".to_string());
                     let _ = t.send(InstallMessage::SelectBinary(choices, reply_tx));
                     match reply_rx.await {
+                        Ok(idx) if idx == usize::MAX => return Err(crate::error::KoreError::Generic("Installation cancelled by user".to_string())),
                         Ok(idx) if idx < executables.len() => Some(executables[idx].clone()),
                         _ => None,
                     }
@@ -294,6 +313,7 @@ pub async fn install_app(
                         choices.push("Skip / Generate New".to_string());
                         let _ = t.send(InstallMessage::SelectDesktop(choices, reply_tx));
                         match reply_rx.await {
+                            Ok(idx) if idx == usize::MAX => return Err(crate::error::KoreError::Generic("Installation cancelled by user".to_string())),
                             Ok(idx) if idx < desktop_files.len() => Some(desktop_files[idx].clone()),
                             _ => None,
                         }
@@ -314,29 +334,8 @@ pub async fn install_app(
             };
 
             if let Some(exec_path) = exec_path {
-                let internal_name = app_name_opt
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| {
-                        if let Some(pkg_name) = &repo_package_name_opt {
-                            pkg_name.clone()
-                        } else if let Some(repo_name) = &repo_name_opt {
-                            repo_name.clone()
-                        } else if downloaded {
-                            source.to_string()
-                        } else {
-                            raw_name_folder.clone()
-                        }
-                    });
-
-                let display_name = app_name_opt
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| {
-                        if let Some(repo_name) = &repo_name_opt {
-                            repo_name.clone()
-                        } else {
-                            internal_name.clone()
-                        }
-                    });
+                let internal_name = safe_name.clone();
+                let display_name = computed_display_name.clone();
 
                 let use_root = use_root_opt
                     .map(|s| s.to_lowercase() == "si" || s.to_lowercase() == "yes" || s.to_lowercase() == "s")

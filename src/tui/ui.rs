@@ -56,7 +56,7 @@ pub fn draw(f: &mut Frame, app: &mut App, config: &Config) {
             let mut c = MainMenu::new();
             c.draw(f, f.area(), app, config);
         }
-        Route::ManageApps | Route::RemoveApps => {
+        Route::ManageApps | Route::RemoveApps | Route::UpdateApps => {
             let mut c = AppManager::new();
             c.draw(f, f.area(), app, config);
         }

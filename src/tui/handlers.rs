@@ -8,30 +8,45 @@ use super::state::{App, Route, PopupType};
 use crate::tui::components::Component;
 
 fn load_log_file_for_popup(app: &mut App, config: &Config) {
-    let log_file = config.log_dir.join("kpm.log");
-    match std::fs::read_to_string(&log_file) {
-        Ok(content) => {
-            let mut lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
-            if lines.is_empty() {
-                lines.push("Log file exists but is empty.".to_string());
+    let mut log_files = vec![];
+    if let Ok(entries) = std::fs::read_dir(&config.log_dir) {
+        for entry in entries.flatten() {
+            if let Ok(file_type) = entry.file_type() {
+                if file_type.is_file() {
+                    let file_name = entry.file_name().to_string_lossy().to_string();
+                    if file_name.starts_with("kpm.log") {
+                        log_files.push(entry.path());
+                    }
+                }
             }
+        }
+    }
+    log_files.sort();
 
-            let keep_last = 500usize;
-            if lines.len() > keep_last {
-                lines = lines.split_off(lines.len() - keep_last);
+    if let Some(log_file) = log_files.last() {
+        match std::fs::read_to_string(log_file) {
+            Ok(content) => {
+                let mut lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
+                if lines.is_empty() {
+                    lines.push("Log file exists but is empty.".to_string());
+                }
+
+                let keep_last = 500usize;
+                if lines.len() > keep_last {
+                    lines = lines.split_off(lines.len() - keep_last);
+                }
+
+                app.logs = lines;
+                app.logs_scroll = app.logs.len().saturating_sub(1) as u16;
             }
-
-            app.logs = lines;
-            app.logs_scroll = app.logs.len().saturating_sub(1) as u16;
+            Err(e) => {
+                app.logs = vec![format!("Could not read log file '{}': {}", log_file.display(), e)];
+                app.logs_scroll = 0;
+            }
         }
-        Err(e) => {
-            app.logs = vec![format!(
-                "Could not read log file '{}': {}",
-                log_file.display(),
-                e
-            )];
-            app.logs_scroll = 0;
-        }
+    } else {
+        app.logs = vec!["No log files found.".to_string()];
+        app.logs_scroll = 0;
     }
 }
 
@@ -313,11 +328,7 @@ pub async fn handle_key_events<B: Backend>(
                         PopupType::InstallBinarySelect | PopupType::InstallAssetSelect | PopupType::InstallDesktopSelect => match key.code {
                             KeyCode::Esc => {
                                 if let Some(tx) = app.pending_install_reply.take() {
-                                    if app.popup_type == PopupType::InstallDesktopSelect {
-                                        let _ = tx.send(app.popup_items.len().saturating_sub(1));
-                                    } else {
-                                        let _ = tx.send(0);
-                                    }
+                                    let _ = tx.send(usize::MAX);
                                 }
                                 app.popup_type = PopupType::InstallProgress;
                             }
@@ -498,7 +509,7 @@ pub async fn handle_key_events<B: Backend>(
                         let mut c = crate::tui::components::main_menu::MainMenu::new();
                         c.handle_key_event(key, app, config)?
                     }
-                    Route::ManageApps | Route::RemoveApps => {
+                    Route::ManageApps | Route::RemoveApps | Route::UpdateApps => {
                         let mut c = crate::tui::components::app_manager::AppManager::new();
                         c.handle_key_event(key, app, config)?
                     }
@@ -526,6 +537,26 @@ pub async fn handle_key_events<B: Backend>(
                         crate::tui::components::AppAction::ChangeRoute(route) => app.route = route,
                         crate::tui::components::AppAction::ShowPopup(popup) => app.popup_type = popup,
                         crate::tui::components::AppAction::ClosePopup => app.popup_type = PopupType::None,
+                        crate::tui::components::AppAction::StartUpdateProcess => {
+                            if let Some(app_to_update) = app.update_queue.pop() {
+                                let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+                                app.install_rx = Some(rx);
+                                let all_repos = crate::repo::get_all_repos(config);
+                                if let Some(repo_source) = all_repos.iter().find(|r| {
+                                    let name_cmp = r.repo.name.to_lowercase().replace(' ', "-");
+                                    let pkg_cmp = r.repo.package_name.to_lowercase().replace(' ', "-");
+                                    let app_cmp = app_to_update.to_lowercase();
+                                    name_cmp == app_cmp || (!r.repo.package_name.is_empty() && pkg_cmp == app_cmp)
+                                }) {
+                                    let config_clone = config.clone();
+                                    let source = repo_source.repo.name.clone();
+                                    let app_name_opt = Some(app_to_update.clone());
+                                    tokio::spawn(async move {
+                                        let _ = crate::core::install_app(&config_clone, &source, app_name_opt.as_deref(), None, None, false, Some(tx), true).await;
+                                    });
+                                }
+                            }
+                        }
                         _ => {}
                     }
                     }

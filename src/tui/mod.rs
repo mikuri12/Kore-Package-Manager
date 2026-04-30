@@ -79,9 +79,31 @@ pub async fn main_menu(config: &Config) -> anyhow::Result<()> {
         if app.install_done {
             app.install_done = false;
             app.install_rx = None;
-            app.popup_type = state::PopupType::Information;
-            app.popup_info = format!("Installation Finished!\n\n{}", app.install_status);
-            app.load_apps(config);
+            
+            if let Some(app_to_update) = app.update_queue.pop() {
+                let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+                app.install_rx = Some(rx);
+                let all_repos = crate::repo::get_all_repos(config);
+                if let Some(repo_source) = all_repos.iter().find(|r| {
+                    let name_cmp = r.repo.name.to_lowercase().replace(' ', "-");
+                    let pkg_cmp = r.repo.package_name.to_lowercase().replace(' ', "-");
+                    let app_cmp = app_to_update.to_lowercase();
+                    name_cmp == app_cmp || (!r.repo.package_name.is_empty() && pkg_cmp == app_cmp)
+                }) {
+                    let config_clone = config.clone();
+                    let source = repo_source.repo.name.clone();
+                    let app_name_opt = Some(app_to_update.clone());
+                    tokio::spawn(async move {
+                        let _ = crate::core::install_app(&config_clone, &source, app_name_opt.as_deref(), None, None, false, Some(tx), true).await;
+                    });
+                } else {
+                    app.install_done = true; // immediately trigger next tick if failed
+                }
+            } else {
+                app.popup_type = state::PopupType::Information;
+                app.popup_info = format!("Installation Finished!\n\n{}", app.install_status);
+                app.load_apps(config);
+            }
         }
 
         let should_quit = handlers::handle_key_events(&mut terminal, &mut app, config).await?;

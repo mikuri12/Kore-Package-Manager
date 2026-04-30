@@ -38,6 +38,8 @@ impl Component for AppManager {
 
         let title = if app.route == Route::ManageApps {
             " 󰏗 Manage Installed "
+        } else if app.route == Route::UpdateApps {
+            " 󰚰 Update Apps (Press 'u' to update all) "
         } else {
             " 󰆴 Uninstall App "
         };
@@ -129,8 +131,20 @@ impl Component for AppManager {
                 app.filter_apps();
             }
             KeyCode::Char(c) => {
-                app.input.push(c);
-                app.filter_apps();
+                if app.route == Route::UpdateApps && c == 'u' {
+                    app.update_queue = app.filtered.clone();
+                    if !app.update_queue.is_empty() {
+                        app.install_status = String::new();
+                        app.install_progress = 0.0;
+                        app.install_done = false;
+                        app.logs.clear();
+                        app.open_popup_info("Starting update process...");
+                        return Ok(Some(AppAction::StartUpdateProcess));
+                    }
+                } else {
+                    app.input.push(c);
+                    app.filter_apps();
+                }
             }
             KeyCode::Enter => {
                 if !app.filtered.is_empty() {
@@ -145,6 +159,15 @@ impl Component for AppManager {
                             "󰈆 Return".to_string()
                         ]);
                         return Ok(Some(AppAction::ShowPopup(PopupType::ActionSelect)));
+                    } else if app.route == Route::UpdateApps {
+                        let selected_app = app.filtered[app.list_state.selected().unwrap()].clone();
+                        app.update_queue = vec![selected_app];
+                        app.install_status = String::new();
+                        app.install_progress = 0.0;
+                        app.install_done = false;
+                        app.logs.clear();
+                        app.open_popup_info("Starting update process...");
+                        return Ok(Some(AppAction::StartUpdateProcess));
                     } else {
                         app.open_popup_list(PopupType::ConfirmUninstall, vec![
                             "Yes, uninstall".to_string(), 

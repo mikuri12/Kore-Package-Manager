@@ -172,9 +172,14 @@ async fn main() -> anyhow::Result<()> {
                     for entry in entries.flatten() {
                         if entry.path().is_dir() {
                             let app = entry.file_name().to_string_lossy().to_string();
-                            if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == app.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == app.to_lowercase())) {
+                            if let Some(repo_source) = all_repos.iter().find(|r| {
+                                let name_cmp = r.repo.name.to_lowercase().replace(' ', "-");
+                                let pkg_cmp = r.repo.package_name.to_lowercase().replace(' ', "-");
+                                let app_cmp = app.to_lowercase();
+                                name_cmp == app_cmp || (!r.repo.package_name.is_empty() && pkg_cmp == app_cmp)
+                            }) {
                                 utils::info_msg(&format!("Updating {}...", repo_source.repo.name));
-                                match core::install_app(&config, &repo_source.repo.name, None, None, None, true, None, true).await {
+                                match core::install_app(&config, &repo_source.repo.name, Some(&app), None, None, true, None, true).await {
                                     Ok(_) => updated_any = true,
                                     Err(e) => {
                                         utils::error_msg(&format!("Failed to update {}: {}", repo_source.repo.name, e));

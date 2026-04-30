@@ -1,3 +1,12 @@
+## [2.1.7 - 2.1.8] - 2026-04-30
+
+### Actualizaciones Masivas y Mejoras en TUI
+- **Interfaz de Actualización por Lotes:** Se agregó una nueva ruta de "Update Applications" a la TUI. Los usuarios ahora pueden presionar la tecla `u` para poner en cola todas las aplicaciones rastreadas que estén desactualizadas para su actualización masiva automática, o presionar `Enter` para actualizarlas de a una.
+- **Corrección de Actualización Inteligente:** Se solucionó un problema por el cual el mecanismo de actualización no lograba hacer coincidir los nombres de las carpetas locales con los nombres de los repositorios oficiales, provocando descargas innecesarias. El sistema ahora lee estrictamente el `.kpm_manifest.json` desde la carpeta definida por el usuario.
+- **Normalización de Prefijos en Tags:** Se resolvió un error que causaba falsos positivos al actualizar, eliminando el prefijo `v` (ej. `v1.2.3` vs `1.2.3`) durante la comparación de versiones contra los tags de lanzamiento de GitHub.
+- **Cancelación Segura:** Presionar la tecla `Esc` durante la aparición de los menús emergentes de selección de archivos comprimidos, binarios o accesos directos ahora aborta el proceso de actualización/instalación de inmediato, en lugar de continuar con la opción por defecto.
+- **Descubrimiento Dinámico de Logs:** Se restauró el formato de registro `daily` (`kpm.log.YYYY-MM-DD`) para mejorar la retención del historial. Simultáneamente se actualizó el visor de registros integrado de la TUI (`F12`) para escanear, ordenar y abrir automáticamente el archivo de log más reciente.
+
 ## [2.1.1 - 2.1.6] - 2026-04-29
 
 ### Control de Versiones y Sistema de Manifiestos
