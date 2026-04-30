@@ -204,7 +204,14 @@ impl Installer {
         let tx = self.state.tx.clone();
         let app_name = self.state.app_name.clone();
         tokio::task::spawn_blocking(move || {
-            match crate::core::install::extract_and_scan(&config, &tarball, Some(&app_name), true) {
+            let is_appimage = tarball.to_string_lossy().to_lowercase().ends_with(".appimage");
+            let result = if is_appimage {
+                crate::core::install::appimage::process_appimage(&config, &tarball, Some(&app_name))
+            } else {
+                crate::core::install::extract_and_scan(&config, &tarball, Some(&app_name), true)
+            };
+
+            match result {
                 Ok(Some((target, raw_name, execs, desks))) => {
                     let _ = tx.send(InstallerEvent::Extracted(target, raw_name, execs, desks));
                 }

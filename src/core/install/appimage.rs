@@ -4,6 +4,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use walkdir::WalkDir;
 
 pub fn process_appimage(
     config: &Config,
@@ -42,10 +43,11 @@ pub fn process_appimage(
     }
     fs::create_dir_all(&temp_dir)?;
 
-    let _ = Command::new(&appimage_dest).current_dir(&temp_dir).arg("--appimage-extract").arg("*.png").output();
-    let _ = Command::new(&appimage_dest).current_dir(&temp_dir).arg("--appimage-extract").arg("*.svg").output();
-    let _ = Command::new(&appimage_dest).current_dir(&temp_dir).arg("--appimage-extract").arg("*.ico").output();
-    let _ = Command::new(&appimage_dest).current_dir(&temp_dir).arg("--appimage-extract").arg(".DirIcon").output();
+    // Extraemos todo el contenido para hacer una búsqueda profunda de iconos
+    let _ = Command::new(&appimage_dest)
+        .current_dir(&temp_dir)
+        .arg("--appimage-extract")
+        .output();
 
     let squashfs_root = temp_dir.join("squashfs-root");
     let mut best_icon = None;
@@ -54,31 +56,45 @@ pub fn process_appimage(
         let dir_icon = squashfs_root.join(".DirIcon");
         if dir_icon.exists() {
             best_icon = Some(dir_icon);
-        } else if let Ok(entries) = fs::read_dir(&squashfs_root) {
+        } else {
             let mut root_pngs = Vec::new();
             let mut root_icos = Vec::new();
+            let lower_app_name = raw_name_folder.to_lowercase();
 
-            for entry in entries.flatten() {
-                if let Ok(ft) = entry.file_type() {
-                    if ft.is_file() {
-                        let name = entry.file_name().to_string_lossy().to_lowercase();
-                        if name.ends_with(".svg") {
-                            best_icon = Some(entry.path());
+            for entry in WalkDir::new(&squashfs_root).into_iter().flatten() {
+                let ft = entry.file_type();
+                // Check if it's a file or symlink
+                if ft.is_file() || ft.is_symlink() {
+                    let name = entry.file_name().to_string_lossy().to_lowercase();
+                    let path = entry.path().to_path_buf();
+                    
+                    // Ignore broken symlinks
+                    if !path.exists() {
+                        continue;
+                    }
+
+                    if name.ends_with(".svg") {
+                        best_icon = Some(path.clone());
+                        if name == "icon.svg" || name.contains("icon") || name.contains(&lower_app_name) {
                             break;
-                        } else if name.ends_with(".png") {
-                            root_pngs.push(entry.path());
-                        } else if name.ends_with(".ico") {
-                            root_icos.push(entry.path());
                         }
+                    } else if name.ends_with(".png") {
+                        root_pngs.push((name, path));
+                    } else if name.ends_with(".ico") {
+                        root_icos.push((name, path));
                     }
                 }
             }
 
             if best_icon.is_none() {
-                if !root_pngs.is_empty() {
-                    best_icon = Some(root_pngs[0].clone());
+                if let Some((_, path)) = root_pngs.iter().find(|(n, _)| n == "icon.png" || n.contains("icon") || n.contains(&lower_app_name)) {
+                    best_icon = Some(path.clone());
+                } else if !root_pngs.is_empty() {
+                    best_icon = Some(root_pngs[0].1.clone());
+                } else if let Some((_, path)) = root_icos.iter().find(|(n, _)| n.contains("icon") || n.contains(&lower_app_name)) {
+                    best_icon = Some(path.clone());
                 } else if !root_icos.is_empty() {
-                    best_icon = Some(root_icos[0].clone());
+                    best_icon = Some(root_icos[0].1.clone());
                 }
             }
         }

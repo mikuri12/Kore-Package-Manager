@@ -13,25 +13,25 @@
       ]
     },
     {
-      "name": "JetBrains Toolbox",
-      "package_name": "jetbrains-toolbox",
-      "url": "https://download.jetbrains.com/toolbox/jetbrains-toolbox-$jb_ver.tar.gz",
-      "category": "Development",
+      "name": "Blender",
+      "package_name": "blender",
+      "url": "https://mirrors.dotsrc.org/blender/release/$blender_major/blender-$blender_ver-linux-x64.tar.xz",
+      "category": "Graphics",
       "requires_root": false,
       "terminal": false,
-      "description": "A central dashboard to manage JetBrains IDEs, updates, and projects effortlessly.",
+      "description": "The free and open source 3D creation suite, supporting the entirety of the 3D pipeline.",
       "formats": [
         "tarball"
       ]
     },
     {
-      "name": "Telegram",
-      "package_name": "telegram",
-      "url": "https://github.com/telegramdesktop/tdesktop",
-      "category": "Internet",
+      "name": "Bottom",
+      "package_name": "bottom",
+      "url": "https://github.com/ClementTsang/bottom",
+      "category": "Utility",
       "requires_root": false,
-      "terminal": false,
-      "description": "Fast and secure desktop messaging app, seamlessly synced between devices.",
+      "terminal": true,
+      "description": "A customizable cross-platform graphical system monitor for the terminal.",
       "formats": [
         "tarball"
       ]
@@ -50,6 +50,57 @@
       ]
     },
     {
+      "name": "JetBrains Toolbox",
+      "package_name": "jetbrains-toolbox",
+      "url": "https://download.jetbrains.com/toolbox/jetbrains-toolbox-$jb_ver.tar.gz",
+      "category": "Development",
+      "requires_root": false,
+      "terminal": false,
+      "description": "A central dashboard to manage JetBrains IDEs, updates, and projects effortlessly.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "LocalSend",
+      "package_name": "localsend",
+      "url": "https://github.com/localsend/localsend",
+      "category": "Network",
+      "requires_root": false,
+      "terminal": false,
+      "description": "An open-source cross-platform alternative to AirDrop for sharing files over the local network.",
+      "formats": [
+        "appimage",
+        "tarball"
+      ]
+    },
+    {
+      "name": "Pinecone Launcher",
+      "package_name": "pinecone-launcher",
+      "url": "https://github.com/ElyPrismLauncher/Launcher",
+      "category": "Games",
+      "requires_root": false,
+      "terminal": false,
+      "description": "A specialized fork of Prism Launcher optimized for specific community features and modpacks.",
+      "formats": [
+        "appimage",
+        "tarball"
+      ]
+    },
+    {
+      "name": "Prism Launcher",
+      "package_name": "prism-launcher",
+      "url": "https://github.com/PrismLauncher/PrismLauncher",
+      "category": "Games",
+      "requires_root": false,
+      "terminal": false,
+      "description": "A custom Minecraft launcher that allows you to easily manage multiple installations and mods.",
+      "formats": [
+        "appimage",
+        "tarball"
+      ]
+    },
+    {
       "name": "Reaper",
       "package_name": "reaper",
       "url": "https://www.reaper.fm/files/7.x/reaper769_linux_x86_64.tar.xz",
@@ -57,6 +108,18 @@
       "requires_root": false,
       "terminal": false,
       "description": "A complete digital audio production application offering full multitrack audio and MIDI recording.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "Red Eclipse",
+      "package_name": "redeclipse",
+      "url": "https://github.com/redeclipse/base",
+      "category": "Games",
+      "requires_root": false,
+      "terminal": false,
+      "description": "An open-source sci-fi first-person shooter, forked from Cube 2: Sauerbraten.",
       "formats": [
         "tarball"
       ]
@@ -74,19 +137,6 @@
       ]
     },
     {
-      "name": "Youtube Music",
-      "package_name": "youtube-music",
-      "url": "https://github.com/pear-devs/pear-desktop",
-      "category": "Music",
-      "requires_root": false,
-      "terminal": false,
-      "description": "Desktop client for YouTube Music with integrated media keys and background playback.",
-      "formats": [
-        "appimage",
-        "tarball"
-      ]
-    },
-    {
       "name": "SuperTuxKart",
       "package_name": "supertuxkart",
       "url": "https://github.com/supertuxkart/stk-code",
@@ -99,13 +149,13 @@
       ]
     },
     {
-      "name": "Bottom",
-      "package_name": "bottom",
-      "url": "https://github.com/ClementTsang/bottom",
-      "category": "Utility",
+      "name": "Telegram",
+      "package_name": "telegram",
+      "url": "https://github.com/telegramdesktop/tdesktop",
+      "category": "Internet",
       "requires_root": false,
-      "terminal": true,
-      "description": "A customizable cross-platform graphical system monitor for the terminal.",
+      "terminal": false,
+      "description": "Fast and secure desktop messaging app, seamlessly synced between devices.",
       "formats": [
         "tarball"
       ]
@@ -135,57 +185,6 @@
       ]
     },
     {
-      "name": "LocalSend",
-      "package_name": "localsend",
-      "url": "https://github.com/localsend/localsend",
-      "category": "Network",
-      "requires_root": false,
-      "terminal": false,
-      "description": "An open-source cross-platform alternative to AirDrop for sharing files over the local network.",
-      "formats": [
-        "appimage",
-        "tarball"
-      ]
-    },
-    {
-      "name": "Prism Launcher",
-      "package_name": "prism-launcher",
-      "url": "https://github.com/PrismLauncher/PrismLauncher",
-      "category": "Games",
-      "requires_root": false,
-      "terminal": false,
-      "description": "A custom Minecraft launcher that allows you to easily manage multiple installations and mods.",
-      "formats": [
-        "appimage",
-        "tarball"
-      ]
-    },
-    {
-      "name": "Pinecone Launcher",
-      "package_name": "pinecone-launcher",
-      "url": "https://github.com/ElyPrismLauncher/Launcher",
-      "category": "Games",
-      "requires_root": false,
-      "terminal": false,
-      "description": "A specialized fork of Prism Launcher optimized for specific community features and modpacks.",
-      "formats": [
-        "appimage",
-        "tarball"
-      ]
-    },
-    {
-      "name": "Blender",
-      "package_name": "blender",
-      "url": "https://mirrors.dotsrc.org/blender/release/$blender_major/blender-$blender_ver-linux-x64.tar.xz",
-      "category": "Graphics",
-      "requires_root": false,
-      "terminal": false,
-      "description": "The free and open source 3D creation suite, supporting the entirety of the 3D pipeline.",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
       "name": "Xonotic",
       "package_name": "xonotic",
       "url": "https://dl.xonotic.org/xonotic-0.8.6.zip",
@@ -198,14 +197,15 @@
       ]
     },
     {
-      "name": "Red Eclipse",
-      "package_name": "redeclipse",
-      "url": "https://github.com/redeclipse/base",
-      "category": "Games",
+      "name": "Youtube Music",
+      "package_name": "youtube-music",
+      "url": "https://github.com/pear-devs/pear-desktop",
+      "category": "Music",
       "requires_root": false,
       "terminal": false,
-      "description": "An open-source sci-fi first-person shooter, forked from Cube 2: Sauerbraten.",
+      "description": "Desktop client for YouTube Music with integrated media keys and background playback.",
       "formats": [
+        "appimage",
         "tarball"
       ]
     }

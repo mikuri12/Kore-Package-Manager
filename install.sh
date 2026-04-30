@@ -60,6 +60,17 @@ install_dependencies() {
     command_exists unzip || missing+=("unzip")
     command_exists update-desktop-database || missing+=("desktop-file-utils")
 
+    # FUSE 2 is required by most AppImages
+    if ! command_exists fusermount && ! find /lib /usr/lib /lib64 /usr/lib64 -name "libfuse.so.2*" -print -quit 2>/dev/null | grep -q .; then
+        if command_exists apt-get; then
+            missing+=("libfuse2")
+        elif command_exists pacman; then
+            missing+=("fuse2")
+        else
+            missing+=("fuse")
+        fi
+    fi
+
     if [ "${#missing[@]}" -eq 0 ]; then
         success "All required dependencies are already installed."
         return 0

@@ -1,130 +1,13 @@
 {
   "repositories": [
     {
-      "name": "Vscodium",
-      "package_name": "vscodium",
-      "url": "https://github.com/VSCodium/vscodium",
-      "category": "Development",
-      "requires_root": false,
-      "terminal": false,
-      "description": "Free/Libre Open Source Software Binaries of VS Code. A code editor with a massive ecosystem of extensions.",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
-      "name": "vesktop",
-      "package_name": "vesktop",
-      "url": "https://github.com/Vencord/Vesktop",
-      "category": "Utility",
-      "requires_root": false,
-      "terminal": false,
-      "description": "An all-in-one Discord client with built-in Vencord and plugins for a better experience.",
-      "formats": [
-        "tarball"
-      ]
-    },
-        {
-      "name": "Helium Browswr",
-      "package_name": "helium",
-      "url": "https://github.com/imputnet/helium-linux",
-      "category": "Network",
-      "requires_root": false,
-      "terminal": false,
-      "description": "The Chromium-based web browser made for people, with love. Privacy-first with unbiased ad-blocking. No bloat and no noise.."
-    },
-    {
-      "name": "Neovim",
-      "package_name": "nvim",
-      "url": "https://github.com/neovim/neovim",
-      "category": "Development",
+      "name": "Basalt",
+      "package_name": "basalt",
+      "url": "https://github.com/erikjuhani/basalt",
+      "category": "Office",
       "requires_root": false,
       "terminal": true,
-      "description": "Hyperextensible Vim-based text editor focused on extensibility and usability.",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
-      "name": "scrcpy",
-      "package_name": "scrcpy",
-      "url": "https://github.com/Genymobile/scrcpy",
-      "category": "Development",
-      "requires_root": false,
-      "terminal": true,
-      "description": "Display and control Android devices connected via USB or TCP/IP from your desktop.",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
-      "name": "Ranger",
-      "package_name": "ranger",
-      "url": "https://ranger.fm/ranger-stable.tar.gz",
-      "category": "Utility",
-      "requires_root": false,
-      "terminal": true,
-      "description": "A console file manager with VI key bindings and a multi-pane minimalistic interface.",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
-      "name": "Croc",
-      "package_name": "croc",
-      "url": "https://github.com/schollz/croc",
-      "category": "Utility",
-      "requires_root": false,
-      "terminal": true,
-      "description": "Easily and securely send files and folders from one computer to another.",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
-      "name": "Strawberry",
-      "package_name": "strawberry",
-      "url": "https://github.com/strawberrymusicplayer/strawberry",
-      "category": "Music",
-      "requires_root": false,
-      "terminal": false,
-      "description": "A music player and collection organizer focused on high-fidelity audio playback.",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
-      "name": "Waterfox",
-      "package_name": "waterfox",
-      "url": "https://cdn.waterfox.com/waterfox/releases/$wf_ver/Linux_x86_64/waterfox-$wf_ver.tar.bz2",
-      "category": "Network",
-      "requires_root": false,
-      "terminal": false,
-      "description": "A privacy-focused web browser based on Firefox, optimized for performance and customization.",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
-      "name": "Micro",
-      "package_name": "micro",
-      "url": "https://github.com/micro-editor/micro",
-      "category": "Development",
-      "requires_root": false,
-      "terminal": true,
-      "description": "A modern and intuitive terminal-based text editor with mouse support and intuitive shortcuts.",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
-      "name": "Helix",
-      "package_name": "helix",
-      "url": "https://github.com/helix-editor/helix",
-      "category": "Development",
-      "requires_root": false,
-      "terminal": true,
-      "description": "A post-modern modal text editor written in Rust with built-in LSP support.",
+      "description": "A lightweight and fast desktop application for project and task management.",
       "formats": [
         "tarball"
       ]
@@ -142,26 +25,13 @@
       ]
     },
     {
-      "name": "Zen Browser",
-      "package_name": "zen",
-      "url": "https://github.com/zen-browser/desktop/",
-      "category": "Network",
+      "name": "Croc",
+      "package_name": "croc",
+      "url": "https://github.com/schollz/croc",
+      "category": "Utility",
       "requires_root": false,
-      "terminal": false,
-      "description": "A beautiful and fast web browser built on top of Firefox, focused on productivity and privacy.",
-      "formats": [
-        "appimage",
-        "tarball"
-      ]
-    },
-    {
-      "name": "Stoat",
-      "package_name": "stoat",
-      "url": "https://github.com/stoatchat/for-desktop",
-      "category": "Network",
-      "requires_root": false,
-      "terminal": false,
-      "description": "A decentralized and secure chat application for privacy-conscious communication.",
+      "terminal": true,
+      "description": "Easily and securely send files and folders from one computer to another.",
       "formats": [
         "tarball"
       ]
@@ -191,13 +61,97 @@
       ]
     },
     {
-      "name": "Basalt",
-      "package_name": "basalt",
-      "url": "https://github.com/erikjuhani/basalt",
-      "category": "Office",
+      "name": "Foot",
+      "package_name": "foot",
+      "url": "https://codeberg.org/dnkl/foot",
+      "category": "Utility",
+      "requires_root": false,
+      "terminal": false,
+      "description": "A fast, lightweight, and minimalistic Wayland terminal emulator.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "Helium Browswr",
+      "package_name": "helium",
+      "url": "https://github.com/imputnet/helium-linux",
+      "category": "Network",
+      "requires_root": false,
+      "terminal": false,
+      "description": "The Chromium-based web browser made for people, with love. Privacy-first with unbiased ad-blocking. No bloat and no noise..",
+      "formats": [
+        "tarball",
+        "appimage"
+      ]
+    },
+    {
+      "name": "Helix",
+      "package_name": "helix",
+      "url": "https://github.com/helix-editor/helix",
+      "category": "Development",
       "requires_root": false,
       "terminal": true,
-      "description": "A lightweight and fast desktop application for project and task management.",
+      "description": "A post-modern modal text editor written in Rust with built-in LSP support.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "Lazygit",
+      "package_name": "lazygit",
+      "url": "https://github.com/jesseduffield/lazygit",
+      "category": "Utility",
+      "requires_root": false,
+      "description": "Lazygit is a fast and intuitive terminal-based interface for Git commands, designed to simplify complex workflows like staging, committing, and rebasing through a navigable keyboard-driven TUI.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "lf",
+      "package_name": "lf",
+      "url": "https://github.com/gokcehan/lf",
+      "category": "Utility",
+      "requires_root": false,
+      "terminal": true,
+      "description": "lf (as in list files) is a terminal file manager written in Go with a heavy inspiration from ranger file manager. ",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "Micro",
+      "package_name": "micro",
+      "url": "https://github.com/micro-editor/micro",
+      "category": "Development",
+      "requires_root": false,
+      "terminal": true,
+      "description": "A modern and intuitive terminal-based text editor with mouse support and intuitive shortcuts.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "Neovim",
+      "package_name": "nvim",
+      "url": "https://github.com/neovim/neovim",
+      "category": "Development",
+      "requires_root": false,
+      "terminal": true,
+      "description": "Hyperextensible Vim-based text editor focused on extensibility and usability.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "nnn",
+      "package_name": "nnn",
+      "url": "https://github.com/jarun/nnn",
+      "category": "Utility",
+      "requires_root": false,
+      "terminal": true,
+      "description": "nnn (n³) is a full-featured terminal file manager. It's tiny, nearly 0-config and incredibly fast.",
       "formats": [
         "tarball"
       ]
@@ -216,13 +170,86 @@
       ]
     },
     {
-      "name": "Foot",
-      "package_name": "foot",
-      "url": "https://codeberg.org/dnkl/foot",
+      "name": "Ranger",
+      "package_name": "ranger",
+      "url": "https://ranger.fm/ranger-stable.tar.gz",
+      "category": "Utility",
+      "requires_root": false,
+      "terminal": true,
+      "description": "A console file manager with VI key bindings and a multi-pane minimalistic interface.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "scrcpy",
+      "package_name": "scrcpy",
+      "url": "https://github.com/Genymobile/scrcpy",
+      "category": "Development",
+      "requires_root": false,
+      "terminal": true,
+      "description": "Display and control Android devices connected via USB or TCP/IP from your desktop.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "Stoat",
+      "package_name": "stoat",
+      "url": "https://github.com/stoatchat/for-desktop",
+      "category": "Network",
+      "requires_root": false,
+      "terminal": false,
+      "description": "A decentralized and secure chat application for privacy-conscious communication.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "Strawberry",
+      "package_name": "strawberry",
+      "url": "https://github.com/strawberrymusicplayer/strawberry",
+      "category": "Music",
+      "requires_root": false,
+      "terminal": false,
+      "description": "A music player and collection organizer focused on high-fidelity audio playback.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "vesktop",
+      "package_name": "vesktop",
+      "url": "https://github.com/Vencord/Vesktop",
       "category": "Utility",
       "requires_root": false,
       "terminal": false,
-      "description": "A fast, lightweight, and minimalistic Wayland terminal emulator.",
+      "description": "An all-in-one Discord client with built-in Vencord and plugins for a better experience.",
+      "formats": [
+        "tarball",
+        "appimage"
+      ]
+    },
+    {
+      "name": "Vscodium",
+      "package_name": "vscodium",
+      "url": "https://github.com/VSCodium/vscodium",
+      "category": "Development",
+      "requires_root": false,
+      "terminal": false,
+      "description": "Free/Libre Open Source Software Binaries of VS Code. A code editor with a massive ecosystem of extensions.",
+      "formats": [
+        "tarball"
+      ]
+    },
+    {
+      "name": "Waterfox",
+      "package_name": "waterfox",
+      "url": "https://cdn.waterfox.com/waterfox/releases/$wf_ver/Linux_x86_64/waterfox-$wf_ver.tar.bz2",
+      "category": "Network",
+      "requires_root": false,
+      "terminal": false,
+      "description": "A privacy-focused web browser based on Firefox, optimized for performance and customization.",
       "formats": [
         "tarball"
       ]
@@ -240,36 +267,13 @@
       ]
     },
     {
-      "name": "nnn",
-      "package_name": "nnn",
-      "url": "https://github.com/jarun/nnn",
-      "category": "Utility",
+      "name": "Zen Browser",
+      "package_name": "zen",
+      "url": "https://github.com/zen-browser/desktop/",
+      "category": "Network",
       "requires_root": false,
-      "terminal": true,
-      "description": "nnn (n³) is a full-featured terminal file manager. It's tiny, nearly 0-config and incredibly fast.",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
-      "name": "lf",
-      "package_name": "lf",
-      "url": "https://github.com/gokcehan/lf",
-      "category": "Utility",
-      "requires_root": false,
-      "terminal": true,
-      "description": "lf (as in list files) is a terminal file manager written in Go with a heavy inspiration from ranger file manager. ",
-      "formats": [
-        "tarball"
-      ]
-    },
-    {
-      "name": "Lazygit",
-      "package_name": "lazygit",
-      "url": "https://github.com/jesseduffield/lazygit",
-      "category": "Utility",
-      "requires_root": false,
-      "description": "Lazygit is a fast and intuitive terminal-based interface for Git commands, designed to simplify complex workflows like staging, committing, and rebasing through a navigable keyboard-driven TUI.",
+      "terminal": false,
+      "description": "A beautiful and fast web browser built on top of Firefox, focused on productivity and privacy.",
       "formats": [
         "tarball"
       ]
