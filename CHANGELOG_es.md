@@ -1,4 +1,4 @@
-## [2.1.1 - 2.1.4] - 2026-04-29
+## [2.1.1 - 2.1.6] - 2026-04-29
 
 ### Control de Versiones y Sistema de Manifiestos
 - **Persistencia de Estado:** Introducción del archivo `.kpm_manifest.json` que se genera en el directorio de cada app instalada. Este almacena el nombre de la app, su versión exacta y las decisiones tomadas por el usuario durante la instalación interactiva (selección del archivo comprimido, binario y acceso directo).
