@@ -265,7 +265,11 @@ pub fn finalize_installation(
             })?;
         }
         
+nixos-pr
         if let Err(e) = create_launcher_or_symlink(&processed_exec_path, &bin_dest) {
+
+        if let Err(e) = create_launcher_or_symlink(exec_path, &bin_dest) {
+ nixos
              if !silent { error_msg(&format!("Unable to create launcher/link: {}", e)); }
              return Err(e);
         }
