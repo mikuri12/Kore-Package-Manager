@@ -1,6 +1,7 @@
 pub mod appimage;
 pub mod desktop;
 pub mod extract;
+pub mod nixos;
 pub mod operations;
 pub mod resolve;
 pub mod update;

@@ -235,6 +235,9 @@ pub async fn handle_key_events<B: Backend>(
                                 if cidx == 0 {
                                     if let Some(idx) = app.list_state.selected() {
                                         let selected_app = app.filtered[idx].clone();
+                                        // Try removing nix profile entry if it exists
+                                        let attr = selected_app.to_lowercase().replace('-', "_").replace(' ', "_");
+                                        let _ = crate::core::install::nixos::nix_profile_remove(&attr);
                                         let _ = remove_app(config, &selected_app, true, true);
                                         app.open_popup_info(&format!("App {} successfully uninstalled.", selected_app));
                                         app.load_apps(config);
