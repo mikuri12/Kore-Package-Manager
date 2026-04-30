@@ -368,9 +368,10 @@ pub async fn install_app(
                 let version_clone = repo_version_opt.clone();
                 let asset_name_clone = saved_asset.clone();
                 let is_cli_clone = is_cli;
+                let archive_clone = actual_tarball.clone();
 
                 tokio::task::spawn_blocking(move || {
-                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &internal_name_clone, &display_name_clone, use_root_clone, use_terminal_clone, &category_clone, bundled_desktop_clone, version_clone, asset_name_clone, !is_cli_clone)
+                    finalize_installation(&config_clone, &target_clone, &exec_path_clone, &internal_name_clone, &display_name_clone, use_root_clone, use_terminal_clone, &category_clone, bundled_desktop_clone, version_clone, asset_name_clone, !is_cli_clone, Some(&archive_clone))
                 }).await.map_err(|e| crate::error::KoreError::Generic(e.to_string()))??;
                 tracing::info!(operation = "install", app = %internal_name, step = "finalize", "Installation finalized");
                 if let Some(t) = &tx {

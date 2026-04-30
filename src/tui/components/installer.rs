@@ -235,9 +235,10 @@ impl Installer {
         let category = self.state.category.clone();
         let desk = self.state.selected_desktop.clone();
         let version = self.state.version.clone();
+        let archive = self.state.tarball_path.clone();
 
         tokio::task::spawn_blocking(move || {
-            match crate::core::install::finalize_installation(&config, &target, &exec_path, &safe_name, &display_name, use_root, use_terminal, &category, desk, version, None, true) {
+            match crate::core::install::finalize_installation(&config, &target, &exec_path, &safe_name, &display_name, use_root, use_terminal, &category, desk, version, None, true, archive.as_deref()) {
                 Ok(_) => { let _ = tx.send(InstallerEvent::Finalized); }
                 Err(e) => { let _ = tx.send(InstallerEvent::Error(e.to_string())); }
             }

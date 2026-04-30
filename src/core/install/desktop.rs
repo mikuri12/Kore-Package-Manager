@@ -241,6 +241,7 @@ pub fn finalize_installation(
     version: Option<String>,
     asset_name: Option<String>,
     silent: bool,
+    original_archive: Option<&Path>,
 ) -> Result<(), crate::error::KoreError> {
     tracing::info!(operation = "desktop_finalize", app = app_name, "Finalizing desktop integration");
     let exec_name = exec_path.file_name().unwrap_or_default().to_string_lossy();
@@ -251,28 +252,76 @@ pub fn finalize_installation(
     
     let icon_path = find_icon(target, display_name, &exec_name).unwrap_or_else(|| "utilities-terminal".to_string());
 
-    let bin_dest = config.bin_dir.join(&bin_name);
-    if bin_dest.exists() {
-        fs::remove_file(&bin_dest).map_err(|e| {
-            if !silent {
-                error_msg(&format!("Unable to remove existing symlink: {}", e));
+    // --- NixOS: try to nixify before creating symlinks ---
+    let nix_installed = if super::nixos::is_nixos() {
+        let is_appimage = original_archive
+            .map(|p| p.to_string_lossy().to_lowercase().ends_with(".appimage"))
+            .unwrap_or(false);
+
+        let result = if is_appimage {
+            if let Some(archive) = original_archive {
+                tracing::info!(operation = "nixify", app = app_name, "Nixifying AppImage");
+                super::nixos::nixify_appimage(archive, app_name, None)
+            } else {
+                Ok(false)
             }
-            crate::error::KoreError::Generic(format!(
-                "Failed to remove existing binary link '{}': {}",
-                bin_dest.display(),
-                e
-            ))
-        })?;
-    }
-    
-    if let Err(e) = create_launcher_or_symlink(exec_path, &bin_dest) {
-         if !silent { error_msg(&format!("Unable to create launcher/link: {}", e)); }
-         return Err(e);
+        } else {
+            tracing::info!(operation = "nixify", app = app_name, "Nixifying installed folder");
+            super::nixos::nixify_installed_folder(target, app_name, None)
+        };
+
+        match result {
+            Ok(true) => {
+                tracing::info!(operation = "nixify", app = app_name, "Nix package installed successfully");
+                true
+            }
+            Ok(false) => {
+                tracing::warn!(operation = "nixify", app = app_name, "Nix build failed, falling back to symlink");
+                false
+            }
+            Err(e) => {
+                tracing::warn!(operation = "nixify", app = app_name, error = %e, "Nixify error, falling back to symlink");
+                false
+            }
+        }
+    } else {
+        false
+    };
+
+    // --- Create symlink/launcher (always, as fallback or primary) ---
+    if !nix_installed {
+        let bin_dest = config.bin_dir.join(&bin_name);
+        if bin_dest.exists() {
+            fs::remove_file(&bin_dest).map_err(|e| {
+                if !silent {
+                    error_msg(&format!("Unable to remove existing symlink: {}", e));
+                }
+                crate::error::KoreError::Generic(format!(
+                    "Failed to remove existing binary link '{}': {}",
+                    bin_dest.display(),
+                    e
+                ))
+            })?;
+        }
+        
+        if let Err(e) = create_launcher_or_symlink(exec_path, &bin_dest) {
+             if !silent { error_msg(&format!("Unable to create launcher/link: {}", e)); }
+             return Err(e);
+        }
     }
 
-    let mut final_exec = quote_desktop_exec_token(&bin_dest.to_string_lossy());
+    // --- Determine the Exec= for the .desktop file ---
+    let final_exec = if nix_installed {
+        // Nix-installed binaries are on PATH via nix profile
+        quote_desktop_exec_token(app_name)
+    } else {
+        let bin_dest = config.bin_dir.join(&bin_name);
+        quote_desktop_exec_token(&bin_dest.to_string_lossy())
+    };
+
+    let mut final_exec_full = final_exec.clone();
     if use_root {
-        final_exec = format!("pkexec {}", final_exec);
+        final_exec_full = format!("pkexec {}", final_exec_full);
     }
 
     let desktop_content = if let Some(ref bd_path) = bundled_desktop {
@@ -284,9 +333,9 @@ pub fn finalize_installation(
         for line in content.lines() {
             let trimmed = line.trim_start();
             if trimmed.starts_with("Exec=") {
-                new_lines.push(format!("Exec={}", final_exec));
+                new_lines.push(format!("Exec={}", final_exec_full));
             } else if trimmed.starts_with("TryExec=") {
-                new_lines.push(format!("TryExec={}", final_exec));
+                new_lines.push(format!("TryExec={}", final_exec_full));
             } else if trimmed.starts_with("Icon=") {
                 new_lines.push(format!("Icon={}", icon_path));
             } else if trimmed.starts_with("Name=") && !has_name {
@@ -317,7 +366,7 @@ Terminal={}
 Path={}
 Categories={};"#,
             display_name,
-            final_exec,
+            final_exec_full,
             icon_path,
             if use_terminal { "true" } else { "false" },
             quote_desktop_exec_token(&target.to_string_lossy()),
@@ -356,10 +405,14 @@ Categories={};"#,
         if let Some(d) = rel_desktop {
             manifest["desktop_file"] = serde_json::Value::String(d);
         }
+        if nix_installed {
+            manifest["nix_installed"] = serde_json::Value::Bool(true);
+        }
         
         let _ = fs::write(manifest_path, serde_json::to_string_pretty(&manifest).unwrap_or_default());
     }
 
-    tracing::info!(operation = "desktop_finalize", app = app_name, "Desktop integration finalized");
+    tracing::info!(operation = "desktop_finalize", app = app_name, nix = nix_installed, "Desktop integration finalized");
     Ok(())
 }
+
