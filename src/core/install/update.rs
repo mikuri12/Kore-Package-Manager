@@ -47,6 +47,13 @@ pub async fn update_kpm(config: &Config) -> Result<(), crate::error::KoreError> 
     }
 
     let current_version = env!("CARGO_PKG_VERSION");
+    let current_version_with_v = format!("v{}", current_version);
+
+    if latest_version == current_version_with_v || latest_version == current_version {
+        success_msg("You already have the latest version of Kore Package Manager! No update is necessary.");
+        tracing::info!(operation = "self_update", step = "check", "Already up-to-date");
+        return Ok(());
+    }
     
     println!("\x1b[1;36mUpdate available:\x1b[0m");
     println!("  - Current version: v{}", current_version);

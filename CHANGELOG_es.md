@@ -1,3 +1,14 @@
+## [2.1.1 - 2.1.4] - 2026-04-29
+
+### Control de Versiones y Sistema de Manifiestos
+- **Persistencia de Estado:** Introducción del archivo `.kpm_manifest.json` que se genera en el directorio de cada app instalada. Este almacena el nombre de la app, su versión exacta y las decisiones tomadas por el usuario durante la instalación interactiva (selección del archivo comprimido, binario y acceso directo).
+- **Visualización de Versiones:** El comando `kpm list` ahora lee estos manifiestos locales para mostrar la versión instalada al lado de cada paquete.
+
+### Actualizaciones Inteligentes y Desatendidas
+- **Actualizaciones sin Prompts:** El motor de `kpm update` ha sido optimizado para la ejecución en segundo plano. Al extraer las selecciones previamente guardadas del manifiesto local, el flujo de actualización se salta por completo todos los menús interactivos, restaurando silenciosamente la misma configuración del usuario.
+- **Búsqueda Difusa de Assets (Fuzzy Matching):** Anticipando que los nombres de los archivos suelen contener la versión (ej. `helium-v1.0.tar.gz`), el sistema de actualización ahora usa un algoritmo heurístico de sustitución. Si no encuentra el nombre exacto del archivo viejo en un *release* nuevo, sustituye inteligentemente el número de versión viejo por el nuevo para garantizar que se descargue la arquitectura/versión correcta automáticamente.
+- **Optimización de Auto-Actualización:** El comando `kpm --update-bin` ahora verifica correctamente si la versión actual del binario coincide con el último release de GitHub antes de descargar nada, abortando limpiamente si no es necesario actualizar.
+
 ## [2.1.0] - 2026-04-29
 
 ### Soporte Nativo para AppImage

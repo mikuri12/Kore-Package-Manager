@@ -1,5 +1,16 @@
 [![Historial de cambios](https://img.shields.io/badge/Changelog-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
 
+## [2.1.1 - 2.1.4] - 2026-04-29
+
+### Version Control & Manifest System
+- **State Persistence:** Introduced a `.kpm_manifest.json` file generated in each app's installation directory. This stores the app name, exact version, and the user's specific installation choices (asset, binary, and desktop file selections).
+- **Version Display:** The `kpm list` command now reads from local manifests and prints the exact version of each installed package alongside its name.
+
+### Non-Interactive Smart Updates
+- **Promptless Updates:** The `kpm update` engine has been fully optimized for background execution. By extracting previously saved selections from the local manifest, the update flow completely bypasses interactive prompts, silently restoring the exact user configuration.
+- **Fuzzy Asset Matching:** Anticipating version-embedded filenames (e.g., `helium-v1.0.tar.gz`), the update engine features a heuristic substitution algorithm. If the exact asset name isn't found in a new release, it intelligently swaps the local version string with the remote version string to ensure the correct architecture/package is still automatically selected.
+- **Self-Update Optimization:** `kpm --update-bin` now properly checks if the current binary version matches the latest GitHub release before attempting to download, cleanly aborting if an update is unnecessary.
+
 ## [2.1.0] - 2026-04-29
 
 ### First-Class AppImage Support
