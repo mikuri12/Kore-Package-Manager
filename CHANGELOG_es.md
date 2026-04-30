@@ -9,6 +9,11 @@
 - **Búsqueda Difusa de Assets (Fuzzy Matching):** Anticipando que los nombres de los archivos suelen contener la versión (ej. `helium-v1.0.tar.gz`), el sistema de actualización ahora usa un algoritmo heurístico de sustitución. Si no encuentra el nombre exacto del archivo viejo en un *release* nuevo, sustituye inteligentemente el número de versión viejo por el nuevo para garantizar que se descargue la arquitectura/versión correcta automáticamente.
 - **Optimización de Auto-Actualización:** El comando `kpm --update-bin` ahora verifica correctamente si la versión actual del binario coincide con el último release de GitHub antes de descargar nada, abortando limpiamente si no es necesario actualizar.
 
+### Mejoras en la TUI Interactiva
+- **Renombramiento de Menús:** Se cambió la opción del menú principal de "Install New Tarball" a "Install New Package" para reflejar mejor el soporte ampliado de archivos.
+- **Soporte de AppImage Local:** El explorador de archivos de la TUI ahora detecta y permite seleccionar activamente archivos `.AppImage` (y `.appimage`) para su instalación local, omitiendo la extracción y procesándolos nativamente.
+- **Seguimiento Manual de Repositorios:** Al realizar una instalación manual desde un archivo local, la TUI ahora pregunta a los usuarios si desean rastrear la aplicación para recibir actualizaciones. Si se acepta, pueden ingresar una URL de GitHub, GitLab o Codeberg, que se guarda automáticamente en sus repositorios personalizados para permitir sincronizaciones futuras con `kpm update`.
+
 ## [2.1.0] - 2026-04-29
 
 ### Soporte Nativo para AppImage

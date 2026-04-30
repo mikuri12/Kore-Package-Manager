@@ -1,6 +1,6 @@
 [![Historial de cambios](https://img.shields.io/badge/Changelog-Español-blueviolet?logo=keepachangelog&logoColor=white)](https://github.com/ezequielgk/Tarball-Manager/blob/main/CHANGELOG_es.md)
 
-## [2.1.1 - 2.1.4] - 2026-04-29
+## [2.1.1 - 2.1.6] - 2026-04-29
 
 ### Version Control & Manifest System
 - **State Persistence:** Introduced a `.kpm_manifest.json` file generated in each app's installation directory. This stores the app name, exact version, and the user's specific installation choices (asset, binary, and desktop file selections).
@@ -10,6 +10,11 @@
 - **Promptless Updates:** The `kpm update` engine has been fully optimized for background execution. By extracting previously saved selections from the local manifest, the update flow completely bypasses interactive prompts, silently restoring the exact user configuration.
 - **Fuzzy Asset Matching:** Anticipating version-embedded filenames (e.g., `helium-v1.0.tar.gz`), the update engine features a heuristic substitution algorithm. If the exact asset name isn't found in a new release, it intelligently swaps the local version string with the remote version string to ensure the correct architecture/package is still automatically selected.
 - **Self-Update Optimization:** `kpm --update-bin` now properly checks if the current binary version matches the latest GitHub release before attempting to download, cleanly aborting if an update is unnecessary.
+
+### Interactive TUI Improvements
+- **Menu Rebranding:** Renamed the main menu option from "Install New Tarball" to "Install New Package" to better reflect the broadened file support.
+- **Local AppImage Support:** The TUI File Browser now actively detects and permits the selection of `.AppImage` (and `.appimage`) files for local installation, skipping extraction and processing them natively.
+- **Manual Repository Tracking:** When performing a manual installation from a local file, the TUI now prompts users if they wish to track the application for updates. If accepted, users can provide a GitHub, GitLab, or Codeberg URL, which is automatically saved to their custom repositories to enable future `kpm update` syncs.
 
 ## [2.1.0] - 2026-04-29
 

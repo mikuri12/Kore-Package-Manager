@@ -35,6 +35,8 @@ pub enum PopupType {
     InstallProgress,
     InstallAssetSelect,
     InstallDesktopSelect,
+    InstallRepoPrompt,
+    InstallRepoUrlInput,
     EnvVarInput,
     Information,
     Help,
@@ -238,7 +240,7 @@ impl App {
                 let name = entry.file_name().to_string_lossy().to_string();
                 if entry.path().is_dir() {
                     self.fb_items.push(format!("{}/", name));
-                } else if name.contains(".tar.") {
+                } else if name.contains(".tar.") || name.ends_with(".zip") || name.to_lowercase().ends_with(".appimage") {
                     self.fb_items.push(name);
                 } else if self.route == Route::IconBrowser {
                     if name.ends_with(".png") || name.ends_with(".svg") || name.ends_with(".ico") {
@@ -282,7 +284,7 @@ impl App {
           || self.popup_type == PopupType::ConfirmUninstall || self.popup_type == PopupType::InstallRootSelect 
           || self.popup_type == PopupType::InstallCategorySelect || self.popup_type == PopupType::InstallBinarySelect
           || self.popup_type == PopupType::RepoActionSelect || self.popup_type == PopupType::RepoRootInput
-          || self.popup_type == PopupType::InstallAssetSelect || self.popup_type == PopupType::InstallDesktopSelect {
+          || self.popup_type == PopupType::InstallAssetSelect || self.popup_type == PopupType::InstallDesktopSelect || self.popup_type == PopupType::InstallRepoPrompt {
             let i = match self.popup_state.selected() {
                 Some(i) => (i + 1) % self.popup_items.len(),
                 None => 0,
@@ -334,7 +336,7 @@ impl App {
           || self.popup_type == PopupType::ConfirmUninstall || self.popup_type == PopupType::InstallRootSelect 
           || self.popup_type == PopupType::InstallCategorySelect || self.popup_type == PopupType::InstallBinarySelect
           || self.popup_type == PopupType::RepoActionSelect || self.popup_type == PopupType::RepoRootInput
-          || self.popup_type == PopupType::InstallAssetSelect || self.popup_type == PopupType::InstallDesktopSelect {
+          || self.popup_type == PopupType::InstallAssetSelect || self.popup_type == PopupType::InstallDesktopSelect || self.popup_type == PopupType::InstallRepoPrompt {
             let i = match self.popup_state.selected() {
                 Some(i) => {
                     if i == 0 { self.popup_items.len().saturating_sub(1) } else { i - 1 }

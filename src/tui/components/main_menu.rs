@@ -39,7 +39,7 @@ impl MainMenu {
 impl Component for MainMenu {
     fn draw(&mut self, f: &mut Frame, _area: Rect, app: &mut App, _config: &Config) {
         let items = vec![
-            ListItem::new("󰉍 Install New Tarball"),
+            ListItem::new("󰉍 Install New Package"),
             ListItem::new("󰏗 Manage Installed"),
             ListItem::new("󰆴 Uninstall Application"),
             ListItem::new("󰒋 Repositories"),

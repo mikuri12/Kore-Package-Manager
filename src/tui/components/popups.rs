@@ -36,7 +36,7 @@ impl Component for Popups {
         f.render_widget(Clear, popup_area);
 
         match app.popup_type {
-            PopupType::ActionSelect | PopupType::CategorySelect | PopupType::ChangeBinarySelect | PopupType::ChangeRootSelect | PopupType::ConfirmUninstall | PopupType::InstallRootSelect | PopupType::InstallCategorySelect | PopupType::InstallBinarySelect | PopupType::InstallAssetSelect | PopupType::InstallDesktopSelect | PopupType::RepoActionSelect | PopupType::RepoRootInput => {
+            PopupType::ActionSelect | PopupType::CategorySelect | PopupType::ChangeBinarySelect | PopupType::ChangeRootSelect | PopupType::ConfirmUninstall | PopupType::InstallRootSelect | PopupType::InstallCategorySelect | PopupType::InstallBinarySelect | PopupType::InstallAssetSelect | PopupType::InstallDesktopSelect | PopupType::RepoActionSelect | PopupType::RepoRootInput | PopupType::InstallRepoPrompt => {
                 let popup_title = match app.popup_type {
                     PopupType::ActionSelect => " Action ",
                     PopupType::RepoActionSelect => " Repo Action ",
@@ -46,6 +46,7 @@ impl Component for Popups {
                     PopupType::InstallBinarySelect | PopupType::ChangeBinarySelect => " Select Main Binary ",
                     PopupType::InstallAssetSelect => " Select Tarball ",
                     PopupType::InstallDesktopSelect => " Select Desktop File ",
+                    PopupType::InstallRepoPrompt => " Track Updates? ",
                     _ => " Options ",
                 };
 
@@ -66,7 +67,7 @@ impl Component for Popups {
 
                 f.render_stateful_widget(p_list, popup_area, &mut app.popup_state);
             }
-            PopupType::NameInput | PopupType::InstallNameInput | PopupType::EnvVarInput | PopupType::RepoNameInput | PopupType::RepoPackageNameInput | PopupType::RepoUrlInput | PopupType::RepoCategoryInput => {
+            PopupType::NameInput | PopupType::InstallNameInput | PopupType::EnvVarInput | PopupType::RepoNameInput | PopupType::RepoPackageNameInput | PopupType::RepoUrlInput | PopupType::RepoCategoryInput | PopupType::InstallRepoUrlInput => {
                 let title = match app.popup_type {
                     PopupType::NameInput => " New Name ",
                     PopupType::InstallNameInput => " Target Name ",
@@ -74,6 +75,7 @@ impl Component for Popups {
                     PopupType::RepoPackageNameInput => " Package Name ",
                     PopupType::RepoUrlInput => " Repo URL ",
                     PopupType::RepoCategoryInput => " Repo Category ",
+                    PopupType::InstallRepoUrlInput => " Github/Gitlab/Codeberg URL ",
                     _ => " Environment Variables "
                 };
                 let mut content = format!("{}█", app.popup_input);

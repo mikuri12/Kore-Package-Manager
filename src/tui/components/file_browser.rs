@@ -70,7 +70,7 @@ impl Component for FileBrowser {
                 } else {
                     "Unsupported File".to_string()
                 }
-            } else if name.contains(".tar.") || name.ends_with(".zip") {
+            } else if name.contains(".tar.") || name.ends_with(".zip") || name.to_lowercase().ends_with(".appimage") {
                 if let Some((cached_name, cached_text)) = &app.cached_preview {
                     if cached_name == name {
                         cached_text.clone()
@@ -153,13 +153,15 @@ impl Component for FileBrowser {
                     } else if choice.ends_with('/') {
                         app.current_dir = app.current_dir.join(&choice[..choice.len() - 1]);
                         app.load_dir();
-                    } else if app.route == Route::FileBrowser && (choice.contains(".tar.") || choice.ends_with(".zip")) {
+                    } else if app.route == Route::FileBrowser && (choice.contains(".tar.") || choice.ends_with(".zip") || choice.to_lowercase().ends_with(".appimage")) {
                         let tarball_path = app.current_dir.join(choice);
                         app.pending_tarball = tarball_path;
                         app.pending_raw_name = choice.replace(".tar.gz", "")
                             .replace(".tar.xz", "")
                             .replace(".tar.bz2", "")
-                            .replace(".zip", "");
+                            .replace(".zip", "")
+                            .replace(".AppImage", "")
+                            .replace(".appimage", "");
                             
                         app.open_popup_input(PopupType::InstallNameInput, "");
                         return Ok(Some(AppAction::ShowPopup(PopupType::InstallNameInput)));

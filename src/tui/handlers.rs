@@ -57,13 +57,13 @@ pub async fn handle_key_events<B: Backend>(
                     let is_list_popup = matches!(app.popup_type,
                         PopupType::ActionSelect | PopupType::CategorySelect | PopupType::ChangeBinarySelect |
                         PopupType::ChangeRootSelect | PopupType::ConfirmUninstall | PopupType::InstallRootSelect |
-                        PopupType::InstallCategorySelect | PopupType::RepoActionSelect | PopupType::RepoRootInput
+                        PopupType::InstallCategorySelect | PopupType::RepoActionSelect | PopupType::RepoRootInput | PopupType::InstallRepoPrompt
                     );
 
                     let is_input_popup = matches!(app.popup_type,
                         PopupType::NameInput | PopupType::EnvVarInput | PopupType::InstallNameInput |
                         PopupType::RepoNameInput | PopupType::RepoPackageNameInput | PopupType::RepoUrlInput |
-                        PopupType::RepoCategoryInput
+                        PopupType::RepoCategoryInput | PopupType::InstallRepoUrlInput
                     );
 
                     if is_list_popup {
@@ -258,7 +258,19 @@ pub async fn handle_key_events<B: Backend>(
                             KeyCode::Enter => {
                                 if let Some(cidx) = app.popup_state.selected() {
                                     app.pending_category = app.popup_items[cidx].clone();
-                                    
+                                    app.open_popup_list(PopupType::InstallRepoPrompt, vec!["No, just install".to_string(), "Yes, track for updates".to_string()]);
+                                } else {
+                                    app.popup_type = PopupType::None;
+                                }
+                            }
+                            _ => {}
+                        },
+                        PopupType::InstallRepoPrompt => match key.code {
+                            KeyCode::Enter => {
+                                let cidx = app.popup_state.selected().unwrap_or(0);
+                                if cidx == 1 {
+                                    app.open_popup_input(PopupType::InstallRepoUrlInput, "");
+                                } else {
                                     app.route = Route::Installer;
                                     app.installer = Some(crate::tui::components::installer::Installer::new(
                                         app.pending_tarball.to_string_lossy().to_string(),
@@ -267,9 +279,34 @@ pub async fn handle_key_events<B: Backend>(
                                         app.pending_category.clone(),
                                     ));
                                     app.popup_type = PopupType::None;
-                                } else {
-                                    app.popup_type = PopupType::None;
                                 }
+                            }
+                            _ => {}
+                        },
+                        PopupType::InstallRepoUrlInput => match key.code {
+                            KeyCode::Backspace => { app.popup_input.pop(); }
+                            KeyCode::Char(c) => { app.popup_input.push(c); }
+                            KeyCode::Enter => {
+                                let url = app.popup_input.trim().to_string();
+                                let url_lower = url.to_lowercase();
+                                if url_lower.contains("github.com") || url_lower.contains("gitlab.com") || url_lower.contains("codeberg.org") {
+                                    let repo_name = app.pending_app_name.clone();
+                                    let pkg_name = app.pending_raw_name.clone();
+                                    let cat = app.pending_category.clone();
+                                    let root = app.pending_use_root;
+                                    let config_clone = config.clone();
+                                    tokio::spawn(async move {
+                                        let _ = crate::repo::add_user_repo(&config_clone, &repo_name, &pkg_name, &url, &cat, root).await;
+                                    });
+                                }
+                                app.route = Route::Installer;
+                                app.installer = Some(crate::tui::components::installer::Installer::new(
+                                    app.pending_tarball.to_string_lossy().to_string(),
+                                    app.pending_app_name.clone(),
+                                    app.pending_use_root,
+                                    app.pending_category.clone(),
+                                ));
+                                app.popup_type = PopupType::None;
                             }
                             _ => {}
                         },
