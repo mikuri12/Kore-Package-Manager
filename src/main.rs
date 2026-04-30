@@ -158,7 +158,7 @@ async fn main() -> anyhow::Result<()> {
             let all_repos = repo::get_all_repos(&config);
             if let Some(target) = app_name {
                 if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == target.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == target.to_lowercase())) {
-                    if let Err(e) = core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true, None, true).await {
+                    if let Err(e) = core::install_app(&config, &repo_source.repo.name, None, None, None, true, None, true).await {
                         utils::error_msg(&format!("Failed to update {}: {}", repo_source.repo.name, e));
                         had_failures = true;
                     }
@@ -174,7 +174,7 @@ async fn main() -> anyhow::Result<()> {
                             let app = entry.file_name().to_string_lossy().to_string();
                             if let Some(repo_source) = all_repos.iter().find(|r| r.repo.name.to_lowercase() == app.to_lowercase() || (!r.repo.package_name.is_empty() && r.repo.package_name.to_lowercase() == app.to_lowercase())) {
                                 utils::info_msg(&format!("Updating {}...", repo_source.repo.name));
-                                match core::install_app(&config, &repo_source.repo.name, Some(&repo_source.repo.name), None, None, true, None, true).await {
+                                match core::install_app(&config, &repo_source.repo.name, None, None, None, true, None, true).await {
                                     Ok(_) => updated_any = true,
                                     Err(e) => {
                                         utils::error_msg(&format!("Failed to update {}: {}", repo_source.repo.name, e));
